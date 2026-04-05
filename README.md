@@ -1,0 +1,2 @@
+# Trendy word
+trendy
