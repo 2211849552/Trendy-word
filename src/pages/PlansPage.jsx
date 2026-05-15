@@ -1,0 +1,359 @@
+import { useMemo, useState } from 'react'
+import {
+  CreditCard,
+  DollarSign,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { PlanFormModal } from '../components/plans/PlanFormModal.jsx'
+import { StatCard } from '../components/StatCard.jsx'
+
+const planDistribution = [
+  { name: 'الخطة الأساسية', value: 49, color: '#3b82f6' },
+  { name: 'الخطة المتقدمة', value: 35, color: '#22c55e' },
+  { name: 'الخطة الاحترافية', value: 16, color: '#fb923c' },
+]
+
+const subscriptionSummary = [
+  { label: 'الخطة الأساسية', count: 120, dotClass: 'bg-sky-500' },
+  { label: 'الخطة المتقدمة', count: 85, dotClass: 'bg-emerald-500' },
+  { label: 'الخطة الاحترافية', count: 40, dotClass: 'bg-amber-500' },
+]
+
+const initialPlans = [
+  {
+    id: 'basic',
+    name: 'الخطة الأساسية',
+    price: 50,
+    subscribers: 120,
+    duration: 'monthly',
+    status: 'active',
+    features: ['حتى 100 منتج', 'لوحة تحكم أساسية', 'دعم فني عبر البريد'],
+  },
+  {
+    id: 'advanced',
+    name: 'الخطة المتقدمة',
+    price: 120,
+    subscribers: 85,
+    duration: 'monthly',
+    status: 'active',
+    features: ['منتجات غير محدودة', 'تقارير متقدمة', 'دعم أولوية'],
+  },
+  {
+    id: 'pro',
+    name: 'الخطة الاحترافية',
+    price: 250,
+    subscribers: 40,
+    duration: 'monthly',
+    status: 'active',
+    features: ['كل ميزات المتقدمة', 'API مخصص', 'مدير حساب'],
+  },
+]
+
+function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) {
+  const RAD = Math.PI / 180
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.52
+  const x = cx + radius * Math.cos(-midAngle * RAD)
+  const y = cy + radius * Math.sin(-midAngle * RAD)
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#334155"
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline="central"
+      className="text-[11px] font-medium"
+    >
+      {`${name}: ${(percent * 100).toFixed(0)}%`}
+    </text>
+  )
+}
+
+function PlansDistributionChart() {
+  return (
+    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
+      <h2 className="text-base font-semibold text-slate-900">توزيع المتاجر حسب الخطط</h2>
+      <div className="mt-4 h-[280px] w-full" dir="ltr">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={planDistribution}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={renderPieLabel}
+              innerRadius={64}
+              outerRadius={102}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {planDistribution.map((entry) => (
+                <Cell key={entry.name} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(v) => [`${v}%`, 'النسبة']}
+              contentStyle={{
+                borderRadius: 12,
+                border: '1px solid #e2e8f0',
+                fontFamily: 'Cairo, sans-serif',
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  )
+}
+
+function SubscriptionSummaryCard() {
+  return (
+    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
+      <h2 className="text-base font-semibold text-slate-900">ملخص الاشتراكات</h2>
+      <ul className="mt-4 space-y-2">
+        {subscriptionSummary.map((row) => (
+          <li
+            key={row.label}
+            className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3"
+          >
+            <span className="text-lg font-bold tabular-nums text-slate-900">{row.count}</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <span className={`size-2.5 shrink-0 rounded-full ${row.dotClass}`} aria-hidden />
+              {row.label}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function PlanCard({ plan, onEdit = () => {}, onDelete = () => {} }) {
+  const active = plan.status !== 'paused'
+  const periodLabel = 'شهري'
+
+  return (
+    <article
+      className="flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80"
+      dir="rtl"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+        <span
+          className={[
+            'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+            active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600',
+          ].join(' ')}
+        >
+          {active ? 'نشط' : 'موقوف'}
+        </span>
+      </div>
+
+      <p className="mt-4">
+        <span className="text-3xl font-bold tabular-nums text-slate-900">{plan.price}</span>
+        <span className="me-1.5 text-sm font-medium text-slate-500">د.ل / {periodLabel}</span>
+      </p>
+
+      <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+        <Users className="size-4 shrink-0 text-slate-400" strokeWidth={2} aria-hidden />
+        <span>
+          {plan.subscribers} متجر مشترك
+        </span>
+      </p>
+
+      <div className="mt-6 flex items-stretch gap-2">
+        <button
+          type="button"
+          onClick={() => onEdit?.(plan)}
+          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+        >
+          <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          تعديل
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete?.(plan)}
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-500 text-white shadow-sm transition-colors hover:bg-rose-600"
+          aria-label={`حذف ${plan.name}`}
+        >
+          <Trash2 className="size-4" strokeWidth={2} />
+        </button>
+      </div>
+    </article>
+  )
+}
+
+export function PlansPage() {
+  const [query, setQuery] = useState('')
+  const [plans, setPlans] = useState(initialPlans)
+  const [modal, setModal] = useState({ open: false, mode: 'add', planId: null })
+
+  const editingPlan = useMemo(
+    () => (modal.planId ? plans.find((p) => p.id === modal.planId) : null),
+    [modal.planId, plans],
+  )
+
+  function openAddModal() {
+    setModal({ open: true, mode: 'add', planId: null })
+  }
+
+  function openEditModal(plan) {
+    setModal({ open: true, mode: 'edit', planId: plan.id })
+  }
+
+  function closeModal() {
+    setModal((m) => ({ ...m, open: false }))
+  }
+
+  function handleSave(payload) {
+    if (payload.mode === 'add') {
+      setPlans((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          name: payload.name,
+          price: payload.price,
+          subscribers: 0,
+          duration: payload.duration,
+          status: payload.status,
+          features: payload.features,
+        },
+      ])
+      return
+    }
+    if (payload.mode === 'edit' && payload.id) {
+      setPlans((prev) =>
+        prev.map((p) =>
+          p.id === payload.id
+            ? {
+                ...p,
+                name: payload.name,
+                price: payload.price,
+                duration: payload.duration,
+                status: payload.status,
+                features: payload.features,
+              }
+            : p,
+        ),
+      )
+    }
+  }
+
+  function handleDeletePlan(plan) {
+    const ok = window.confirm(`هل تريد حذف «${plan.name}»؟ لا يمكن التراجع عن هذا الإجراء.`)
+    if (!ok) return
+    setPlans((prev) => prev.filter((p) => p.id !== plan.id))
+    setModal((m) => (m.planId === plan.id ? { ...m, open: false, planId: null } : m))
+  }
+
+  const filteredPlans = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return plans
+    return plans.filter((p) => p.name.toLowerCase().includes(q))
+  }, [query, plans])
+
+  return (
+    <>
+      <PlanFormModal
+        open={modal.open}
+        mode={modal.mode}
+        initialPlan={editingPlan}
+        onClose={closeModal}
+        onSave={handleSave}
+      />
+
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
+            إدارة الخطط
+          </h1>
+          <p className="mt-1 text-slate-500">إدارة خطط الاشتراك وتسعير المنصة</p>
+        </div>
+        <button
+          type="button"
+          onClick={openAddModal}
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
+        >
+          <Plus className="size-5" strokeWidth={2.25} aria-hidden />
+          إضافة خطة اشتراك
+        </button>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
+        <StatCard
+          label="متوسط قيمة الاشتراك"
+          value="107"
+          change="—"
+          trend="up"
+          icon={TrendingUp}
+          iconClassName="bg-violet-100 text-violet-600"
+        />
+        <StatCard
+          label="إيرادات الاشتراكات"
+          value="26200"
+          change="15%"
+          trend="up"
+          icon={DollarSign}
+          iconClassName="bg-violet-100 text-violet-600"
+        />
+        <StatCard
+          label="المتاجر المشتركة"
+          value="245"
+          change="8%"
+          trend="up"
+          icon={Users}
+          iconClassName="bg-emerald-100 text-emerald-600"
+        />
+        <StatCard
+          label="إجمالي الخطط"
+          value={String(plans.length)}
+          change="—"
+          trend="up"
+          icon={CreditCard}
+          iconClassName="bg-sky-100 text-sky-600"
+        />
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <SubscriptionSummaryCard />
+        <PlansDistributionChart />
+      </div>
+
+      <div className="relative mt-8" dir="rtl">
+        <Search
+          className="pointer-events-none absolute top-1/2 end-4 size-5 -translate-y-1/2 text-slate-400"
+          strokeWidth={2}
+          aria-hidden
+        />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="البحث عن خطة اشتراك..."
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pe-12 ps-4 text-sm text-slate-900 shadow-sm outline-none ring-slate-200/80 transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+        />
+      </div>
+
+      <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {filteredPlans.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            onEdit={openEditModal}
+            onDelete={handleDeletePlan}
+          />
+        ))}
+      </div>
+
+      {filteredPlans.length === 0 ? (
+        <p className="mt-6 text-center text-sm text-slate-500">لا توجد خطط مطابقة للبحث.</p>
+      ) : null}
+    </>
+  )
+}

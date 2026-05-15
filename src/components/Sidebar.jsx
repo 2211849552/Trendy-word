@@ -51,10 +51,10 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
               type="button"
               onClick={() => onNavigate?.(id)}
               className={[
-                'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm font-medium transition-colors',
+                'flex w-full items-center gap-3 rounded-xl border-e-4 px-3 py-2.5 text-start text-sm font-medium transition-colors',
                 active
-                  ? 'bg-sky-50 text-sky-600'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                  ? 'border-sky-600 bg-sky-50 text-sky-600'
+                  : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900',
               ].join(' ')}
             >
               <Icon
