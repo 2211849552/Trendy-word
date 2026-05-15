@@ -8,6 +8,11 @@ export const joinRequests = [
     owner: 'سارة أحمد',
     email: 'sara@lcwaikiki.ly',
     city: 'طرابلس',
+    phone: '091-765-4321',
+    description: 'طلب فتح فرع للعلامة التجارية العالمية في مجمع تجاري بطرابلس.',
+    businessType: 'إلكتروني',
+    status: 'قيد المراجعة',
+    documentFile: 'lcwaikiki_tripoli_license_001.pdf',
   },
   {
     id: '2',
@@ -16,6 +21,11 @@ export const joinRequests = [
     owner: 'ليلى إبراهيم',
     email: 'layla@mango.ly',
     city: 'بنغازي',
+    phone: '092-334-5566',
+    description: 'متجر أزياء نسائية ورجالية ضمن علامة مانجو المعتمدة.',
+    businessType: 'إلكتروني',
+    status: 'قيد المراجعة',
+    documentFile: 'mango_benghazi_commercial.pdf',
   },
   {
     id: '3',
@@ -24,6 +34,11 @@ export const joinRequests = [
     owner: 'نور الدين المبروك',
     email: 'nour@alwafaa-fashion.ly',
     city: 'طرابلس',
+    phone: '093-112-8899',
+    description: 'متجر محلي متخصص في الأزياء اليومية والمناسبات.',
+    businessType: 'إلكتروني',
+    status: 'قيد المراجعة',
+    documentFile: 'alwafaa_registration_2026.pdf',
   },
   {
     id: '4',
@@ -32,6 +47,11 @@ export const joinRequests = [
     owner: 'هدى الكاسح',
     email: 'hoda@sultana-boutique.ly',
     city: 'مصراتة',
+    phone: '094-556-7788',
+    description: 'بوتيك للأزياء النسائية والإكسسوارات الفاخرة.',
+    businessType: 'إلكتروني',
+    status: 'قيد المراجعة',
+    documentFile: 'sultana_boutique_license.pdf',
   },
 ]
 
@@ -55,6 +75,13 @@ export const registeredStores = [
     products: 156,
     orders: 234,
     icon: 'shirt',
+    status: 'active',
+    catalog: [
+      { sku: 'RTJ-101', name: 'عباية كريب يومية', category: 'عبايات', price: 185, stock: 22 },
+      { sku: 'RTJ-102', name: 'طقم بنطلون وبلوزة', category: 'ملابس نسائية', price: 95, stock: 40 },
+      { sku: 'RTJ-103', name: 'جاكيت جينز كلاسيك', category: 'ملابس رجالية', price: 140, stock: 18 },
+      { sku: 'RTJ-104', name: 'وشاح حرير', category: 'إكسسوارات', price: 45, stock: 60 },
+    ],
   },
   {
     id: 'r2',
@@ -66,6 +93,12 @@ export const registeredStores = [
     products: 203,
     orders: 189,
     icon: 'bag',
+    status: 'active',
+    catalog: [
+      { sku: 'OAS-201', name: 'حذاء رياضي شبكي', category: 'أحذية', price: 165, stock: 30 },
+      { sku: 'OAS-202', name: 'شنطة يد جلد صناعي', category: 'حقائب', price: 120, stock: 15 },
+      { sku: 'OAS-203', name: 'قميص قطن أبيض', category: 'قمصان', price: 55, stock: 80 },
+    ],
   },
   {
     id: 'r3',
@@ -77,6 +110,12 @@ export const registeredStores = [
     products: 178,
     orders: 145,
     icon: 'sparkles',
+    status: 'pending',
+    catalog: [
+      { sku: 'BRD-301', name: 'فستان سهرة مخمل', category: 'فساتين', price: 320, stock: 8 },
+      { sku: 'BRD-302', name: 'ساعة يد أنيقة', category: 'إكسسوارات', price: 450, stock: 12 },
+      { sku: 'BRD-303', name: 'نظارة شمسية polarized', category: 'إكسسوارات', price: 85, stock: 25 },
+    ],
   },
   {
     id: 'r4',
@@ -88,5 +127,11 @@ export const registeredStores = [
     products: 142,
     orders: 167,
     icon: 'shirt',
+    status: 'disabled',
+    catalog: [
+      { sku: 'TRN-401', name: 'تيشيرت قطن مطبوع', category: 'ملابس كاجوال', price: 42, stock: 55 },
+      { sku: 'TRN-402', name: 'بنطلون تشينو', category: 'ملابس رجالية', price: 78, stock: 34 },
+      { sku: 'TRN-403', name: 'كارديجان خفيف', category: 'ملابس نسائية', price: 95, stock: 20 },
+    ],
   },
 ]

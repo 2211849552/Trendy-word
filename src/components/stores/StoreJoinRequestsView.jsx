@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Store,
   Ban,
@@ -16,12 +17,28 @@ import {
 } from 'lucide-react'
 import { StatCard } from '../StatCard.jsx'
 import { joinRequests } from '../../data/stores.js'
+import { JoinRequestDetailModal } from './JoinRequestDetailModal.jsx'
 
 const cardIcons = [Shirt, Sparkles, Footprints, ShoppingBag]
 
-export function StoreJoinRequestsView({ onViewStore, onOpenList }) {
+export function StoreJoinRequestsView({ onOpenList }) {
+  const [modalRequestId, setModalRequestId] = useState(null)
+  const modalRequest = joinRequests.find((r) => r.id === modalRequestId) ?? null
+
   return (
     <>
+      <JoinRequestDetailModal
+        request={modalRequest}
+        open={Boolean(modalRequestId)}
+        onClose={() => setModalRequestId(null)}
+        onAccept={(id) => window.alert(`تم تسجيل قبول الطلب رقم ${id} (واجهة تجريبية).`)}
+        onReject={(id, reason) =>
+          window.alert(
+            `تم رفض الطلب رقم ${id}.\n\nسبب الرفض:\n${reason}`,
+          )
+        }
+      />
+
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <header>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
@@ -51,20 +68,12 @@ export function StoreJoinRequestsView({ onViewStore, onOpenList }) {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
         <StatCard
-          label="المتاجر النشطة"
-          value="4"
-          change="12%"
+          label="إجمالي المنتجات"
+          value="902"
+          change="8%"
           trend="up"
-          icon={Store}
-          iconClassName="bg-emerald-100 text-emerald-600"
-        />
-        <StatCard
-          label="المتاجر المحظورة"
-          value="1"
-          change="—"
-          trend="up"
-          icon={Ban}
-          iconClassName="bg-rose-100 text-rose-600"
+          icon={ShoppingBag}
+          iconClassName="bg-sky-100 text-sky-600"
         />
         <StatCard
           label="طلبات التسجيل"
@@ -75,12 +84,20 @@ export function StoreJoinRequestsView({ onViewStore, onOpenList }) {
           iconClassName="bg-amber-100 text-amber-600"
         />
         <StatCard
-          label="إجمالي المنتجات"
-          value="902"
-          change="8%"
+          label="المتاجر المحظورة"
+          value="1"
+          change="—"
           trend="up"
-          icon={ShoppingBag}
-          iconClassName="bg-sky-100 text-sky-600"
+          icon={Ban}
+          iconClassName="bg-rose-100 text-rose-600"
+        />
+        <StatCard
+          label="المتاجر النشطة"
+          value="4"
+          change="12%"
+          trend="up"
+          icon={Store}
+          iconClassName="bg-emerald-100 text-emerald-600"
         />
       </div>
 
@@ -145,7 +162,7 @@ export function StoreJoinRequestsView({ onViewStore, onOpenList }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => onViewStore(req.id)}
+                    onClick={() => setModalRequestId(req.id)}
                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
                   >
                     <Eye className="size-4" aria-hidden />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Sidebar } from './components/Sidebar.jsx'
+import { MarketingPage } from './pages/MarketingPage.jsx'
 import { OverviewPage } from './pages/OverviewPage.jsx'
 import { PlansPage } from './pages/PlansPage.jsx'
 import { StoreManagementPage } from './pages/StoreManagementPage.jsx'
@@ -7,6 +8,7 @@ import { StoreManagementPage } from './pages/StoreManagementPage.jsx'
 function renderPage(activeNav) {
   if (activeNav === 'stores') return <StoreManagementPage />
   if (activeNav === 'plans') return <PlansPage />
+  if (activeNav === 'marketing') return <MarketingPage />
   return <OverviewPage />
 }
 

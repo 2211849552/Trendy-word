@@ -1,4 +1,12 @@
-export function StatCard({ label, value, change, trend = 'up', icon: Icon, iconClassName }) {
+export function StatCard({
+  label,
+  value,
+  change,
+  trend = 'up',
+  icon: Icon,
+  iconClassName,
+  omitChange = false,
+}) {
   const trendColor = trend === 'up' ? 'text-emerald-600' : 'text-rose-600'
   const arrow = trend === 'up' ? '↑' : '↓'
   const neutral = change === '—'
@@ -9,7 +17,9 @@ export function StatCard({ label, value, change, trend = 'up', icon: Icon, iconC
       className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100/80"
     >
       <div className="flex items-start justify-between gap-3">
-        {neutral ? (
+        {omitChange ? (
+          <span className="min-h-[1.25rem] shrink-0" aria-hidden />
+        ) : neutral ? (
           <span className="text-sm font-semibold text-slate-400">—</span>
         ) : (
           <span className={`text-sm font-semibold tabular-nums ${trendColor}`}>

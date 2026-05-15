@@ -1,5 +1,7 @@
-import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2 } from 'lucide-react'
 import { registeredStores } from '../../data/stores.js'
+import { StoreProductsModal } from './StoreProductsModal.jsx'
 
 function RowIcon({ type }) {
   const cls = 'size-4 text-slate-600'
@@ -9,8 +11,37 @@ function RowIcon({ type }) {
 }
 
 export function StoreListView({ onBackToJoin }) {
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('all')
+  const [productStoreId, setProductStoreId] = useState(null)
+
+  const productStore = useMemo(
+    () => registeredStores.find((s) => s.id === productStoreId) ?? null,
+    [productStoreId],
+  )
+
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return registeredStores.filter((row) => {
+      const matchesText =
+        !q ||
+        row.name.toLowerCase().includes(q) ||
+        row.city.toLowerCase().includes(q) ||
+        row.merchant.toLowerCase().includes(q) ||
+        row.email.toLowerCase().includes(q)
+      const matchesStatus = status === 'all' || row.status === status
+      return matchesText && matchesStatus
+    })
+  }, [query, status])
+
   return (
     <>
+      <StoreProductsModal
+        store={productStore}
+        open={Boolean(productStoreId)}
+        onClose={() => setProductStoreId(null)}
+      />
+
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <header>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
@@ -36,6 +67,8 @@ export function StoreListView({ onBackToJoin }) {
           <Search className="pointer-events-none absolute end-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="البحث عن متجر..."
             className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2.5 pe-11 ps-3 text-sm text-slate-900 outline-none ring-sky-500/30 transition focus:border-sky-300 focus:bg-white focus:ring-2"
           />
@@ -43,8 +76,9 @@ export function StoreListView({ onBackToJoin }) {
         <div className="flex shrink-0 items-center gap-2">
           <SlidersHorizontal className="size-5 text-slate-400" aria-hidden />
           <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
             className="rounded-xl border border-slate-200 bg-white py-2.5 ps-3 pe-8 text-sm font-medium text-slate-700 shadow-sm outline-none ring-sky-500/30 focus:ring-2"
-            defaultValue="all"
           >
             <option value="all">جميع الحالات</option>
             <option value="active">نشط</option>
@@ -62,7 +96,7 @@ export function StoreListView({ onBackToJoin }) {
           <h2 className="text-lg font-semibold text-slate-900">قائمة المتاجر</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-right text-sm">
+          <table className="w-full min-w-[800px] text-right text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80 text-slate-600">
                 <th className="px-4 py-3 font-semibold">المتجر</th>
@@ -71,10 +105,11 @@ export function StoreListView({ onBackToJoin }) {
                 <th className="px-4 py-3 font-semibold">الهاتف</th>
                 <th className="px-4 py-3 font-semibold">المنتجات</th>
                 <th className="px-4 py-3 font-semibold">الطلبات</th>
+                <th className="px-4 py-3 font-semibold">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {registeredStores.map((row) => (
+              {filteredRows.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/60">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
@@ -104,11 +139,38 @@ export function StoreListView({ onBackToJoin }) {
                   <td className="px-4 py-4 font-medium tabular-nums text-slate-900">
                     {row.orders}
                   </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setProductStoreId(row.id)}
+                        className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                        aria-label={`عرض منتجات ${row.name}`}
+                      >
+                        <Eye className="size-4" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                        aria-label="حذف (تجريبي)"
+                        onClick={() =>
+                          window.alert('إجراء الحذف غير مفعّل في الواجهة التجريبية.')
+                        }
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {filteredRows.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-slate-500">
+            لا توجد متاجر مطابقة للبحث أو الفلتر.
+          </p>
+        ) : null}
       </section>
     </>
   )
