@@ -6,6 +6,11 @@ import { PlansPage } from './pages/PlansPage.jsx'
 import { StoreManagementPage } from './pages/StoreManagementPage.jsx'
 import { CategoriesPage } from './pages/CategoriesPage.jsx'
 import { DisputesPage } from './pages/DisputesPage.jsx'
+import { FinancePage } from './pages/FinancePage.jsx'
+import { OffersPage } from './pages/OffersPage.jsx'
+import { CustomersPage } from './pages/CustomersPage.jsx'
+import { StaffPage } from './pages/StaffPage.jsx'
+import { NotificationsPage } from './pages/NotificationsPage.jsx'
 
 function renderPage(activeNav) {
   if (activeNav === 'stores') return <StoreManagementPage />
@@ -13,6 +18,11 @@ function renderPage(activeNav) {
   if (activeNav === 'marketing') return <MarketingPage />
   if (activeNav === 'catalog') return <CategoriesPage />
   if (activeNav === 'disputes') return <DisputesPage />
+  if (activeNav === 'finance') return <FinancePage />
+  if (activeNav === 'offers') return <OffersPage />
+  if (activeNav === 'customers') return <CustomersPage />
+  if (activeNav === 'staff') return <StaffPage />
+  if (activeNav === 'notifications') return <NotificationsPage />
   return <OverviewPage />
 }
 

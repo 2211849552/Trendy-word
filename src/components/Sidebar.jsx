@@ -14,6 +14,8 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronUp,
+  ShoppingCart,
+  Truck
 } from 'lucide-react'
 
 const navItems = [
@@ -32,6 +34,8 @@ const navItems = [
   { id: 'customers', label: 'إدارة الزبائن', icon: Users },
   { id: 'staff', label: 'إدارة الموظفين', icon: UserPlus },
   { id: 'notifications', label: 'الإشعارات', icon: Bell },
+  { id: 'orders', label: 'إدارة الطلبات', icon: ShoppingCart },
+  { id: 'drivers', label: 'إدارة السائقين', icon: Truck },
 ]
 
 export function Sidebar({ activeId = 'overview', onNavigate }) {
