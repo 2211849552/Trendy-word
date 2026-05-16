@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2 } from 'lucide-react'
 import { registeredStores } from '../../data/stores.js'
-import { StoreProductsModal } from './StoreProductsModal.jsx'
+
 
 function RowIcon({ type }) {
   const cls = 'size-4 text-slate-600'
@@ -10,15 +10,10 @@ function RowIcon({ type }) {
   return <Shirt className={cls} aria-hidden />
 }
 
-export function StoreListView({ onBackToJoin }) {
+export function StoreListView({ onBackToJoin, onOpenProducts }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
-  const [productStoreId, setProductStoreId] = useState(null)
 
-  const productStore = useMemo(
-    () => registeredStores.find((s) => s.id === productStoreId) ?? null,
-    [productStoreId],
-  )
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -36,11 +31,7 @@ export function StoreListView({ onBackToJoin }) {
 
   return (
     <>
-      <StoreProductsModal
-        store={productStore}
-        open={Boolean(productStoreId)}
-        onClose={() => setProductStoreId(null)}
-      />
+
 
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <header>
@@ -143,7 +134,7 @@ export function StoreListView({ onBackToJoin }) {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
-                        onClick={() => setProductStoreId(row.id)}
+                        onClick={() => onOpenProducts?.(row.id)}
                         className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                         aria-label={`عرض منتجات ${row.name}`}
                       >

@@ -4,11 +4,15 @@ import { MarketingPage } from './pages/MarketingPage.jsx'
 import { OverviewPage } from './pages/OverviewPage.jsx'
 import { PlansPage } from './pages/PlansPage.jsx'
 import { StoreManagementPage } from './pages/StoreManagementPage.jsx'
+import { CategoriesPage } from './pages/CategoriesPage.jsx'
+import { DisputesPage } from './pages/DisputesPage.jsx'
 
 function renderPage(activeNav) {
   if (activeNav === 'stores') return <StoreManagementPage />
   if (activeNav === 'plans') return <PlansPage />
   if (activeNav === 'marketing') return <MarketingPage />
+  if (activeNav === 'catalog') return <CategoriesPage />
+  if (activeNav === 'disputes') return <DisputesPage />
   return <OverviewPage />
 }
 
