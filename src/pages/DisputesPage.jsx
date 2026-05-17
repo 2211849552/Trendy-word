@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, MessageSquare, CheckCircle2, Eye, AlertCircle, Calendar, Package, Store, User, ChevronDown, Camera, X, Send, Lock, AlertTriangle, UserMinus, ShieldAlert, DollarSign } from 'lucide-react'
+import { Search, MessageSquare, CheckCircle2, Eye, AlertCircle, Calendar, Package, Store, User, ChevronDown, Camera, X, Send, Lock, AlertTriangle, UserMinus, ShieldAlert, DollarSign, Check } from 'lucide-react'
 
 const initialDisputes = [
   { 
@@ -39,6 +39,16 @@ export function DisputesPage() {
   const [selectedDispute, setSelectedDispute] = useState(null)
   const [showImageModal, setShowImageModal] = useState(false)
 
+  // Success Toast state
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+
+  const triggerToast = (msg) => {
+    setToastMessage(msg)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
+
   const placeholderProductImage = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=1000'
 
   const openReplyModal = (dispute) => {
@@ -51,8 +61,56 @@ export function DisputesPage() {
     setDetailsModalOpen(true)
   }
 
+  const handleAction = (actionName) => {
+    if (!selectedDispute) return
+    
+    // Perform the action logic here
+    console.log(`Action performed: ${actionName} for dispute ${selectedDispute.id}`)
+    
+    let message = ''
+    switch(actionName) {
+      case 'refund':
+        message = 'تم طلب استرداد المبلغ للزبون بنجاح'
+        break
+      case 'deduct':
+        message = 'تم خصم المبلغ من التاجر بنجاح'
+        break
+      case 'ban_store':
+        message = 'تم حظر المتجر بنجاح'
+        break
+      case 'warn_merchant':
+        message = 'تم إرسال تحذير للتاجر'
+        break
+      case 'ban_customer':
+        message = 'تم حظر الزبون بنجاح'
+        break
+      case 'close':
+        setDisputes(disputes.map(d => d.id === selectedDispute.id ? { ...d, status: 'مغلقة' } : d))
+        message = 'تم إغلاق الشكوى بنجاح'
+        break
+      default:
+        message = 'تم تنفيذ الإجراء بنجاح'
+    }
+    
+    triggerToast(message)
+    if (actionName === 'close') {
+      setDetailsModalOpen(false)
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-20 animate-in fade-in duration-500">
+    <div className="mx-auto max-w-6xl space-y-6 pb-20 animate-in fade-in duration-500 relative">
+      
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-600 px-6 py-3.5 text-white shadow-2xl">
+            <CheckCircle2 className="size-5" />
+            <span className="font-bold">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col items-start gap-2 border-b border-slate-200 pb-5">
         <h1 className="text-2xl font-bold text-slate-900">الشكاوى والنزاعات</h1>
@@ -62,7 +120,7 @@ export function DisputesPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg text-brand-500">
             <MessageSquare className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">متوسط وقت الحل</p>
@@ -101,13 +159,14 @@ export function DisputesPage() {
             placeholder="البحث في الشكاوى (رقم الشكوى، الزبون، المتجر، رقم الطلب، الوصف)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border-0 bg-transparent py-2 pl-4 pr-11 text-sm outline-none placeholder:text-slate-400 focus:ring-0"
+            className="w-full rounded-lg border-0 bg-transparent py-2 pl-4 pr-11 text-sm outline-none placeholder:text-slate-400 focus:ring-0 text-right"
+            dir="rtl"
           />
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-end gap-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm" dir="rtl">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm font-medium text-slate-700">الحالة:</span>
           {['الكل', 'مفتوحة', 'قيد المراجعة', 'تم الحل', 'مغلقة'].map(status => (
@@ -116,7 +175,7 @@ export function DisputesPage() {
               onClick={() => setActiveStatusFilter(status)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
                 activeStatusFilter === status 
-                  ? 'bg-blue-600 text-white' 
+                  ? 'bg-brand-600 text-white' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -133,7 +192,7 @@ export function DisputesPage() {
               onClick={() => setActiveTypeFilter(type)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
                 activeTypeFilter === type 
-                  ? 'bg-blue-600 text-white' 
+                  ? 'bg-brand-600 text-white' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -182,7 +241,7 @@ export function DisputesPage() {
                     <span className="font-mono text-xs">{dispute.orderId}</span>
                   </div>
                   <div className="flex items-center gap-2 flex-row-reverse">
-                    <Calendar className="size-4 text-blue-400" />
+                    <Calendar className="size-4 text-brand-400" />
                     <span>{dispute.date}</span>
                   </div>
                 </div>
@@ -192,7 +251,7 @@ export function DisputesPage() {
               <div className="flex flex-col items-start gap-3 w-full md:w-auto order-1 md:order-2">
                  <div className="flex items-center gap-2 flex-wrap">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      dispute.type === 'استرجاع' ? 'bg-blue-100 text-blue-700' :
+                      dispute.type === 'استرجاع' ? 'bg-brand-100 text-brand-700' :
                       dispute.type === 'نزاع' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-700'
                     }`}>
                       {dispute.type}
@@ -210,7 +269,7 @@ export function DisputesPage() {
                     )}
                     <button 
                       onClick={() => openDetailsModal(dispute)}
-                      className="flex items-center gap-1 px-3 py-1 rounded-full border border-blue-200 text-xs font-bold text-blue-600 bg-white hover:bg-blue-50 transition-colors"
+                      className="flex items-center gap-1 px-3 py-1 rounded-full border border-brand-200 text-xs font-bold text-brand-600 bg-white hover:bg-brand-50 transition-colors"
                     >
                        عرض التفاصيل <Eye className="size-3" />
                     </button>
@@ -239,7 +298,7 @@ export function DisputesPage() {
                                     setOpenDropdownId(null)
                                   }}
                                   className={`w-full text-right px-4 py-2 text-xs font-bold hover:bg-slate-50 transition-colors ${
-                                    dispute.status === opt ? 'bg-slate-50 text-blue-600' : 'text-slate-700'
+                                    dispute.status === opt ? 'bg-slate-50 text-brand-600' : 'text-slate-700'
                                   }`}
                                 >
                                   {opt}
@@ -256,7 +315,10 @@ export function DisputesPage() {
                            إضافة رد <Send className="size-3.5" />
                         </button>
                         <button 
-                          onClick={() => setDisputes(disputes.map(d => d.id === dispute.id ? { ...d, status: 'مغلقة' } : d))}
+                          onClick={() => {
+                            setDisputes(disputes.map(d => d.id === dispute.id ? { ...d, status: 'مغلقة' } : d))
+                            triggerToast('تم إغلاق الشكوى')
+                          }}
                           className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-slate-700 hover:bg-slate-800 transition-colors shadow-sm"
                         >
                            إغلاق
@@ -274,7 +336,8 @@ export function DisputesPage() {
                   setSelectedDispute(dispute)
                   setShowImageModal(true)
                 }}
-                className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors group"
+                className="mt-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4 flex items-center justify-between cursor-pointer hover:bg-brand-100 transition-colors group"
+                dir="rtl"
               >
                  <div className="flex items-center gap-4">
                     <div className="size-16 rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center text-3xl">
@@ -285,7 +348,7 @@ export function DisputesPage() {
                       <p className="text-xs text-slate-500 mt-1">تم إرفاق صورة توضيحية للمنتج - اضغط للتكبير</p>
                     </div>
                  </div>
-                 <div className="size-8 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                 <div className="size-8 rounded-full bg-white flex items-center justify-center text-brand-600 shadow-sm">
                     <Search className="size-4" />
                  </div>
               </div>
@@ -298,22 +361,26 @@ export function DisputesPage() {
       {replyModalOpen && selectedDispute && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6" dir="rtl">
                <h2 className="text-xl font-bold text-slate-900">إضافة رد على الشكوى</h2>
                <button onClick={() => setReplyModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                  <X className="size-5" />
                </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 text-right">
                <label className="block text-sm font-medium text-slate-700 mb-2">الرد *</label>
                <textarea 
                  rows="6" 
                  placeholder="اكتب ردك على الشكوى..." 
-                 className="w-full rounded-xl border border-slate-200 bg-white p-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-y"
+                 className="w-full rounded-xl border border-slate-200 bg-white p-4 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-y text-right"
+                 dir="rtl"
                ></textarea>
             </div>
-            <div className="flex items-center justify-start gap-3 border-t border-slate-100 p-6">
-               <button onClick={() => setReplyModalOpen(false)} className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700 shadow-sm transition-colors">
+            <div className="flex items-center justify-start gap-3 border-t border-slate-100 p-6" dir="rtl">
+               <button onClick={() => {
+                 setReplyModalOpen(false)
+                 triggerToast('تم إرسال الرد بنجاح')
+               }} className="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-700 shadow-sm transition-colors">
                  إرسال الرد
                </button>
                <button onClick={() => setReplyModalOpen(false)} className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
@@ -329,7 +396,7 @@ export function DisputesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto py-10">
           <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
             
-            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6" dir="rtl">
                <div>
                   <h2 className="text-2xl font-bold text-slate-900">تفاصيل الشكوى</h2>
                </div>
@@ -340,10 +407,10 @@ export function DisputesPage() {
 
             <div className="p-6 space-y-6">
                {/* Header info */}
-               <div className="flex justify-between items-center text-right border-b border-slate-100 pb-4">
+               <div className="flex justify-between items-center text-right border-b border-slate-100 pb-4" dir="rtl">
                   <div className="flex gap-2">
                      <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
-                      selectedDispute.type === 'استرجاع' ? 'bg-blue-100 text-blue-700' :
+                      selectedDispute.type === 'استرجاع' ? 'bg-brand-100 text-brand-700' :
                       selectedDispute.type === 'نزاع' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-700'
                     }`}>
                       {selectedDispute.type}
@@ -355,16 +422,16 @@ export function DisputesPage() {
                       {selectedDispute.status}
                     </span>
                   </div>
-                  <div className="text-left">
+                  <div className="text-right">
                      <h3 className="text-xl font-bold text-slate-900 flex items-center justify-end gap-1">شكوى {selectedDispute.id}</h3>
                      <p className="text-sm text-slate-500 mt-1">{selectedDispute.date}</p>
                   </div>
                </div>
 
                {/* Details Grid */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="rounded-xl bg-blue-50/50 border border-blue-100 p-5 text-right">
-                     <p className="text-sm text-blue-400 mb-1">الزبون</p>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4" dir="rtl">
+                  <div className="rounded-xl bg-brand-50/50 border border-brand-100 p-5 text-right">
+                     <p className="text-sm text-brand-400 mb-1">الزبون</p>
                      <p className="font-bold text-slate-900 text-lg">{selectedDispute.customer}</p>
                   </div>
                   <div className="rounded-xl bg-emerald-50/50 border border-emerald-100 p-5 text-right">
@@ -378,28 +445,28 @@ export function DisputesPage() {
                </div>
 
                {/* Subject */}
-               <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 text-right">
+               <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 text-right" dir="rtl">
                   <p className="text-sm text-slate-500 mb-2">وصف الشكوى</p>
                   <p className="font-bold text-slate-900 text-lg">{selectedDispute.subject}</p>
                </div>
 
                 {/* Attached Image */}
                 {selectedDispute.hasImage && (
-                  <div className="rounded-xl border border-blue-200 bg-white overflow-hidden text-right">
-                     <div className="p-3 bg-blue-50/50 border-b border-blue-100">
+                  <div className="rounded-xl border border-brand-200 bg-white overflow-hidden text-right" dir="rtl">
+                     <div className="p-3 bg-brand-50/50 border-b border-brand-100">
                        <p className="text-sm font-bold text-slate-600">صورة المنتج المرفقة من الزبون</p>
                      </div>
                      <div className="p-6 flex flex-col items-center justify-center">
                         <div 
                           onClick={() => setShowImageModal(true)}
-                          className="w-full max-w-md h-64 rounded-2xl bg-slate-50 border-2 border-slate-100 shadow-inner overflow-hidden cursor-pointer hover:ring-2 ring-blue-400 transition-all mb-4"
+                          className="w-full max-w-md h-64 rounded-2xl bg-slate-50 border-2 border-slate-100 shadow-inner overflow-hidden cursor-pointer hover:ring-2 ring-brand-400 transition-all mb-4"
                         >
                           <img src={placeholderProductImage} alt="Product Detail" className="w-full h-full object-cover" />
                         </div>
                         <p className="text-sm font-medium text-slate-700">صورة توضيحية للمنتج موضوع الشكوى</p>
                         <button 
                           onClick={() => setShowImageModal(true)}
-                          className="text-blue-600 text-sm font-bold mt-2 flex items-center gap-1 hover:underline"
+                          className="text-brand-600 text-sm font-bold mt-2 flex items-center gap-1 hover:underline"
                         >
                            اضغط للتكبير <Search className="size-3" />
                         </button>
@@ -407,49 +474,61 @@ export function DisputesPage() {
                     <div className="p-3 bg-slate-50 text-center border-t border-slate-100">
                        <p className="text-xs text-slate-500">ملاحظة: الصورة مرفقة من الزبون كدليل على الشكوى</p>
                     </div>
-                 </div>
+                  </div>
                )}
 
                {/* Available Actions */}
                <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-900 text-right mb-4 border-b pb-2">الإجراءات المتاحة</h3>
+                  <h3 className="text-lg font-bold text-slate-900 text-right mb-4 border-b pb-2" dir="rtl">الإجراءات المتاحة</h3>
                   
                   <div className="space-y-6">
                     {/* Financial Actions */}
-                    <div>
-                      <p className="text-sm font-bold text-slate-500 flex justify-end items-center gap-2 mb-3">
+                    <div dir="rtl">
+                      <p className="text-sm font-bold text-slate-500 flex items-center gap-2 mb-3">
                          إجراء مالي <DollarSign className="size-4" />
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button className="w-full rounded-xl bg-emerald-600 py-4 text-center font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleAction('refund')}
+                          className="w-full rounded-xl bg-emerald-600 py-4 text-center font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2"
+                        >
                            استرداد للزبون 💰
                         </button>
-                        <button className="w-full rounded-xl bg-red-600 py-4 text-center font-bold text-white hover:bg-red-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleAction('deduct')}
+                          className="w-full rounded-xl bg-red-600 py-4 text-center font-bold text-white hover:bg-red-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2"
+                        >
                            خصم من التاجر 💳
                         </button>
                       </div>
                     </div>
 
                     {/* Admin Actions */}
-                    <div>
-                      <p className="text-sm font-bold text-slate-500 flex justify-end items-center gap-2 mb-3">
+                    <div dir="rtl">
+                      <p className="text-sm font-bold text-slate-500 flex items-center gap-2 mb-3">
                          إجراء إداري <ShieldAlert className="size-4" />
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button className="w-full rounded-xl bg-orange-600 py-4 text-center font-bold text-white hover:bg-orange-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleAction('ban_store')}
+                          className="w-full rounded-xl bg-orange-600 py-4 text-center font-bold text-white hover:bg-orange-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2"
+                        >
                            حظر المتجر 🚫
                         </button>
-                        <button className="w-full rounded-xl bg-amber-500 py-4 text-center font-bold text-white hover:bg-amber-600 transition-colors shadow-sm text-lg flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleAction('warn_merchant')}
+                          className="w-full rounded-xl bg-amber-500 py-4 text-center font-bold text-white hover:bg-amber-600 transition-colors shadow-sm text-lg flex items-center justify-center gap-2"
+                        >
                            تحذير التاجر ⚠️
                         </button>
-                        <button className="w-full rounded-xl bg-purple-600 py-4 text-center font-bold text-white hover:bg-purple-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleAction('ban_customer')}
+                          className="w-full rounded-xl bg-purple-600 py-4 text-center font-bold text-white hover:bg-purple-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2"
+                        >
                            حظر الزبون ⛔
                         </button>
                         <button 
-                          onClick={() => {
-                            setDisputes(disputes.map(d => d.id === selectedDispute.id ? { ...d, status: 'مغلقة' } : d))
-                            setDetailsModalOpen(false)
-                          }}
+                          onClick={() => handleAction('close')}
                           className="w-full rounded-xl bg-slate-600 py-4 text-center font-bold text-white hover:bg-slate-700 transition-colors shadow-sm text-lg flex items-center justify-center gap-2"
                         >
                            إغلاق الشكوى 🔒

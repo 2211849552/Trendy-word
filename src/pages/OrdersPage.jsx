@@ -63,7 +63,7 @@ export function OrdersPage() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'قيد التنفيذ': return 'bg-blue-100 text-blue-700'
+      case 'قيد التنفيذ': return 'bg-brand-100 text-brand-700'
       case 'قيد الشحن': return 'bg-yellow-100 text-yellow-700'
       case 'تم التسليم': return 'bg-emerald-100 text-emerald-700'
       case 'ملغي': return 'bg-red-100 text-red-700'
@@ -93,7 +93,7 @@ export function OrdersPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center relative">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
             <ShoppingCart className="size-6" />
           </div>
           <div className="absolute top-4 left-4 flex items-center gap-1 text-emerald-600 font-bold text-xs">
@@ -133,7 +133,7 @@ export function OrdersPage() {
         <select 
           value={activeStatus}
           onChange={e => setActiveStatus(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 w-full sm:w-auto"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
         >
           <option>جميع الحالات</option>
           <option>قيد التنفيذ</option>
@@ -149,7 +149,7 @@ export function OrdersPage() {
             placeholder="البحث عن طلب..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-brand-500"
           />
         </div>
       </div>
@@ -179,7 +179,7 @@ export function OrdersPage() {
                   <td className="px-6 py-4 font-bold text-slate-900 text-center">{order.total}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <div className="size-5 flex items-center justify-center rounded bg-blue-50 text-blue-500">
+                      <div className="size-5 flex items-center justify-center rounded bg-brand-50 text-brand-500">
                         <CreditCard className="size-3" />
                       </div>
                       <span className="text-[10px] text-slate-500">{order.payment}</span>
@@ -204,7 +204,7 @@ export function OrdersPage() {
                   <td className="px-6 py-4 text-center">
                     <button 
                       onClick={() => openDetails(order)}
-                      className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
+                      className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
                       title="عرض التفاصيل"
                     >
                       <Eye className="size-4" />
@@ -283,12 +283,12 @@ export function OrdersPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl bg-blue-50 border border-blue-100 p-5 flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-white border border-blue-200 flex items-center justify-center text-blue-500">
+                <div className="rounded-xl bg-brand-50 border border-brand-100 p-5 flex items-center gap-4">
+                  <div className="size-10 rounded-full bg-white border border-brand-200 flex items-center justify-center text-brand-500">
                     <CreditCard className="size-5" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-blue-500 mb-0.5">الإجمالي والدفع</p>
+                    <p className="text-xs text-brand-500 mb-0.5">الإجمالي والدفع</p>
                     <p className="font-bold text-slate-900">{selectedOrder.total} ({selectedOrder.payment})</p>
                   </div>
                 </div>

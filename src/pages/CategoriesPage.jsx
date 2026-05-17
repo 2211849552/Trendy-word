@@ -152,7 +152,7 @@ export function CategoriesPage() {
           <p className="mt-1 text-2xl font-bold text-slate-900">{totalProducts}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <CheckCircle className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">التصنيفات النشطة</p>
@@ -167,7 +167,7 @@ export function CategoriesPage() {
             onClick={() => setActiveTab('categories')}
             className={`flex-1 py-4 text-center text-sm font-medium transition-colors ${
               activeTab === 'categories'
-                ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/50'
+                ? 'border-b-2 border-brand-600 text-brand-600 bg-brand-50/50'
                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
             }`}
           >
@@ -177,7 +177,7 @@ export function CategoriesPage() {
             onClick={() => setActiveTab('attributes')}
             className={`flex-1 py-4 text-center text-sm font-medium transition-colors ${
               activeTab === 'attributes'
-                ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/50'
+                ? 'border-b-2 border-brand-600 text-brand-600 bg-brand-50/50'
                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
             }`}
           >
@@ -191,7 +191,7 @@ export function CategoriesPage() {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => setShowAddCategory(true)}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   <Plus className="size-4" />
                   إضافة تصنيف
@@ -203,14 +203,14 @@ export function CategoriesPage() {
                     placeholder="البحث عن تصنيف..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {categories.filter(cat => cat.name.includes(searchQuery)).map((cat) => (
-                  <div key={cat.id} className="group relative flex flex-col items-center rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300 transition-all hover:shadow-md text-center">
+                  <div key={cat.id} className="group relative flex flex-col items-center rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-brand-300 transition-all hover:shadow-md text-center">
                     <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform">{cat.icon}</div>
                     <h3 className="text-base font-bold text-slate-800">{cat.name}</h3>
                     {cat.isActive && (
@@ -218,12 +218,12 @@ export function CategoriesPage() {
                         نشط
                       </span>
                     )}
-                    <p className="mt-3 text-lg font-bold text-blue-600">{cat.count} <span className="text-[10px] text-slate-400 font-normal">منتج</span></p>
+                    <p className="mt-3 text-lg font-bold text-brand-600">{cat.count} <span className="text-[10px] text-slate-400 font-normal">منتج</span></p>
                     
                     <div className="mt-4 flex items-center justify-center gap-2 border-t border-slate-50 pt-4 w-full">
                       <button 
                         onClick={() => openEditCategory(cat)}
-                        className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold"
+                        className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white transition-all text-[10px] font-bold"
                       >
                         <Edit className="size-3" />
                         تعديل
@@ -245,7 +245,7 @@ export function CategoriesPage() {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => setShowAddAttribute(true)}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   <Plus className="size-4" />
                   إضافة خاصية
@@ -257,7 +257,7 @@ export function CategoriesPage() {
                     placeholder="البحث عن خاصية..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500"
                   />
                 </div>
               </div>
@@ -277,7 +277,7 @@ export function CategoriesPage() {
                       <tr key={attr.id} className="hover:bg-slate-50">
                         <td className="px-4 py-4 font-bold text-slate-900 text-lg">{attr.name}</td>
                         <td className="px-4 py-4">
-                          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+                          <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">
                             {attr.type}
                           </span>
                         </td>
@@ -295,7 +295,7 @@ export function CategoriesPage() {
                           <div className="flex justify-center gap-1.5">
                             <button 
                               onClick={() => openAttrDetails(attr)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" 
+                              className="p-2 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors" 
                               title="عرض التفاصيل"
                             >
                               <Eye className="size-4" />
@@ -326,6 +326,117 @@ export function CategoriesPage() {
         </div>
       </div>
 
+      {/* Add Category Modal (Matching Image 1) */}
+      {showAddCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 bg-slate-50/50">
+               <h2 className="text-xl font-bold text-slate-800">إضافة تصنيف جديد</h2>
+               <button onClick={() => setShowAddCategory(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                 <X className="size-6" />
+               </button>
+            </div>
+            <div className="p-8 space-y-8">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3 text-right">اسم التصنيف *</label>
+                <input 
+                  type="text" 
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="مثال: أزياء رجالية"
+                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3 text-right">الأيقونة</label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 flex gap-2 text-2xl p-4 border border-slate-200 rounded-xl overflow-x-auto bg-slate-50 scrollbar-hide">
+                    {['👔', '👖', '👗', '🧥', '👚', '🩳'].map(emoji => (
+                      <button 
+                        key={emoji}
+                        onClick={() => setNewCatIcon(emoji)}
+                        className={`hover:scale-125 transition-transform p-1 ${newCatIcon === emoji ? 'bg-white shadow-md rounded-lg scale-110' : ''}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="size-14 shrink-0 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-3xl shadow-sm">
+                    {newCatIcon}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-start p-6 bg-slate-50 border-t border-slate-100">
+                <button onClick={handleAddCategory} className="rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white hover:bg-brand-700 shadow-md shadow-brand-200 transition-all active:scale-95">إضافة التصنيف</button>
+                <button onClick={() => setShowAddCategory(false)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Property Modal (Matching Image 2/3/4) */}
+      {showAddAttribute && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto py-10">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto" dir="rtl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+               <h2 className="text-xl font-bold text-slate-800">إضافة خاصية جديدة</h2>
+               <button onClick={() => setShowAddAttribute(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                 <X className="size-6" />
+               </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-2 text-right">اسم الخاصية *</label>
+                <input 
+                  type="text" 
+                  value={newAttrName}
+                  onChange={(e) => setNewAttrName(e.target.value)}
+                  placeholder="مثال: المقاس"
+                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-2 text-right">نوع الخاصية *</label>
+                <div className="relative">
+                  <select className="w-full appearance-none rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-white">
+                    <option>نص</option>
+                    <option>قائمة اختيارات</option>
+                    <option>رقم</option>
+                  </select>
+                  <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-start gap-3 py-4 border-y border-slate-50">
+                <input type="checkbox" id="req_add" defaultChecked className="size-5 rounded border-slate-300 text-brand-600" />
+                <label htmlFor="req_add" className="text-sm font-bold text-slate-700">خاصية مطلوبة</label>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-slate-500 mb-4 text-right">التصنيفات المرتبطة *</p>
+                <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
+                  {categories.map(cat => (
+                    <div key={cat.id} className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                          <span className="text-lg">{cat.icon}</span>
+                          <span className="text-sm font-bold text-slate-800">{cat.name}</span>
+                       </div>
+                       <input type="checkbox" className="size-5 rounded border-slate-300 text-brand-600" />
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-slate-400 text-left">تم تحديد 0 تصنيف</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-start p-6 bg-slate-50 border-t border-slate-100">
+                <button onClick={handleAddAttribute} className="rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white hover:bg-brand-700 shadow-md shadow-brand-200 transition-all active:scale-95">إضافة الخاصية</button>
+                <button onClick={() => setShowAddAttribute(false)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Category Modal (Matching Image 1) */}
       {showEditCategory && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
@@ -343,14 +454,14 @@ export function CategoriesPage() {
                   type="text" 
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium" 
+                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-3 text-right">الأيقونة</label>
                 <div className="flex items-center gap-4">
                   <div className="flex-1 flex gap-2 text-2xl p-4 border border-slate-200 rounded-xl overflow-x-auto bg-slate-50 scrollbar-hide">
-                    {['👔', '👖', '👗', '🧥', '👚', '🩳', '📦', '👗', '👜', '💍', '⌚', '🎮', '📱'].map(emoji => (
+                    {['👔', '👖', '👗', '🧥', '👚', '🩳'].map(emoji => (
                       <button 
                         key={emoji}
                         onClick={() => setNewCatIcon(emoji)}
@@ -367,7 +478,7 @@ export function CategoriesPage() {
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-slate-50 border-t border-slate-100">
-                <button onClick={handleEditCategory} className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white hover:bg-blue-700 shadow-md shadow-blue-200 transition-all active:scale-95">حفظ التعديلات</button>
+                <button onClick={handleEditCategory} className="rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white hover:bg-brand-700 shadow-md shadow-brand-200 transition-all active:scale-95">حفظ التعديلات</button>
                 <button onClick={() => setShowEditCategory(false)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">إلغاء</button>
             </div>
           </div>
@@ -392,7 +503,7 @@ export function CategoriesPage() {
                <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100 flex flex-col items-center justify-center">
                     <span className="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">النوع</span>
-                    <span className="rounded-full bg-blue-100 px-4 py-1.5 text-xs font-bold text-blue-700">
+                    <span className="rounded-full bg-brand-100 px-4 py-1.5 text-xs font-bold text-brand-700">
                       {selectedItem.type}
                     </span>
                   </div>
@@ -405,7 +516,7 @@ export function CategoriesPage() {
                   </div>
                </div>
 
-               <div className="rounded-2xl bg-blue-50/30 p-5 border border-blue-100/50">
+               <div className="rounded-2xl bg-brand-50/30 p-5 border border-brand-100/50">
                   <p className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-wider">الخيارات المتاحة ({selectedItem.options?.length || 0})</p>
                   <div className="flex flex-wrap gap-2">
                      {(selectedItem.options || ['S', 'M', 'L', 'XL', 'XXL']).map(opt => (
@@ -453,13 +564,13 @@ export function CategoriesPage() {
                   type="text" 
                   value={newAttrName}
                   onChange={(e) => setNewAttrName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium" 
+                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-2 text-left">نوع الخاصية</label>
                 <div className="relative">
-                  <select className="w-full appearance-none rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium bg-white">
+                  <select className="w-full appearance-none rounded-xl border border-slate-200 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-white">
                     <option>قائمة اختيارات</option>
                     <option>نص حر</option>
                     <option>رقم</option>
@@ -487,13 +598,13 @@ export function CategoriesPage() {
                           newOpts[idx] = e.target.value
                           setAttrOptions(newOpts)
                         }}
-                        className="flex-1 rounded-xl border border-slate-200 px-5 py-2.5 text-right outline-none focus:border-blue-500 transition-all text-sm font-medium" 
+                        className="flex-1 rounded-xl border border-slate-200 px-5 py-2.5 text-right outline-none focus:border-brand-500 transition-all text-sm font-medium" 
                       />
                     </div>
                   ))}
                   <button 
                     onClick={() => setAttrOptions([...attrOptions, ''])}
-                    className="flex items-center gap-1 text-blue-600 font-bold text-sm hover:underline mt-2 mr-auto"
+                    className="flex items-center gap-1 text-brand-600 font-bold text-sm hover:underline mt-2 mr-auto"
                   >
                     <Plus className="size-4" />
                     إضافة خيار
@@ -503,7 +614,7 @@ export function CategoriesPage() {
 
               <div className="flex items-center justify-end gap-3 py-4 border-y border-slate-50">
                 <label htmlFor="req_edit" className="text-sm font-bold text-slate-700">خاصية مطلوبة</label>
-                <input type="checkbox" id="req_edit" defaultChecked className="size-5 rounded border-slate-300 text-blue-600" />
+                <input type="checkbox" id="req_edit" defaultChecked className="size-5 rounded border-slate-300 text-brand-600" />
               </div>
 
               <div>
@@ -511,7 +622,7 @@ export function CategoriesPage() {
                 <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
                   {categories.map(cat => (
                     <div key={cat.id} className="flex items-center justify-between">
-                       <input type="checkbox" defaultChecked={cat.name.includes('أزياء')} className="size-5 rounded border-slate-300 text-blue-600" />
+                       <input type="checkbox" defaultChecked={cat.name.includes('أزياء')} className="size-5 rounded border-slate-300 text-brand-600" />
                        <div className="flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-800">{cat.name}</span>
                           <span className="text-lg">{cat.icon}</span>
@@ -522,7 +633,7 @@ export function CategoriesPage() {
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-slate-50 border-t border-slate-100">
-                <button onClick={handleEditAttribute} className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white hover:bg-blue-700 shadow-md shadow-blue-200 transition-all active:scale-95">حفظ التعديلات</button>
+                <button onClick={handleEditAttribute} className="rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white hover:bg-brand-700 shadow-md shadow-brand-200 transition-all active:scale-95">حفظ التعديلات</button>
                 <button onClick={() => setShowEditAttribute(false)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">إلغاء</button>
             </div>
           </div>

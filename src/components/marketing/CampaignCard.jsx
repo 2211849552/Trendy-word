@@ -7,6 +7,12 @@ function fmtNum(n) {
 
 export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
   const badge = statusBadgeClass[campaign.status] ?? statusBadgeClass.finished
+  
+  // Custom display for status if paused
+  const displayStatus = campaign.paused ? 'متوقف' : statusLabels[campaign.status]
+  const displayBadge = campaign.paused 
+    ? 'bg-slate-100 text-slate-700 ring-slate-200' 
+    : badge
 
   return (
     <article
@@ -15,9 +21,9 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
     >
       <div className="flex items-start justify-between gap-2">
         <span
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${badge}`}
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${displayBadge}`}
         >
-          {statusLabels[campaign.status]}
+          {displayStatus}
         </span>
         <span className="text-2xl leading-none" aria-hidden>
           {campaign.emoji}
@@ -32,7 +38,7 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
 
       <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
         <li className="flex justify-between gap-2">
-          <span className="font-bold tabular-nums text-violet-600">{fmtNum(campaign.stores)}</span>
+          <span className="font-bold tabular-nums text-brand-600">{fmtNum(campaign.stores)}</span>
           <span className="text-slate-500">عدد المتاجر</span>
         </li>
         <li className="flex justify-between gap-2">
@@ -70,8 +76,13 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         <button
           type="button"
           onClick={() => onToggle?.(campaign)}
-          className="flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
-          aria-label="تشغيل أو إيقاف"
+          className={`flex size-10 items-center justify-center rounded-xl border shadow-sm transition-colors ${
+            campaign.paused 
+              ? 'border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-100' 
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+          aria-label={campaign.paused ? "تفعيل" : "إلغاء تفعيل"}
+          title={campaign.paused ? "تفعيل" : "إلغاء تفعيل"}
         >
           {campaign.paused ? (
             <Play className="size-4" aria-hidden />

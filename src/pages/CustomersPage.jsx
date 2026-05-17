@@ -100,7 +100,7 @@ export function CustomersPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center relative">
           <div className="absolute top-4 left-4 text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md">8% ↑</div>
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
             <Users className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">إجمالي الزبائن</p>
@@ -137,7 +137,7 @@ export function CustomersPage() {
         <select 
           value={activeStatus}
           onChange={e => setActiveStatus(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 w-full sm:w-auto"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
         >
           <option>جميع الحالات</option>
           <option>نشط</option>
@@ -151,7 +151,7 @@ export function CustomersPage() {
             placeholder="البحث عن زبون..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-brand-500"
           />
         </div>
       </div>
@@ -203,7 +203,7 @@ export function CustomersPage() {
                       </button>
                       <button 
                         onClick={() => openDetails(c)}
-                        className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
+                        className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
                         title="عرض التفاصيل"
                       >
                         <Eye className="size-4" />
@@ -276,8 +276,8 @@ export function CustomersPage() {
                     <p className="font-bold text-emerald-600 text-3xl mb-1" dir="ltr">{selectedCustomer.totalSpent}</p>
                     <p className="text-sm text-slate-600 mt-1">د.ل</p>
                  </div>
-                 <div className="rounded-xl bg-blue-50/50 border border-blue-100 p-5 text-center flex flex-col items-center justify-center">
-                    <p className="font-bold text-blue-600 text-3xl mb-1">{selectedCustomer.orders}</p>
+                 <div className="rounded-xl bg-brand-50/50 border border-brand-100 p-5 text-center flex flex-col items-center justify-center">
+                    <p className="font-bold text-brand-600 text-3xl mb-1">{selectedCustomer.orders}</p>
                     <p className="text-sm text-slate-600 mt-1">طلب</p>
                  </div>
               </div>

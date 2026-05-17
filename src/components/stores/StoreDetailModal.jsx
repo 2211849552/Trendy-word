@@ -31,8 +31,8 @@ export function StoreDetailModal({ store, open, onClose }) {
           
           {/* Store Main Info */}
           <div className="text-center">
-            <div className="mx-auto flex size-20 items-center justify-center rounded-2xl bg-blue-50 shadow-sm mb-4">
-              <ShoppingBag className="size-10 text-blue-600" />
+            <div className="mx-auto flex size-20 items-center justify-center rounded-2xl bg-brand-50 shadow-sm mb-4">
+              <ShoppingBag className="size-10 text-brand-600" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900">{store.name}</h3>
             <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto">
@@ -73,9 +73,9 @@ export function StoreDetailModal({ store, open, onClose }) {
 
           {/* KPI Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl bg-blue-50/50 p-4 border border-blue-100 text-center">
-              <p className="text-3xl font-bold text-blue-600 tabular-nums">{stats.productsCount}</p>
-              <p className="text-xs text-blue-600/70 font-medium mt-1">المنتجات</p>
+            <div className="rounded-xl bg-brand-50/50 p-4 border border-brand-100 text-center">
+              <p className="text-3xl font-bold text-brand-600 tabular-nums">{stats.productsCount}</p>
+              <p className="text-xs text-brand-600/70 font-medium mt-1">المنتجات</p>
             </div>
             <div className="rounded-xl bg-emerald-50/50 p-4 border border-emerald-100 text-center">
               <p className="text-3xl font-bold text-emerald-600 tabular-nums">{stats.orders}</p>
@@ -95,7 +95,7 @@ export function StoreDetailModal({ store, open, onClose }) {
             </div>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
               {(store.catalog || []).map((product, idx) => (
-                <div key={product.sku} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex items-center gap-4 hover:border-blue-200 transition-colors">
+                <div key={product.sku} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex items-center gap-4 hover:border-brand-200 transition-colors">
                   <div className="size-14 rounded-xl bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                      <img 
                       src={`https://images.unsplash.com/photo-${idx % 2 === 0 ? '1521572163474-6864f9cf17ab' : '1591047139829-d91aecb6caea'}?auto=format&fit=crop&w=100&q=80`} 

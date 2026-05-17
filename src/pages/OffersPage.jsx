@@ -78,7 +78,7 @@ export function OffersPage() {
         
         {/* Scheduled Offers */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
             <CalendarCheck className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">العروض المجدولة</p>
@@ -112,7 +112,7 @@ export function OffersPage() {
               <div className="flex justify-between items-start mb-4">
                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     offer.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' :
-                    offer.status === 'مجدول' ? 'bg-blue-100 text-blue-700' :
+                    offer.status === 'مجدول' ? 'bg-brand-100 text-brand-700' :
                     'bg-slate-100 text-slate-700'
                  }`}>
                    {offer.status}
@@ -144,7 +144,7 @@ export function OffersPage() {
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span className="text-slate-500">المنتجات:</span>
-                  <span className="font-medium text-blue-600">{offer.productsCount}</span>
+                  <span className="font-medium text-brand-600">{offer.productsCount}</span>
                 </div>
                 {offer.minAmount && (
                   <div className="flex justify-between items-center text-slate-600">
@@ -158,7 +158,7 @@ export function OffersPage() {
             <div className="p-4 pt-0">
                <button 
                  onClick={() => openDetails(offer)}
-                 className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                 className="w-full rounded-xl bg-brand-600 py-3 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm flex items-center justify-center gap-2"
                >
                  <Eye className="size-4" />
                  عرض التفاصيل
@@ -184,7 +184,7 @@ export function OffersPage() {
               <div className="flex justify-between items-center text-right border-b border-slate-100 pb-4">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
                   selectedOffer.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' :
-                  selectedOffer.status === 'مجدول' ? 'bg-blue-100 text-blue-700' :
+                  selectedOffer.status === 'مجدول' ? 'bg-brand-100 text-brand-700' :
                   'bg-slate-100 text-slate-700'
                 }`}>
                   {selectedOffer.status}

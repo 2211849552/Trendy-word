@@ -7,6 +7,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Area,
+  AreaChart,
 } from 'recharts'
 
 const monthly = [
@@ -20,22 +22,28 @@ const monthly = [
 
 export function LineChartCard() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
-      <h2 className="text-base font-semibold text-slate-900">الإيرادات والطلبات الشهرية</h2>
-      <div className="mt-4 h-[280px] w-full" dir="ltr">
+    <section className="rounded-2xl bg-white p-6 shadow-sm border border-brand-100/50" dir="rtl">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-slate-900">الإيرادات والطلبات الشهرية</h2>
+        <div className="flex gap-2">
+           <span className="rounded-lg bg-brand-50 px-3 py-1 text-xs font-bold text-brand-600">آخر 6 أشهر</span>
+        </div>
+      </div>
+      
+      <div className="h-[280px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={monthly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
-              axisLine={{ stroke: '#e2e8f0' }}
+              tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
+              axisLine={{ stroke: '#f1f5f9' }}
               tickLine={false}
             />
             <YAxis
               yAxisId="rev"
               orientation="left"
-              tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
+              tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
               domain={[0, 80000]}
@@ -44,16 +52,18 @@ export function LineChartCard() {
             <YAxis
               yAxisId="ord"
               orientation="right"
-              tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
+              tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
               domain={[0, 1500]}
             />
             <Tooltip
               contentStyle={{
-                borderRadius: 12,
-                border: '1px solid #e2e8f0',
+                borderRadius: 16,
+                border: 'none',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                 fontFamily: 'Cairo, sans-serif',
+                padding: '12px'
               }}
               formatter={(value, name) => [
                 name === 'revenue' ? `${Number(value).toLocaleString('ar-LY')} د.ل` : value,
@@ -63,8 +73,10 @@ export function LineChartCard() {
             <Legend
               verticalAlign="bottom"
               align="center"
+              iconType="circle"
+              wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value) => (
-                <span className="text-sm text-slate-600">
+                <span className="text-sm font-semibold text-slate-600 ml-2">
                   {value === 'revenue' ? 'الإيرادات' : 'الطلبات'}
                 </span>
               )}
@@ -74,20 +86,20 @@ export function LineChartCard() {
               type="monotone"
               dataKey="revenue"
               name="revenue"
-              stroke="#3b82f6"
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }}
-              activeDot={{ r: 5 }}
+              stroke="#6366f1"
+              strokeWidth={3}
+              dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }}
+              activeDot={{ r: 6, strokeWidth: 0 }}
             />
             <Line
               yAxisId="ord"
               type="monotone"
               dataKey="orders"
               name="orders"
-              stroke="#22c55e"
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: '#22c55e', strokeWidth: 0 }}
-              activeDot={{ r: 5 }}
+              stroke="#f43f5e"
+              strokeWidth={3}
+              dot={{ r: 4, fill: '#f43f5e', strokeWidth: 0 }}
+              activeDot={{ r: 6, strokeWidth: 0 }}
             />
           </LineChart>
         </ResponsiveContainer>

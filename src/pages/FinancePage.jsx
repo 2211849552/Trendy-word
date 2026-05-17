@@ -125,7 +125,7 @@ export function FinancePage() {
         
         {/* Success Card */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
             <CheckCircle2 className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">المعاملات الناجحة</p>
@@ -203,7 +203,7 @@ export function FinancePage() {
           <select 
             value={activeStatus}
             onChange={e => setActiveStatus(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 w-full sm:w-auto"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
           >
             <option>جميع الحالات</option>
             <option>ناجحة</option>
@@ -214,7 +214,7 @@ export function FinancePage() {
           <select 
             value={activePeriod}
             onChange={e => setActivePeriod(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 w-full sm:w-auto"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
           >
             <option>كل الفترات</option>
             <option>هذا الشهر</option>
@@ -224,7 +224,7 @@ export function FinancePage() {
           <select 
             value={activeType}
             onChange={e => setActiveType(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 w-full sm:w-auto"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
           >
             <option>جميع الأنواع</option>
             <option>محفظة إلكترونية</option>
@@ -239,7 +239,7 @@ export function FinancePage() {
             placeholder="البحث في المعاملات..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-brand-500"
           />
         </div>
       </div>
@@ -272,7 +272,7 @@ export function FinancePage() {
                   <td className="px-6 py-4 font-bold text-emerald-600" dir="ltr">{tx.amount} د.ل</td>
                   <td className="px-6 py-4">
                     <span className="flex items-center gap-1.5 text-slate-700">
-                      {tx.type} {tx.type === 'محفظة إلكترونية' ? <CreditCard className="size-4 text-blue-500" /> : <Banknote className="size-4 text-emerald-500" />}
+                      {tx.type} {tx.type === 'محفظة إلكترونية' ? <CreditCard className="size-4 text-brand-500" /> : <Banknote className="size-4 text-emerald-500" />}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-500">{tx.date}</td>
@@ -288,7 +288,7 @@ export function FinancePage() {
                   <td className="px-6 py-4">
                     <button 
                       onClick={() => openDetails(tx)}
-                      className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
+                      className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
                     >
                       <Eye className="size-5" />
                     </button>
@@ -363,7 +363,7 @@ export function FinancePage() {
                   <p className="text-sm text-slate-500 mb-1">نوع العملية</p>
                   <p className="font-bold text-slate-900 text-lg flex items-center gap-2">
                     {selectedTx.type} 
-                    {selectedTx.type === 'محفظة إلكترونية' ? <CreditCard className="size-5 text-blue-500" /> : <Banknote className="size-5 text-emerald-500" />}
+                    {selectedTx.type === 'محفظة إلكترونية' ? <CreditCard className="size-5 text-brand-500" /> : <Banknote className="size-5 text-emerald-500" />}
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 text-right flex flex-col items-start justify-center">

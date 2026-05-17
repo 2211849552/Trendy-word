@@ -1,6 +1,6 @@
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
-const COLORS = ['#22c55e', '#fb923c', '#ef4444']
+const COLORS = ['#6366f1', '#f43f5e', '#fbbf24']
 
 const pieData = [
   { name: 'نشطة', value: 84 },
@@ -18,21 +18,24 @@ function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name
     <text
       x={x}
       y={y}
-      fill="#334155"
-      textAnchor={x > cx ? 'start' : 'end'}
+      fill="#fff"
+      textAnchor="middle"
       dominantBaseline="central"
-      className="text-xs font-medium"
+      className="text-[10px] font-bold"
     >
-      {`${name} ${(percent * 100).toFixed(0)}%`}
+      {`${(percent * 100).toFixed(0)}%`}
     </text>
   )
 }
 
 export function PieChartCard() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
-      <h2 className="text-base font-semibold text-slate-900">توزيع المتاجر</h2>
-      <div className="mt-4 h-[280px] w-full" dir="ltr">
+    <section className="rounded-2xl bg-white p-6 shadow-sm border border-brand-100/50" dir="rtl">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-slate-900">توزيع المتاجر</h2>
+      </div>
+      
+      <div className="h-[280px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -41,10 +44,11 @@ export function PieChartCard() {
               cy="50%"
               labelLine={false}
               label={renderLabel}
-              innerRadius={68}
+              innerRadius={60}
               outerRadius={100}
-              paddingAngle={2}
+              paddingAngle={4}
               dataKey="value"
+              stroke="none"
             >
               {pieData.map((_, i) => (
                 <Cell key={pieData[i].name} fill={COLORS[i % COLORS.length]} />
@@ -53,10 +57,20 @@ export function PieChartCard() {
             <Tooltip
               formatter={(v) => [`${v}%`, 'النسبة']}
               contentStyle={{
-                borderRadius: 12,
-                border: '1px solid #e2e8f0',
+                borderRadius: 16,
+                border: 'none',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                 fontFamily: 'Cairo, sans-serif',
+                padding: '12px'
               }}
+            />
+            <Legend 
+              verticalAlign="bottom" 
+              align="center" 
+              iconType="circle"
+              formatter={(value) => (
+                <span className="text-sm font-semibold text-slate-600 ml-2">{value}</span>
+              )}
             />
           </PieChart>
         </ResponsiveContainer>

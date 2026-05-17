@@ -58,7 +58,7 @@ export function NotificationsPage() {
   const getIcon = (type) => {
     switch (type) {
       case 'order': return <Package className="size-6 text-orange-400" />
-      case 'store': return <Store className="size-6 text-blue-500" />
+      case 'store': return <Store className="size-6 text-brand-500" />
       case 'dispute': return <AlertTriangle className="size-6 text-amber-500" />
       default: return <Bell className="size-6 text-slate-500" />
     }
@@ -128,7 +128,7 @@ export function NotificationsPage() {
           <h1 className="text-2xl font-bold text-slate-900">إدارة الإشعارات</h1>
           <p className="text-sm text-slate-500">مركز التنبيهات والإشعارات</p>
         </div>
-        <button onClick={markAllAsRead} className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-sm">
+        <button onClick={markAllAsRead} className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm">
           <CheckCircle2 className="size-4" />
           تحديد الكل كمقروء
         </button>
@@ -137,7 +137,7 @@ export function NotificationsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center relative">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
             <Bell className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">إجمالي الإشعارات</p>
@@ -175,7 +175,7 @@ export function NotificationsPage() {
           <div 
             key={notif.id} 
             className={`rounded-xl border p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-              notif.isRead ? 'bg-white border-slate-200 opacity-75' : 'bg-blue-50/30 border-blue-200 shadow-sm'
+              notif.isRead ? 'bg-white border-slate-200 opacity-75' : 'bg-brand-50/30 border-brand-200 shadow-sm'
             }`}
           >
             <div className="flex items-start gap-4 flex-1">
@@ -219,7 +219,7 @@ export function NotificationsPage() {
               {!notif.isRead && (
                 <button 
                   onClick={() => markAsRead(notif.id)}
-                  className="text-blue-600 hover:bg-blue-100 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
+                  className="text-brand-600 hover:bg-brand-100 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
                   title="تحديد كمقروء"
                 >
                   <Check className="size-4" />

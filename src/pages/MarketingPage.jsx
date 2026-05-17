@@ -38,6 +38,31 @@ export function MarketingPage() {
     setTimeout(() => setShowToast(false), 3000)
   }
 
+  const handleToggleCampaign = (camp) => {
+    setList((prev) =>
+      prev.map((x) => {
+        if (x.id === camp.id) {
+          const newPaused = !x.paused
+          const message = newPaused ? 'تم تعطيل حملة إعلانية' : 'تم تفعيل حملة إعلانية'
+          setToastMessage(message)
+          setShowToast(true)
+          setTimeout(() => setShowToast(false), 3000)
+          
+          // Update status based on pause state if needed
+          let newStatus = x.status
+          if (newPaused) {
+            newStatus = 'stopped'
+          } else if (x.status === 'stopped') {
+            newStatus = 'active'
+          }
+          
+          return { ...x, paused: newPaused, status: newStatus }
+        }
+        return x
+      })
+    )
+  }
+
   return (
     <>
       <CampaignDetailModal
@@ -98,7 +123,7 @@ export function MarketingPage() {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-sky-700"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-700"
         >
           <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           إنشاء حملة إعلانية
@@ -112,7 +137,7 @@ export function MarketingPage() {
           change={marketingStats.viewsChange}
           trend="up"
           icon={Eye}
-          iconClassName="bg-sky-100 text-sky-600"
+          iconClassName="bg-brand-100 text-brand-600"
         />
         <StatCard
           label="الحملات المنتهية"
@@ -154,7 +179,7 @@ export function MarketingPage() {
               className={[
                 'rounded-full px-4 py-2 text-sm font-semibold transition-colors',
                 filter === key
-                  ? 'bg-sky-600 text-white shadow-sm'
+                  ? 'bg-brand-600 text-white shadow-sm'
                   : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50',
               ].join(' ')}
             >
@@ -175,13 +200,7 @@ export function MarketingPage() {
                 campaign={c}
                 onView={(camp) => setDetailCampaign(camp)}
                 onEdit={(camp) => setEditCampaign(camp)}
-                onToggle={(camp) =>
-                  setList((prev) =>
-                    prev.map((x) =>
-                      x.id === camp.id ? { ...x, paused: !x.paused } : x,
-                    )
-                  )
-                }
+                onToggle={handleToggleCampaign}
                 onDelete={(camp) => setDeleteCampaign(camp)}
               />
             ))}

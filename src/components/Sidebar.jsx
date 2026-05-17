@@ -25,7 +25,7 @@ const navItems = [
   { id: 'marketing', label: 'التسويق والمحتوى', icon: Megaphone },
   {
     id: 'catalog',
-    label: 'إدارة الكتالوج والتصنيفات',
+    label: 'إدارة الكتالوج',
     icon: List,
   },
   { id: 'disputes', label: 'الشكاوى والنزاعات', icon: MessageCircle },
@@ -48,16 +48,26 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
   return (
     <aside
       dir="rtl"
-      className="flex h-dvh w-72 shrink-0 flex-col overflow-hidden border-l border-slate-200/80 bg-white shadow-sm"
+      className="flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-2xl"
     >
-      <div className="shrink-0 border-b border-slate-100 px-6 py-7 text-center">
-        <h1 className="text-lg font-bold tracking-tight text-blue-950">
-          Trendy Dashboard
-        </h1>
+      <div className="shrink-0 px-6 py-8">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/20">
+            <Store className="size-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              Trendy
+            </h1>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-brand-300/60">
+              Admin Control
+            </p>
+          </div>
+        </div>
       </div>
 
       <nav
-        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
+        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-4 scrollbar-hide"
         aria-label="القائمة الرئيسية"
       >
         {navItems.map(({ id, label, icon: Icon, items }) => {
@@ -65,7 +75,7 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
           const isOpen = openMenus[id]
 
           return (
-            <div key={id}>
+            <div key={id} className="mb-1">
               <button
                 type="button"
                 onClick={() => {
@@ -76,29 +86,34 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                   }
                 }}
                 className={[
-                  'flex w-full items-center justify-between rounded-xl border-e-4 px-3 py-2.5 text-start text-sm font-medium transition-colors',
+                  'group flex w-full items-center justify-between rounded-xl px-4 py-3 text-start text-sm font-medium transition-all duration-200',
                   isActive && !items
-                    ? 'border-blue-600 bg-blue-50 text-blue-600'
+                    ? 'premium-gradient text-white shadow-lg shadow-brand-600/20'
                     : isActive && items
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                    ? 'bg-white/5 text-white'
+                    : 'text-brand-100/60 hover:bg-white/5 hover:text-white',
                 ].join(' ')}
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className="size-5 shrink-0"
-                    strokeWidth={isActive ? 2.25 : 2}
+                    className={[
+                      'size-5 shrink-0 transition-transform duration-200 group-hover:scale-110',
+                      isActive ? 'text-white' : 'text-brand-400/60 group-hover:text-brand-300',
+                    ].join(' ')}
+                    strokeWidth={isActive ? 2.5 : 2}
                     aria-hidden
                   />
-                  {label}
+                  <span>{label}</span>
                 </div>
                 {items && (
-                  isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />
+                  <div className={['transition-transform duration-200', isOpen ? 'rotate-180' : ''].join(' ')}>
+                    <ChevronDown className="size-4 opacity-40" />
+                  </div>
                 )}
               </button>
 
               {items && isOpen && (
-                <div className="mt-1 flex flex-col gap-1 pr-9">
+                <div className="mt-1 flex flex-col gap-1 pr-11">
                   {items.map((subItem) => {
                     const isSubActive = subItem.id === activeId
                     return (
@@ -107,13 +122,13 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                         type="button"
                         onClick={() => onNavigate?.(subItem.id)}
                         className={[
-                          'flex w-full items-center rounded-lg px-3 py-2 text-start text-sm font-medium transition-colors relative',
+                          'flex w-full items-center rounded-lg py-2 text-start text-[13px] font-medium transition-colors relative',
                           isSubActive
-                            ? 'text-blue-600 bg-blue-50/50'
-                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                            ? 'text-brand-300'
+                            : 'text-brand-100/40 hover:text-brand-200',
                         ].join(' ')}
                       >
-                        {isSubActive && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-blue-600" />}
+                        {isSubActive && <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-400 shadow-[0_0_8px_rgba(165,180,252,0.6)]" />}
                         {subItem.label}
                       </button>
                     )
@@ -125,15 +140,7 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
         })}
       </nav>
 
-      <div className="flex shrink-0 justify-end p-4" dir="ltr">
-        <button
-          type="button"
-          className="flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-700"
-          aria-label="المساعدة"
-        >
-          <HelpCircle className="size-5" strokeWidth={2} />
-        </button>
-      </div>
+
     </aside>
   )
 }

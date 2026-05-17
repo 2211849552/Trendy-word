@@ -34,9 +34,11 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('overview')
 
   return (
-    <div className="flex min-h-dvh flex-row bg-slate-100" dir="ltr">
+    <div className="flex min-h-dvh flex-row bg-brand-50/50" dir="ltr">
       <main dir="rtl" className="min-w-0 flex-1 overflow-auto px-6 py-8 lg:px-10">
-        {renderPage(activeNav)}
+        <div className="mx-auto max-w-7xl">
+          {renderPage(activeNav)}
+        </div>
       </main>
 
       <Sidebar activeId={activeNav} onNavigate={setActiveNav} />

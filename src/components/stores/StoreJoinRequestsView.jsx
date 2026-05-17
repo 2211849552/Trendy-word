@@ -16,14 +16,18 @@ import {
   Footprints,
 } from 'lucide-react'
 import { StatCard } from '../StatCard.jsx'
-import { joinRequests } from '../../data/stores.js'
 import { JoinRequestDetailModal } from './JoinRequestDetailModal.jsx'
 
 const cardIcons = [Shirt, Sparkles, Footprints, ShoppingBag]
 
-export function StoreJoinRequestsView({ onOpenList }) {
+export function StoreJoinRequestsView({ requests, onAccept, onReject, onOpenList }) {
   const [modalRequestId, setModalRequestId] = useState(null)
-  const modalRequest = joinRequests.find((r) => r.id === modalRequestId) ?? null
+  const modalRequest = requests.find((r) => r.id === modalRequestId) ?? null
+
+  const handlePrint = () => {
+    // Basic implementation for printing the page
+    window.print()
+  }
 
   return (
     <>
@@ -32,12 +36,10 @@ export function StoreJoinRequestsView({ onOpenList }) {
         open={Boolean(modalRequestId)}
         onClose={() => setModalRequestId(null)}
         onAccept={(id) => {
-          // Logic to update request status in data would go here
-          console.log(`Accepted request: ${id}`)
+          onAccept(id)
         }}
         onReject={(id, reason) => {
-          // Logic to update request status in data would go here
-          console.log(`Rejected request: ${id} for reason: ${reason}`)
+          onReject(id, reason)
         }}
       />
 
@@ -60,6 +62,7 @@ export function StoreJoinRequestsView({ onOpenList }) {
           </button>
           <button
             type="button"
+            onClick={handlePrint}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
           >
             <Download className="size-4" aria-hidden />
@@ -79,7 +82,7 @@ export function StoreJoinRequestsView({ onOpenList }) {
         />
         <StatCard
           label="طلبات التسجيل"
-          value="4"
+          value={String(requests.length)}
           change="—"
           trend="up"
           icon={Clock}
@@ -110,12 +113,12 @@ export function StoreJoinRequestsView({ onOpenList }) {
         <div className="mb-4 flex items-center gap-2">
           <Clock className="size-5 text-amber-600" aria-hidden />
           <h2 className="text-lg font-semibold text-slate-900">
-            طلبات انضمام المتاجر ({joinRequests.length})
+            طلبات انضمام المتاجر ({requests.length})
           </h2>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">
-          {joinRequests.map((req, i) => {
+          {requests.map((req, i) => {
             const Deco = cardIcons[i % cardIcons.length]
             return (
               <article
@@ -151,7 +154,7 @@ export function StoreJoinRequestsView({ onOpenList }) {
                   <button
                     type="button"
                     onClick={() => setModalRequestId(req.id)}
-                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
+                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
                   >
                     <Eye className="size-4" aria-hidden />
                     عرض التفاصيل

@@ -88,7 +88,7 @@ export function StaffPage() {
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
-      case 'مدير نظام': return 'bg-blue-100 text-blue-700'
+      case 'مدير نظام': return 'bg-brand-100 text-brand-700'
       case 'مسؤول عمليات': return 'bg-sky-100 text-sky-700'
       case 'محاسب': return 'bg-indigo-100 text-indigo-700'
       default: return 'bg-slate-100 text-slate-700'
@@ -104,7 +104,7 @@ export function StaffPage() {
           <h1 className="text-2xl font-bold text-slate-900">إدارة الموظفين</h1>
           <p className="text-sm text-slate-500">إدارة حسابات الموظفين والصلاحيات</p>
         </div>
-        <button onClick={() => openEdit(null)} className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-sm">
+        <button onClick={() => openEdit(null)} className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm">
           <Plus className="size-4" />
           إضافة موظف
         </button>
@@ -113,7 +113,7 @@ export function StaffPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center relative">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
             <Users className="size-6" />
           </div>
           <p className="text-sm font-medium text-slate-500">إجمالي الموظفين</p>
@@ -150,7 +150,7 @@ export function StaffPage() {
         <select 
           value={activeRole}
           onChange={e => setActiveRole(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 w-full sm:w-auto"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
         >
           <option>جميع الأدوار</option>
           <option>مدير نظام</option>
@@ -167,7 +167,7 @@ export function StaffPage() {
             placeholder="البحث عن موظف..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-brand-500"
           />
         </div>
       </div>
@@ -228,7 +228,7 @@ export function StaffPage() {
                       </button>
                       <button 
                         onClick={() => openDetails(s)}
-                        className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
+                        className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
                         title="عرض التفاصيل"
                       >
                         <Eye className="size-4" />
@@ -326,7 +326,7 @@ export function StaffPage() {
                   required
                   value={selectedStaff.name}
                   onChange={e => setSelectedStaff({...selectedStaff, name: e.target.value})}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500"
                 />
               </div>
 
@@ -338,7 +338,7 @@ export function StaffPage() {
                     required
                     value={selectedStaff.email}
                     onChange={e => setSelectedStaff({...selectedStaff, email: e.target.value})}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono text-left outline-none transition-colors focus:border-blue-500"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono text-left outline-none transition-colors focus:border-brand-500"
                     dir="ltr"
                   />
                 </div>
@@ -349,7 +349,7 @@ export function StaffPage() {
                     required
                     value={selectedStaff.phone}
                     onChange={e => setSelectedStaff({...selectedStaff, phone: e.target.value})}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono text-left outline-none transition-colors focus:border-blue-500"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono text-left outline-none transition-colors focus:border-brand-500"
                     dir="ltr"
                   />
                 </div>
@@ -360,7 +360,7 @@ export function StaffPage() {
                 <select 
                   value={selectedStaff.role}
                   onChange={e => setSelectedStaff({...selectedStaff, role: e.target.value})}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500"
                 >
                   <option>مدير نظام</option>
                   <option>مسؤول عمليات</option>
@@ -373,7 +373,7 @@ export function StaffPage() {
               <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
                 <button 
                   type="submit"
-                  className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-colors"
+                  className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
                 >
                   حفظ التعديلات
                 </button>

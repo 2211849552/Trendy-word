@@ -35,7 +35,7 @@ export function StoreProductsView({ storeId, onBack }) {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <select className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 outline-none hover:bg-slate-50 focus:border-blue-500">
+            <select className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 outline-none hover:bg-slate-50 focus:border-brand-500">
               <option>الكل</option>
               <option>متوفر</option>
               <option>نفد</option>
@@ -43,7 +43,7 @@ export function StoreProductsView({ storeId, onBack }) {
             <ChevronDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
           <div className="relative">
-            <select className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 outline-none hover:bg-slate-50 focus:border-blue-500">
+            <select className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 outline-none hover:bg-slate-50 focus:border-brand-500">
               <option>جميع التصنيفات</option>
               {CLOTHING_CATEGORIES.map(cat => (
                 <option key={cat.id}>{cat.name}</option>
@@ -60,7 +60,7 @@ export function StoreProductsView({ storeId, onBack }) {
             placeholder="البحث عن منتج بالاسم أو الوصف..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
           />
         </div>
       </div>
@@ -100,13 +100,13 @@ export function StoreProductsView({ storeId, onBack }) {
                   <span className={`rounded-lg px-2 py-1 text-xs font-bold ${product.stock > 0 ? 'bg-slate-900 text-white' : 'bg-red-100 text-red-700'}`}>
                     {product.stock > 0 ? `${product.stock} متوفر` : 'نفد'}
                   </span>
-                  <span className="text-2xl font-bold text-blue-600" dir="ltr">
+                  <span className="text-2xl font-bold text-brand-600" dir="ltr">
                     {product.price} <span className="text-sm font-medium">د.ل</span>
                   </span>
                 </div>
 
                 <div className="mt-4 border-t border-slate-100 pt-4">
-                  <button className="w-full rounded-xl border border-blue-200 bg-blue-50 py-2.5 text-blue-600 hover:bg-blue-100 flex justify-center items-center gap-2 transition-colors font-bold text-sm">
+                  <button className="w-full rounded-xl border border-brand-200 bg-brand-50 py-2.5 text-brand-600 hover:bg-brand-100 flex justify-center items-center gap-2 transition-colors font-bold text-sm">
                     <Eye className="size-4" />
                     عرض التفاصيل
                   </button>
@@ -130,24 +130,24 @@ export function StoreProductsView({ storeId, onBack }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">اسم المنتج</label>
-                <input type="text" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-blue-500 transition-colors" />
+                <input type="text" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-brand-500 transition-colors" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الوصف</label>
-                <textarea rows="3" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-blue-500 bg-slate-50 transition-colors"></textarea>
+                <textarea rows="3" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-brand-500 bg-slate-50 transition-colors"></textarea>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">السعر (د.ل)</label>
-                  <input type="number" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-blue-500 bg-slate-50 transition-colors" />
+                  <input type="number" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-brand-500 bg-slate-50 transition-colors" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">الكمية</label>
-                  <input type="number" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-blue-500 bg-slate-50 transition-colors" />
+                  <input type="number" className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-brand-500 bg-slate-50 transition-colors" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">التصنيف</label>
-                  <select className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-blue-500 bg-slate-50 text-slate-600 transition-colors">
+                  <select className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-brand-500 bg-slate-50 text-slate-600 transition-colors">
                     <option>اختر التصنيف</option>
                     {CLOTHING_CATEGORIES.map(cat => (
                       <option key={cat.id}>{cat.name}</option>
@@ -157,7 +157,7 @@ export function StoreProductsView({ storeId, onBack }) {
               </div>
               <div className="flex gap-3 justify-end mt-8 pt-4 border-t">
                 <button onClick={() => setShowAddProduct(false)} className="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium hover:bg-slate-50 transition-colors">إلغاء</button>
-                <button onClick={() => setShowAddProduct(false)} className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm">إضافة المنتج</button>
+                <button onClick={() => setShowAddProduct(false)} className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 transition-colors shadow-sm">إضافة المنتج</button>
               </div>
             </div>
           </div>

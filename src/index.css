@@ -2,14 +2,39 @@
 
 @theme {
   --font-sans: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+  
+  --color-brand-50: #f5f7ff;
+  --color-brand-100: #ebf0fe;
+  --color-brand-200: #dce4fd;
+  --color-brand-300: #c1ccfb;
+  --color-brand-400: #9ea9f7;
+  --color-brand-500: #7a82f0;
+  --color-brand-600: #6366f1; /* Indigo-600 */
+  --color-brand-700: #5553e1;
+  --color-brand-800: #4643b8;
+  --color-brand-900: #3d3b94;
+  --color-brand-950: #252457;
+
+  --shadow-premium: 0 10px 15px -3px rgba(99, 102, 241, 0.1), 0 4px 6px -4px rgba(99, 102, 241, 0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
 @layer base {
   body {
-    @apply m-0 min-h-dvh bg-slate-100 font-sans text-slate-800 antialiased;
+    @apply m-0 min-h-dvh bg-[#f8f9ff] font-sans text-slate-800 antialiased;
   }
 
   #root {
     @apply min-h-dvh w-full max-w-none;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-glass;
+  }
+  
+  .premium-gradient {
+    @apply bg-gradient-to-br from-brand-600 to-brand-800;
   }
 }

@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2, CheckCircle } from 'lucide-react'
-import { registeredStores } from '../../data/stores.js'
+import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2, CheckCircle, Download } from 'lucide-react'
 import { StoreDetailModal } from './StoreDetailModal.jsx'
-
 
 function RowIcon({ type }) {
   const cls = 'size-4 text-slate-600'
@@ -11,8 +9,7 @@ function RowIcon({ type }) {
   return <Shirt className={cls} aria-hidden />
 }
 
-export function StoreListView({ onBackToJoin }) {
-  const [stores, setStores] = useState(registeredStores)
+export function StoreListView({ stores, onDeleteStore, onBackToJoin }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const [deleteStore, setDeleteStore] = useState(null)
@@ -33,10 +30,14 @@ export function StoreListView({ onBackToJoin }) {
 
   const confirmDelete = () => {
     if (!deleteStore) return
-    setStores(prev => prev.filter(s => s.id !== deleteStore.id))
+    onDeleteStore(deleteStore.id)
     setDeleteStore(null)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
+  }
+
+  const handlePrint = () => {
+    window.print()
   }
 
   return (
@@ -98,13 +99,23 @@ export function StoreListView({ onBackToJoin }) {
           </h1>
           <p className="mt-1 text-slate-500">قائمة المتاجر المسجلة في المنصة</p>
         </header>
-        <button
-          type="button"
-          onClick={onBackToJoin}
-          className="self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-        >
-          طلبات الانضمام
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onBackToJoin}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          >
+            طلبات الانضمام
+          </button>
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+          >
+            <Download className="size-4" aria-hidden />
+            طباعة قائمة المتاجر
+          </button>
+        </div>
       </div>
 
       <div
@@ -119,7 +130,7 @@ export function StoreListView({ onBackToJoin }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="البحث عن متجر..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2.5 pe-11 ps-3 text-sm text-slate-900 outline-none ring-sky-500/30 transition focus:border-sky-300 focus:bg-white focus:ring-2"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2.5 pe-11 ps-3 text-sm text-slate-900 outline-none ring-brand-500/30 transition focus:border-brand-300 focus:bg-white focus:ring-2"
           />
         </label>
         <div className="flex shrink-0 items-center gap-2">
@@ -127,7 +138,7 @@ export function StoreListView({ onBackToJoin }) {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white py-2.5 ps-3 pe-8 text-sm font-medium text-slate-700 shadow-sm outline-none ring-sky-500/30 focus:ring-2"
+            className="rounded-xl border border-slate-200 bg-white py-2.5 ps-3 pe-8 text-sm font-medium text-slate-700 shadow-sm outline-none ring-brand-500/30 focus:ring-2"
           >
             <option value="all">جميع الحالات</option>
             <option value="active">نشط</option>
@@ -144,8 +155,8 @@ export function StoreListView({ onBackToJoin }) {
         <div className="border-b border-slate-100 px-5 py-4">
           <h2 className="text-lg font-semibold text-slate-900">قائمة المتاجر</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-right text-sm">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full min-w-[800px] text-right text-sm print:min-w-full">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80 text-slate-600">
                 <th className="px-4 py-3 font-semibold">المتجر</th>
@@ -154,7 +165,7 @@ export function StoreListView({ onBackToJoin }) {
                 <th className="px-4 py-3 font-semibold">الهاتف</th>
                 <th className="px-4 py-3 font-semibold">المنتجات</th>
                 <th className="px-4 py-3 font-semibold">الطلبات</th>
-                <th className="px-4 py-3 font-semibold">إجراءات</th>
+                <th className="px-4 py-3 font-semibold print:hidden">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -162,7 +173,7 @@ export function StoreListView({ onBackToJoin }) {
                 <tr key={row.id} className="hover:bg-slate-50/60">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 print:hidden">
                         <RowIcon type={row.icon} />
                       </span>
                       <div>
@@ -180,15 +191,13 @@ export function StoreListView({ onBackToJoin }) {
                   </td>
                   <td className="px-4 py-4">
                     <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 tabular-nums">
-                      <Shirt className="size-3.5 text-slate-400" aria-hidden />
-                      <ShoppingBag className="size-3.5 text-slate-400" aria-hidden />
                       {row.products}
                     </span>
                   </td>
                   <td className="px-4 py-4 font-medium tabular-nums text-slate-900">
                     {row.orders}
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 print:hidden">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
@@ -196,7 +205,7 @@ export function StoreListView({ onBackToJoin }) {
                           setSelectedStore(row)
                           setDetailModalOpen(true)
                         }}
-                        className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                        className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
                         aria-label={`عرض تفاصيل ${row.name}`}
                       >
                         <Eye className="size-4" aria-hidden />
