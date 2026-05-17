@@ -37,6 +37,9 @@ export function DisputesPage() {
   const [replyModalOpen, setReplyModalOpen] = useState(false)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [selectedDispute, setSelectedDispute] = useState(null)
+  const [showImageModal, setShowImageModal] = useState(false)
+
+  const placeholderProductImage = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=1000'
 
   const openReplyModal = (dispute) => {
     setSelectedDispute(dispute)
@@ -266,15 +269,24 @@ export function DisputesPage() {
 
             {/* Bottom row: Image attached */}
             {dispute.hasImage && (
-              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4 flex items-center justify-between">
+              <div 
+                onClick={() => {
+                  setSelectedDispute(dispute)
+                  setShowImageModal(true)
+                }}
+                className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors group"
+              >
                  <div className="flex items-center gap-4">
-                    <div className="size-16 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-3xl">
-                      📸
+                    <div className="size-16 rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center text-3xl">
+                      <img src={placeholderProductImage} alt="Product" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-slate-800">صورة المنتج من الزبون</h4>
                       <p className="text-xs text-slate-500 mt-1">تم إرفاق صورة توضيحية للمنتج - اضغط للتكبير</p>
                     </div>
+                 </div>
+                 <div className="size-8 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                    <Search className="size-4" />
                  </div>
               </div>
             )}
@@ -371,21 +383,27 @@ export function DisputesPage() {
                   <p className="font-bold text-slate-900 text-lg">{selectedDispute.subject}</p>
                </div>
 
-               {/* Attached Image */}
-               {selectedDispute.hasImage && (
-                 <div className="rounded-xl border border-blue-200 bg-white overflow-hidden text-right">
-                    <div className="p-3 bg-blue-50/50 border-b border-blue-100">
-                      <p className="text-sm font-bold text-slate-600">صورة المنتج المرفقة من الزبون</p>
-                    </div>
-                    <div className="p-6 flex flex-col items-center justify-center">
-                       <div className="size-32 rounded-2xl bg-slate-50 border-2 border-slate-100 shadow-inner flex items-center justify-center text-6xl mb-4">
-                         📸
-                       </div>
-                       <p className="text-sm font-medium text-slate-700">صورة توضيحية للمنتج موضوع الشكوى</p>
-                       <button className="text-blue-600 text-sm font-bold mt-2 flex items-center gap-1 hover:underline">
-                          اضغط للتكبير <Search className="size-3" />
-                       </button>
-                    </div>
+                {/* Attached Image */}
+                {selectedDispute.hasImage && (
+                  <div className="rounded-xl border border-blue-200 bg-white overflow-hidden text-right">
+                     <div className="p-3 bg-blue-50/50 border-b border-blue-100">
+                       <p className="text-sm font-bold text-slate-600">صورة المنتج المرفقة من الزبون</p>
+                     </div>
+                     <div className="p-6 flex flex-col items-center justify-center">
+                        <div 
+                          onClick={() => setShowImageModal(true)}
+                          className="w-full max-w-md h-64 rounded-2xl bg-slate-50 border-2 border-slate-100 shadow-inner overflow-hidden cursor-pointer hover:ring-2 ring-blue-400 transition-all mb-4"
+                        >
+                          <img src={placeholderProductImage} alt="Product Detail" className="w-full h-full object-cover" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-700">صورة توضيحية للمنتج موضوع الشكوى</p>
+                        <button 
+                          onClick={() => setShowImageModal(true)}
+                          className="text-blue-600 text-sm font-bold mt-2 flex items-center gap-1 hover:underline"
+                        >
+                           اضغط للتكبير <Search className="size-3" />
+                        </button>
+                     </div>
                     <div className="p-3 bg-slate-50 text-center border-t border-slate-100">
                        <p className="text-xs text-slate-500">ملاحظة: الصورة مرفقة من الزبون كدليل على الشكوى</p>
                     </div>
@@ -441,6 +459,28 @@ export function DisputesPage() {
                   </div>
                </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Image Zoom Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <button 
+            onClick={() => setShowImageModal(false)}
+            className="absolute top-6 right-6 size-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+          >
+            <X className="size-6" />
+          </button>
+          <div className="relative max-w-4xl w-full max-h-[85vh] overflow-hidden rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+            <img 
+              src={placeholderProductImage} 
+              alt="Enlarged Product" 
+              className="w-full h-full object-contain bg-slate-800"
+            />
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white text-right" dir="rtl">
+              <h3 className="text-xl font-bold">معاينة الصورة المرفقة</h3>
+              <p className="text-sm text-slate-300 mt-1">توضيح لحالة المنتج المستلم في الشكوى {selectedDispute?.id}</p>
             </div>
           </div>
         </div>

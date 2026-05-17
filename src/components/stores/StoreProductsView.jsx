@@ -33,14 +33,6 @@ export function StoreProductsView({ storeId, onBack }) {
 
       {/* Filters and Actions */}
       <div className="flex flex-wrap items-center gap-4">
-        <button
-          onClick={() => setShowAddProduct(true)}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          <Plus className="size-4" />
-          إضافة منتج
-        </button>
-
         <div className="flex items-center gap-2">
           <div className="relative">
             <select className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 outline-none hover:bg-slate-50 focus:border-blue-500">
@@ -77,22 +69,23 @@ export function StoreProductsView({ storeId, onBack }) {
       {storeProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-16 text-center">
           <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
-            <Plus className="size-8 text-slate-400" />
+            <Package className="size-8 text-slate-400" />
           </div>
           <h3 className="text-lg font-medium text-slate-900">لا توجد منتجات</h3>
           <p className="mt-1 text-sm text-slate-500 max-w-sm">
-            هذا المتجر لا يحتوي على أي منتجات مضافة حالياً. يمكنك إضافة منتج جديد باستخدام الزر أعلاه.
+            هذا المتجر لا يحتوي على أي منتجات مضافة حالياً.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {storeProducts.map(product => (
+          {storeProducts.map((product, idx) => (
             <div key={product.sku} className="flex flex-col rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex h-48 items-center justify-center bg-slate-50 text-6xl">
-                {/* Fallback emoji based on category text */}
-                {product.category.includes('قميص') ? '👔' : 
-                 product.category.includes('حذاء') ? '👟' : 
-                 product.category.includes('بنطلون') ? '👖' : '📦'}
+              <div className="flex h-48 items-center justify-center bg-slate-50">
+                <img 
+                  src={`https://images.unsplash.com/photo-${idx % 2 === 0 ? '1521572163474-6864f9cf17ab' : '1591047139829-d91aecb6caea'}?auto=format&fit=crop&w=400&q=80`} 
+                  alt={product.name}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <h3 className="text-lg font-bold text-slate-900">{product.name}</h3>
@@ -112,12 +105,10 @@ export function StoreProductsView({ storeId, onBack }) {
                   </span>
                 </div>
 
-                <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
-                  <button className="flex-1 rounded-lg border border-slate-200 py-2 text-slate-600 hover:bg-slate-50 flex justify-center items-center transition-colors">
-                    <Edit className="size-4" />
-                  </button>
-                  <button className="flex-1 rounded-lg border border-slate-200 py-2 text-red-600 hover:bg-red-50 flex justify-center items-center transition-colors">
-                    <Trash2 className="size-4" />
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <button className="w-full rounded-xl border border-blue-200 bg-blue-50 py-2.5 text-blue-600 hover:bg-blue-100 flex justify-center items-center gap-2 transition-colors font-bold text-sm">
+                    <Eye className="size-4" />
+                    عرض التفاصيل
                   </button>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Eye, TrendingUp, Archive, CircleCheck } from 'lucide-react'
+import { Plus, Eye, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X } from 'lucide-react'
 import { StatCard } from '../components/StatCard.jsx'
 import { CampaignPerformanceChart } from '../components/marketing/CampaignPerformanceChart.jsx'
 import { CampaignCard } from '../components/marketing/CampaignCard.jsx'
@@ -20,11 +20,23 @@ export function MarketingPage() {
   const [list, setList] = useState(() => seedCampaigns.map((c) => ({ ...c })))
   const [detailCampaign, setDetailCampaign] = useState(null)
   const [editCampaign, setEditCampaign] = useState(null)
+  const [deleteCampaign, setDeleteCampaign] = useState(null)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
 
   const filtered = useMemo(() => {
     if (filter === 'all') return list
     return list.filter((c) => c.status === filter)
   }, [list, filter])
+
+  const confirmDelete = () => {
+    if (!deleteCampaign) return
+    setList(prev => prev.filter(c => c.id !== deleteCampaign.id))
+    setDeleteCampaign(null)
+    setToastMessage('تم حذف الحملة بنجاح')
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
 
   return (
     <>
@@ -68,7 +80,9 @@ export function MarketingPage() {
               paused: false,
             },
           ])
-          window.alert('تم حفظ الحملة الجديدة (واجهة تجريبية).')
+          setToastMessage('تم إنشاء الحملة بنجاح')
+          setShowToast(true)
+          setTimeout(() => setShowToast(false), 3000)
         }}
       />
 
@@ -165,21 +179,65 @@ export function MarketingPage() {
                   setList((prev) =>
                     prev.map((x) =>
                       x.id === camp.id ? { ...x, paused: !x.paused } : x,
-                    ),
+                    )
                   )
                 }
-                onDelete={(camp) => {
-                  if (
-                    window.confirm(`هل تريد حذف الحملة «${camp.title}»؟`)
-                  ) {
-                    setList((prev) => prev.filter((x) => x.id !== camp.id))
-                  }
-                }}
+                onDelete={(camp) => setDeleteCampaign(camp)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteCampaign && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeleteCampaign(null)} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+              <h2 className="text-lg font-bold text-slate-900">تأكيد حذف الحملة</h2>
+              <button onClick={() => setDeleteCampaign(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                <Trash2 className="size-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">هل أنت متأكد؟</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                أنت على وشك حذف الحملة <span className="font-bold text-slate-900">«{deleteCampaign.title}»</span> نهائياً.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 p-5 bg-slate-50 border-t border-slate-100 sm:flex-row-reverse sm:gap-3">
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-sm hover:bg-rose-700 transition-colors"
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteCampaign(null)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-600 px-6 py-3.5 text-white shadow-2xl">
+            <CheckCircle className="size-5" />
+            <span className="font-bold">{toastMessage}</span>
+          </div>
+        </div>
+      )}
     </>
   )
 }

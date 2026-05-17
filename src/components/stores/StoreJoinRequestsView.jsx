@@ -31,12 +31,14 @@ export function StoreJoinRequestsView({ onOpenList }) {
         request={modalRequest}
         open={Boolean(modalRequestId)}
         onClose={() => setModalRequestId(null)}
-        onAccept={(id) => window.alert(`تم تسجيل قبول الطلب رقم ${id} (واجهة تجريبية).`)}
-        onReject={(id, reason) =>
-          window.alert(
-            `تم رفض الطلب رقم ${id}.\n\nسبب الرفض:\n${reason}`,
-          )
-        }
+        onAccept={(id) => {
+          // Logic to update request status in data would go here
+          console.log(`Accepted request: ${id}`)
+        }}
+        onReject={(id, reason) => {
+          // Logic to update request status in data would go here
+          console.log(`Rejected request: ${id} for reason: ${reason}`)
+        }}
       />
 
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -148,25 +150,11 @@ export function StoreJoinRequestsView({ onOpenList }) {
                 <div className="mt-4 flex items-center gap-2">
                   <button
                     type="button"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-rose-200 bg-white text-rose-600 transition-colors hover:bg-rose-50"
-                    aria-label="رفض"
-                  >
-                    <X className="size-4" strokeWidth={2.5} />
-                  </button>
-                  <button
-                    type="button"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-white text-emerald-600 transition-colors hover:bg-emerald-50"
-                    aria-label="قبول"
-                  >
-                    <Check className="size-4" strokeWidth={2.5} />
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setModalRequestId(req.id)}
                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
                   >
                     <Eye className="size-4" aria-hidden />
-                    عرض
+                    عرض التفاصيل
                   </button>
                 </div>
               </article>

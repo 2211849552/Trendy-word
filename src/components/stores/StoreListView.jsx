@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2 } from 'lucide-react'
+import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2, CheckCircle } from 'lucide-react'
 import { registeredStores } from '../../data/stores.js'
+import { StoreDetailModal } from './StoreDetailModal.jsx'
 
 
 function RowIcon({ type }) {
@@ -10,28 +11,85 @@ function RowIcon({ type }) {
   return <Shirt className={cls} aria-hidden />
 }
 
-export function StoreListView({ onBackToJoin, onOpenProducts }) {
+export function StoreListView({ onBackToJoin }) {
+  const [stores, setStores] = useState(registeredStores)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
-
+  const [deleteStore, setDeleteStore] = useState(null)
+  const [selectedStore, setSelectedStore] = useState(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   const filteredRows = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return registeredStores.filter((row) => {
-      const matchesText =
-        !q ||
-        row.name.toLowerCase().includes(q) ||
-        row.city.toLowerCase().includes(q) ||
-        row.merchant.toLowerCase().includes(q) ||
-        row.email.toLowerCase().includes(q)
-      const matchesStatus = status === 'all' || row.status === status
-      return matchesText && matchesStatus
+    return stores.filter((s) => {
+      const matchesSearch =
+        s.name.toLowerCase().includes(query.toLowerCase()) ||
+        s.merchant.toLowerCase().includes(query.toLowerCase())
+      
+      const matchesStatus = status === 'all' || s.status === status
+      return matchesSearch && matchesStatus
     })
-  }, [query, status])
+  }, [stores, query, status])
+
+  const confirmDelete = () => {
+    if (!deleteStore) return
+    setStores(prev => prev.filter(s => s.id !== deleteStore.id))
+    setDeleteStore(null)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
 
   return (
     <>
+      {/* Delete Confirmation Modal */}
+      {deleteStore && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeleteStore(null)} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+              <h2 className="text-lg font-bold text-slate-900">تأكيد حذف المتجر</h2>
+              <button onClick={() => setDeleteStore(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <Trash2 className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                <Trash2 className="size-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">هل أنت متأكد؟</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                أنت على وشك حذف المتجر <span className="font-bold text-slate-900">«{deleteStore.name}»</span> نهائياً من المنصة. لا يمكن التراجع عن هذا الإجراء.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 p-5 bg-slate-50 border-t border-slate-100 sm:flex-row-reverse sm:gap-3">
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-sm hover:bg-rose-700 transition-colors"
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteStore(null)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-600 px-6 py-3.5 text-white shadow-2xl">
+            <CheckCircle className="size-5" />
+            <span className="font-bold">تم حذف المتجر بنجاح</span>
+          </div>
+        </div>
+      )}
 
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <header>
@@ -134,19 +192,20 @@ export function StoreListView({ onBackToJoin, onOpenProducts }) {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
-                        onClick={() => onOpenProducts?.(row.id)}
+                        onClick={() => {
+                          setSelectedStore(row)
+                          setDetailModalOpen(true)
+                        }}
                         className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
-                        aria-label={`عرض منتجات ${row.name}`}
+                        aria-label={`عرض تفاصيل ${row.name}`}
                       >
                         <Eye className="size-4" aria-hidden />
                       </button>
                       <button
                         type="button"
                         className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                        aria-label="حذف (تجريبي)"
-                        onClick={() =>
-                          window.alert('إجراء الحذف غير مفعّل في الواجهة التجريبية.')
-                        }
+                        aria-label="حذف"
+                        onClick={() => setDeleteStore(row)}
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </button>
@@ -163,6 +222,12 @@ export function StoreListView({ onBackToJoin, onOpenProducts }) {
           </p>
         ) : null}
       </section>
+
+      <StoreDetailModal 
+        store={selectedStore}
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+      />
     </>
   )
 }

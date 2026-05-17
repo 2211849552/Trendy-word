@@ -1,15 +1,15 @@
 import { useEffect, useId, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 
-const DURATION_OPTIONS = [{ value: 'monthly', label: 'شهري' }]
+const DURATION_OPTIONS = [
+  { value: 'monthly', label: 'شهري' },
+  { value: 'yearly', label: 'سنوي' },
+]
+
 const STATUS_OPTIONS = [
   { value: 'active', label: 'نشط' },
   { value: 'paused', label: 'موقوف' },
 ]
-
-function newFeatureRow() {
-  return { id: crypto.randomUUID(), text: '' }
-}
 
 function emptyForm() {
   return {
@@ -17,7 +17,6 @@ function emptyForm() {
     price: '0',
     duration: 'monthly',
     status: 'active',
-    features: [newFeatureRow()],
   }
 }
 
@@ -33,13 +32,6 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
         price: String(initialPlan.price),
         duration: initialPlan.duration ?? 'monthly',
         status: initialPlan.status ?? 'active',
-        features:
-          initialPlan.features?.length > 0
-            ? initialPlan.features.map((text) => ({
-                id: crypto.randomUUID(),
-                text,
-              }))
-            : [newFeatureRow()],
       })
     } else {
       setForm(emptyForm())
@@ -72,30 +64,11 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  function addFeatureRow() {
-    setForm((f) => ({ ...f, features: [...f.features, newFeatureRow()] }))
-  }
-
-  function updateFeature(id, text) {
-    setForm((f) => ({
-      ...f,
-      features: f.features.map((row) => (row.id === id ? { ...row, text } : row)),
-    }))
-  }
-
-  function removeFeature(id) {
-    setForm((f) => ({
-      ...f,
-      features: f.features.length <= 1 ? f.features : f.features.filter((row) => row.id !== id),
-    }))
-  }
-
   function handleSubmit(e) {
     e.preventDefault()
     const name = form.name.trim()
     const priceNum = Number(form.price)
-    const featureTexts = form.features.map((r) => r.text.trim()).filter(Boolean)
-    if (!name || Number.isNaN(priceNum) || priceNum < 0 || featureTexts.length === 0) return
+    if (!name || Number.isNaN(priceNum) || priceNum < 0) return
 
     onSave?.({
       mode,
@@ -104,14 +77,13 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
       price: priceNum,
       duration: form.duration,
       status: form.status,
-      features: featureTexts,
     })
     onClose?.()
   }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px] animate-in fade-in duration-200"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose?.()
@@ -121,67 +93,89 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[min(90dvh,720px)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl ring-1 ring-slate-200/80"
+        className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 animate-in zoom-in-95 duration-200"
         dir="rtl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 py-5">
-          <h2 id={titleId} className="text-lg font-bold text-slate-900">
-            {isEdit ? 'تعديل الخطة' : 'إضافة خطة اشتراك'}
+        <header className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-5">
+          <h2 id={titleId} className="text-xl font-bold text-slate-900">
+            {isEdit ? 'تعديل بيانات الخطة' : 'إنشاء خطة اشتراك جديدة'}
           </h2>
           <button
             type="button"
             onClick={() => onClose?.()}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-200/50 hover:text-slate-700"
             aria-label="إغلاق"
           >
-            <X className="size-5" strokeWidth={2} />
+            <X className="size-5" strokeWidth={2.5} />
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6">
-          <div>
-            <label htmlFor="plan-name" className="mb-1.5 block text-sm font-medium text-slate-700">
-              اسم الخطة <span className="text-sky-600">*</span>
-            </label>
-            <input
-              id="plan-name"
-              type="text"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              placeholder="مثال: الخطة الذهبية"
-              required
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="plan-price" className="mb-1.5 block text-sm font-medium text-slate-700">
-                السعر (د.ل) <span className="text-sky-600">*</span>
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-6">
+            <div className="group">
+              <label htmlFor="plan-name" className="mb-2 block text-sm font-bold text-slate-700">
+                اسم الخطة <span className="text-rose-500">*</span>
               </label>
               <input
-                id="plan-price"
-                type="number"
-                min={0}
-                step={1}
-                value={form.price}
-                onChange={(e) => setField('price', e.target.value)}
+                id="plan-name"
+                type="text"
+                value={form.name}
+                onChange={(e) => setField('name', e.target.value)}
+                placeholder="مثال: الخطة السنوية المتقدمة"
                 required
-                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
               />
             </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="plan-price" className="mb-2 block text-sm font-bold text-slate-700">
+                  السعر (د.ل) <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="plan-price"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.price}
+                    onChange={(e) => setField('price', e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="plan-duration" className="mb-2 block text-sm font-bold text-slate-700">
+                  دورة الفوترة
+                </label>
+                <select
+                  id="plan-duration"
+                  value={form.duration}
+                  onChange={(e) => setField('duration', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
+                >
+                  {DURATION_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label htmlFor="plan-duration" className="mb-1.5 block text-sm font-medium text-slate-700">
-                المدة
+              <label htmlFor="plan-status" className="mb-2 block text-sm font-bold text-slate-700">
+                حالة الخطة
               </label>
               <select
-                id="plan-duration"
-                value={form.duration}
-                onChange={(e) => setField('duration', e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                id="plan-status"
+                value={form.status}
+                onChange={(e) => setField('status', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
               >
-                {DURATION_OPTIONS.map((o) => (
+                {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -190,76 +184,19 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
             </div>
           </div>
 
-          <div>
-            <label htmlFor="plan-status" className="mb-1.5 block text-sm font-medium text-slate-700">
-              الحالة
-            </label>
-            <select
-              id="plan-status"
-              value={form.status}
-              onChange={(e) => setField('status', e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-slate-700">
-                المميزات <span className="text-sky-600">*</span>
-              </span>
-              <button
-                type="button"
-                onClick={addFeatureRow}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-sky-600 hover:text-sky-700"
-              >
-                <Plus className="size-4" strokeWidth={2.25} aria-hidden />
-                إضافة ميزة
-              </button>
-            </div>
-            <ul className="space-y-2">
-              {form.features.map((row) => (
-                <li key={row.id} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={row.text}
-                    onChange={(e) => updateFeature(row.id, e.target.value)}
-                    placeholder="مثال: حتى 100 منتج"
-                    className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-                  />
-                  {isEdit ? (
-                    <button
-                      type="button"
-                      onClick={() => removeFeature(row.id)}
-                      className="flex size-10 shrink-0 items-center justify-center rounded-xl text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                      aria-label="حذف الميزة"
-                    >
-                      <X className="size-5" strokeWidth={2} />
-                    </button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <footer className="flex flex-wrap items-center justify-start gap-2 border-t border-slate-100 pt-5">
-            <button
-              type="submit"
-              className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
-            >
-              {isEdit ? 'حفظ التعديلات' : 'إضافة الخطة'}
-            </button>
+          <footer className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => onClose?.()}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:bg-slate-50"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300"
             >
-              إلغاء
+              إلغاء الإجراء
+            </button>
+            <button
+              type="submit"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-sky-600 px-8 text-sm font-bold text-white shadow-md transition-all hover:bg-sky-700 hover:shadow-lg focus:ring-4 focus:ring-sky-500/20 active:scale-95"
+            >
+              {isEdit ? 'تأكيد الحفظ' : 'إنشاء الخطة'}
             </button>
           </footer>
         </form>

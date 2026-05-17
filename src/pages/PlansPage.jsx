@@ -8,6 +8,8 @@ import {
   Trash2,
   TrendingUp,
   Users,
+  CheckCircle,
+  X,
 } from 'lucide-react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { PlanFormModal } from '../components/plans/PlanFormModal.jsx'
@@ -134,21 +136,21 @@ function SubscriptionSummaryCard() {
   )
 }
 
-function PlanCard({ plan, onEdit = () => {}, onDelete = () => {} }) {
+function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus = () => {} }) {
   const active = plan.status !== 'paused'
-  const periodLabel = 'شهري'
+  const periodLabel = plan.duration === 'yearly' ? 'سنوي' : 'شهري'
 
   return (
     <article
-      className="flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80"
+      className="flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80 hover:shadow-md transition-shadow"
       dir="rtl"
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
         <span
           className={[
-            'rounded-full px-2.5 py-0.5 text-xs font-semibold',
-            active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600',
+            'rounded-full px-3 py-1 text-[11px] font-bold',
+            active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700',
           ].join(' ')}
         >
           {active ? 'نشط' : 'موقوف'}
@@ -167,11 +169,11 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {} }) {
         </span>
       </p>
 
-      <div className="mt-6 flex items-stretch gap-2">
+      <div className="mt-6 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onEdit?.(plan)}
-          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+          className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         >
           <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
           تعديل
@@ -179,10 +181,10 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {} }) {
         <button
           type="button"
           onClick={() => onDelete?.(plan)}
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-500 text-white shadow-sm transition-colors hover:bg-rose-600"
-          aria-label={`حذف ${plan.name}`}
+          className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-sm transition-colors hover:bg-red-100"
         >
           <Trash2 className="size-4" strokeWidth={2} />
+          حذف
         </button>
       </div>
     </article>
@@ -245,11 +247,23 @@ export function PlansPage() {
     }
   }
 
+  const [deletePlan, setDeletePlan] = useState(null)
+  const [showToast, setShowToast] = useState(false)
+
   function handleDeletePlan(plan) {
-    const ok = window.confirm(`هل تريد حذف «${plan.name}»؟ لا يمكن التراجع عن هذا الإجراء.`)
-    if (!ok) return
-    setPlans((prev) => prev.filter((p) => p.id !== plan.id))
-    setModal((m) => (m.planId === plan.id ? { ...m, open: false, planId: null } : m))
+    setDeletePlan(plan)
+  }
+
+  function confirmDelete() {
+    if (!deletePlan) return
+    setPlans(prev => prev.filter(p => p.id !== deletePlan.id))
+    setDeletePlan(null)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
+
+  function handleToggleStatus(id, newStatus) {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p))
   }
 
   const filteredPlans = useMemo(() => {
@@ -260,6 +274,56 @@ export function PlansPage() {
 
   return (
     <>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-600 px-6 py-3.5 text-white shadow-2xl">
+            <CheckCircle className="size-5" />
+            <span className="font-bold">تم حذف الخطة بنجاح</span>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletePlan && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeletePlan(null)} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+              <h2 className="text-lg font-bold text-slate-900">تأكيد حذف الخطة</h2>
+              <button onClick={() => setDeletePlan(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                <Trash2 className="size-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">هل أنت متأكد؟</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                أنت على وشك حذف خطة <span className="font-bold text-slate-900">«{deletePlan.name}»</span> نهائياً. سيؤثر هذا على المشتركين الحاليين.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 p-5 bg-slate-50 border-t border-slate-100 sm:flex-row-reverse sm:gap-3">
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-sm hover:bg-rose-700 transition-colors"
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletePlan(null)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PlanFormModal
         open={modal.open}
         mode={modal.mode}
@@ -347,6 +411,7 @@ export function PlansPage() {
             plan={plan}
             onEdit={openEditModal}
             onDelete={handleDeletePlan}
+            onToggleStatus={handleToggleStatus}
           />
         ))}
       </div>
