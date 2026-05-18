@@ -18,7 +18,7 @@ export function StatCard({
     >
       <div className="flex items-start justify-between">
         <div
-          className={`flex size-12 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${iconClassName ?? 'bg-brand-50 text-brand-600'}`}
+          className={`flex size-12 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${iconClassName ?? 'bg-brand-50 text-brand-900'}`}
         >
           <Icon className="size-6" strokeWidth={2} aria-hidden />
         </div>

@@ -34,7 +34,7 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('overview')
 
   return (
-    <div className="flex min-h-dvh flex-row bg-brand-50/50" dir="ltr">
+    <div className="flex min-h-dvh flex-row bg-brand-50" dir="ltr">
       <main dir="rtl" className="min-w-0 flex-1 overflow-auto px-6 py-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           {renderPage(activeNav)}

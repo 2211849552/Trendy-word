@@ -1,6 +1,13 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import { CAMPAIGN_METRICS, CHART_DISTRIBUTION_COLORS } from '../theme/chartColors.js'
 
-const COLORS = ['#6366f1', '#f43f5e', '#fbbf24']
+const COLORS = CHART_DISTRIBUTION_COLORS
+
+const legendColors = {
+  نشطة: CAMPAIGN_METRICS.views.stroke,
+  'قيد المراجعة': CAMPAIGN_METRICS.stores.stroke,
+  موقوفة: CAMPAIGN_METRICS.products.stroke,
+}
 
 const pieData = [
   { name: 'نشطة', value: 84 },
@@ -64,12 +71,17 @@ export function PieChartCard() {
                 padding: '12px'
               }}
             />
-            <Legend 
-              verticalAlign="bottom" 
-              align="center" 
-              iconType="circle"
+            <Legend
+              verticalAlign="bottom"
+              align="center"
               formatter={(value) => (
-                <span className="text-sm font-semibold text-slate-600 ml-2">{value}</span>
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 ml-2">
+                  <span
+                    className="inline-block size-2.5 rounded-full"
+                    style={{ backgroundColor: legendColors[value] ?? '#64748b' }}
+                  />
+                  {value}
+                </span>
               )}
             />
           </PieChart>

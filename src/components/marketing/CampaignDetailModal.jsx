@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
+import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
 export function CampaignDetailModal({ campaign, open, onClose }) {
   useEffect(() => {
@@ -24,8 +25,11 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
 
   if (!open || !campaign) return null
 
-  const statusClass =
-    statusBadgeClass[campaign.status] ?? statusBadgeClass.finished
+  const isStopped = campaign.paused || campaign.status === 'stopped'
+  const displayStatus = isStopped ? 'متوقف' : statusLabels[campaign.status]
+  const statusClass = isStopped
+    ? statusBadgeClass.stopped
+    : (statusBadgeClass[campaign.status] ?? statusBadgeClass.finished)
 
   const overlay = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
@@ -58,10 +62,7 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
 
         <div className="space-y-6 px-5 py-6">
           <div className="text-center">
-            <span className="text-4xl leading-none" aria-hidden>
-              {campaign.emoji}
-            </span>
-            <h3 className="mt-3 text-xl font-bold text-slate-900">{campaign.title}</h3>
+            <h3 className="text-xl font-bold text-slate-900">{campaign.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{campaign.description}</p>
           </div>
 
@@ -77,32 +78,44 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
                   <span
                     className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${statusClass}`}
                   >
-                    {statusLabels[campaign.status]}
+                    {displayStatus}
                   </span>
                 </p>
               </div>
             </div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-violet-100 bg-violet-50/90 px-4 py-5 text-center">
-                <p className="text-3xl font-bold tabular-nums text-violet-600">
+              <div
+                className={`rounded-xl border px-4 py-5 text-center ${CAMPAIGN_METRICS.stores.card}`}
+              >
+                <p className={`text-3xl font-bold tabular-nums ${CAMPAIGN_METRICS.stores.value}`}>
                   {campaign.stores.toLocaleString('ar-LY')}
                 </p>
-                <p className="mt-1 text-sm font-medium text-violet-900/80">عدد المتاجر</p>
+                <p className={`mt-1 text-sm font-medium ${CAMPAIGN_METRICS.stores.label}`}>
+                  عدد المتاجر
+                </p>
               </div>
-              <div className="rounded-xl border border-orange-100 bg-orange-50/90 px-4 py-5 text-center">
-                <p className="text-3xl font-bold tabular-nums text-orange-600">
+              <div
+                className={`rounded-xl border px-4 py-5 text-center ${CAMPAIGN_METRICS.products.card}`}
+              >
+                <p className={`text-3xl font-bold tabular-nums ${CAMPAIGN_METRICS.products.value}`}>
                   {campaign.products.toLocaleString('ar-LY')}
                 </p>
-                <p className="mt-1 text-sm font-medium text-orange-900/80">عدد المنتجات</p>
+                <p className={`mt-1 text-sm font-medium ${CAMPAIGN_METRICS.products.label}`}>
+                  عدد المنتجات
+                </p>
               </div>
             </div>
 
-            <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/90 px-4 py-5 text-center">
-              <p className="text-3xl font-bold tabular-nums text-emerald-600">
+            <div
+              className={`mt-3 rounded-xl border px-4 py-5 text-center ${CAMPAIGN_METRICS.views.card}`}
+            >
+              <p className={`text-3xl font-bold tabular-nums ${CAMPAIGN_METRICS.views.value}`}>
                 {campaign.views.toLocaleString('ar-LY')}
               </p>
-              <p className="mt-1 text-sm font-medium text-emerald-900/80">المشاهدات</p>
+              <p className={`mt-1 text-sm font-medium ${CAMPAIGN_METRICS.views.label}`}>
+                المشاهدات
+              </p>
             </div>
           </div>
         </div>

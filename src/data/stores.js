@@ -1,3 +1,5 @@
+import { PRODUCT_IMAGES, STORE_IMAGES, withProductImages } from './storeImages.js'
+
 /** أسماء متاجر أزياء وعلامات موجودة فعلياً في ليبيا (فروع ومحلات معروفة) */
 
 export const joinRequests = [
@@ -13,6 +15,12 @@ export const joinRequests = [
     businessType: 'إلكتروني',
     status: 'قيد المراجعة',
     documentFile: 'lcwaikiki_tripoli_license_001.pdf',
+    image: STORE_IMAGES.lcWaikiki,
+    sampleProducts: [
+      { name: 'قميص قطن عائلي', category: 'قمصان', image: PRODUCT_IMAGES.shirt },
+      { name: 'بنطلون جينز رجالي', category: 'بنطلون', image: PRODUCT_IMAGES.pants },
+      { name: 'فستان بناتي صيفي', category: 'فساتين', image: PRODUCT_IMAGES.girlsSummerDress },
+    ],
   },
   {
     id: '2',
@@ -26,6 +34,12 @@ export const joinRequests = [
     businessType: 'إلكتروني',
     status: 'قيد المراجعة',
     documentFile: 'mango_benghazi_commercial.pdf',
+    image: STORE_IMAGES.mango,
+    sampleProducts: [
+      { name: 'فستان كتان أنيق', category: 'فساتين', image: PRODUCT_IMAGES.dressWhite },
+      { name: 'بليزر نسائي', category: 'جاكيت', image: PRODUCT_IMAGES.jacket },
+      { name: 'بلوزة حرير', category: 'بلوزة', image: PRODUCT_IMAGES.blouse },
+    ],
   },
   {
     id: '3',
@@ -39,6 +53,12 @@ export const joinRequests = [
     businessType: 'إلكتروني',
     status: 'قيد المراجعة',
     documentFile: 'alwafaa_registration_2026.pdf',
+    image: STORE_IMAGES.alWafaa,
+    sampleProducts: [
+      { name: 'عباية كريب يومية', category: 'عبايات', image: PRODUCT_IMAGES.abayaCoat },
+      { name: 'طقم مناسبات', category: 'ملابس نسائية', image: PRODUCT_IMAGES.occasionSet },
+      { name: 'بلوزة كريب', category: 'بلوزة', image: PRODUCT_IMAGES.blouse },
+    ],
   },
   {
     id: '4',
@@ -48,10 +68,16 @@ export const joinRequests = [
     email: 'hoda@sultana-boutique.ly',
     city: 'مصراتة',
     phone: '094-556-7788',
-    description: 'بوتيك للأزياء النسائية والإكسسوارات الفاخرة.',
+    description: 'بوتيك للأزياء النسائية الفاخرة.',
     businessType: 'إلكتروني',
     status: 'قيد المراجعة',
     documentFile: 'sultana_boutique_license.pdf',
+    image: STORE_IMAGES.sultana,
+    sampleProducts: [
+      { name: 'فستان سهرة مخمل', category: 'فساتين', image: PRODUCT_IMAGES.dressWhite },
+      { name: 'معطف نسائي أنيق', category: 'جاكيت', image: PRODUCT_IMAGES.jacket },
+      { name: 'بنطلون رسمي', category: 'بنطلون', image: PRODUCT_IMAGES.pants },
+    ],
   },
 ]
 
@@ -75,12 +101,13 @@ export const registeredStores = [
     products: 156,
     orders: 234,
     icon: 'shirt',
+    image: STORE_IMAGES.retaj,
     status: 'active',
     catalog: [
-      { sku: 'RTJ-101', name: 'عباية كريب يومية', category: 'عبايات', price: 185, stock: 22 },
-      { sku: 'RTJ-102', name: 'طقم بنطلون وبلوزة', category: 'ملابس نسائية', price: 95, stock: 40 },
-      { sku: 'RTJ-103', name: 'جاكيت جينز كلاسيك', category: 'ملابس رجالية', price: 140, stock: 18 },
-      { sku: 'RTJ-104', name: 'وشاح حرير', category: 'إكسسوارات', price: 45, stock: 60 },
+      { sku: 'RTJ-101', name: 'عباية كريب يومية', category: 'عبايات', price: 185, stock: 22, image: PRODUCT_IMAGES.abayaCoat },
+      { sku: 'RTJ-102', name: 'طقم بنطلون وبلوزة', category: 'ملابس نسائية', price: 95, stock: 40, image: PRODUCT_IMAGES.occasionSet },
+      { sku: 'RTJ-103', name: 'جاكيت جينز كلاسيك', category: 'ملابس رجالية', price: 140, stock: 18, image: PRODUCT_IMAGES.jacket },
+      { sku: 'RTJ-104', name: 'بلوزة قطن', category: 'بلوزة', price: 45, stock: 60, image: PRODUCT_IMAGES.blouse },
     ],
   },
   {
@@ -93,11 +120,12 @@ export const registeredStores = [
     products: 203,
     orders: 189,
     icon: 'bag',
+    image: STORE_IMAGES.oasis,
     status: 'active',
     catalog: [
-      { sku: 'OAS-201', name: 'حذاء رياضي شبكي', category: 'أحذية', price: 165, stock: 30 },
-      { sku: 'OAS-202', name: 'شنطة يد جلد صناعي', category: 'حقائب', price: 120, stock: 15 },
-      { sku: 'OAS-203', name: 'قميص قطن أبيض', category: 'قمصان', price: 55, stock: 80 },
+      { sku: 'OAS-201', name: 'قميص قطن أبيض', category: 'قمصان', price: 55, stock: 80, image: PRODUCT_IMAGES.shirt },
+      { sku: 'OAS-202', name: 'بنطلون كاجوال', category: 'بنطلون', price: 120, stock: 15, image: PRODUCT_IMAGES.pants },
+      { sku: 'OAS-203', name: 'تيشيرت مطبوع', category: 'ملابس كاجوال', price: 55, stock: 80, image: PRODUCT_IMAGES.tshirt },
     ],
   },
   {
@@ -110,11 +138,12 @@ export const registeredStores = [
     products: 178,
     orders: 145,
     icon: 'sparkles',
+    image: STORE_IMAGES.brandat,
     status: 'pending',
     catalog: [
-      { sku: 'BRD-301', name: 'فستان سهرة مخمل', category: 'فساتين', price: 320, stock: 8 },
-      { sku: 'BRD-302', name: 'ساعة يد أنيقة', category: 'إكسسوارات', price: 450, stock: 12 },
-      { sku: 'BRD-303', name: 'نظارة شمسية polarized', category: 'إكسسوارات', price: 85, stock: 25 },
+      { sku: 'BRD-301', name: 'فستان سهرة', category: 'فساتين', price: 320, stock: 8, image: PRODUCT_IMAGES.dressWhite },
+      { sku: 'BRD-302', name: 'معطف صوف', category: 'جاكيت', price: 450, stock: 12, image: PRODUCT_IMAGES.jacket },
+      { sku: 'BRD-303', name: 'بلوزة حرير', category: 'بلوزة', price: 85, stock: 25, image: PRODUCT_IMAGES.blouse },
     ],
   },
   {
@@ -127,11 +156,12 @@ export const registeredStores = [
     products: 142,
     orders: 167,
     icon: 'shirt',
+    image: STORE_IMAGES.terranova,
     status: 'disabled',
     catalog: [
-      { sku: 'TRN-401', name: 'تيشيرت قطن مطبوع', category: 'ملابس كاجوال', price: 42, stock: 55 },
-      { sku: 'TRN-402', name: 'بنطلون تشينو', category: 'ملابس رجالية', price: 78, stock: 34 },
-      { sku: 'TRN-403', name: 'كارديجان خفيف', category: 'ملابس نسائية', price: 95, stock: 20 },
+      { sku: 'TRN-401', name: 'تيشيرت قطن مطبوع', category: 'ملابس كاجوال', price: 42, stock: 55, image: PRODUCT_IMAGES.tshirt },
+      { sku: 'TRN-402', name: 'بنطلون تشينو', category: 'ملابس رجالية', price: 78, stock: 34, image: PRODUCT_IMAGES.pants },
+      { sku: 'TRN-403', name: 'بلوزة خفيفة', category: 'ملابس نسائية', price: 95, stock: 20, image: PRODUCT_IMAGES.blouse },
     ],
   },
 ]

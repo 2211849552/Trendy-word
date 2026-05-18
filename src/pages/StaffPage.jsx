@@ -89,8 +89,8 @@ export function StaffPage() {
   const getRoleBadgeColor = (role) => {
     switch (role) {
       case 'مدير نظام': return 'bg-brand-100 text-brand-700'
-      case 'مسؤول عمليات': return 'bg-sky-100 text-sky-700'
-      case 'محاسب': return 'bg-indigo-100 text-indigo-700'
+      case 'مسؤول عمليات': return 'bg-brand-100 text-brand-800'
+      case 'محاسب': return 'bg-brand-100 text-brand-800'
       default: return 'bg-slate-100 text-slate-700'
     }
   }
@@ -104,7 +104,7 @@ export function StaffPage() {
           <h1 className="text-2xl font-bold text-slate-900">إدارة الموظفين</h1>
           <p className="text-sm text-slate-500">إدارة حسابات الموظفين والصلاحيات</p>
         </div>
-        <button onClick={() => openEdit(null)} className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm">
+        <button onClick={() => openEdit(null)} className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-sm">
           <Plus className="size-4" />
           إضافة موظف
         </button>
@@ -221,14 +221,14 @@ export function StaffPage() {
                       </button>
                       <button 
                         onClick={() => openEdit(s)}
-                        className="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-lg transition-colors"
+                        className="icon-btn-edit"
                         title="تعديل"
                       >
                         <Edit className="size-4" />
                       </button>
                       <button 
                         onClick={() => openDetails(s)}
-                        className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
+                        className="icon-btn-view"
                         title="عرض التفاصيل"
                       >
                         <Eye className="size-4" />
@@ -373,7 +373,7 @@ export function StaffPage() {
               <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
                 <button 
                   type="submit"
-                  className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
+                  className="rounded-lg bg-brand-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors"
                 >
                   حفظ التعديلات
                 </button>

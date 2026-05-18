@@ -31,7 +31,7 @@ export function OverviewPage() {
           change="22%"
           trend="up"
           icon={DollarSign}
-          iconClassName="bg-sky-100 text-sky-600"
+          iconClassName="bg-brand-100 text-brand-800"
         />
         <StatCard
           label="الطلبات الشهرية"
@@ -39,7 +39,7 @@ export function OverviewPage() {
           change="18%"
           trend="up"
           icon={ShoppingCart}
-          iconClassName="bg-violet-100 text-violet-600"
+          iconClassName="bg-brand-100 text-brand-950"
         />
         <StatCard
           label="إجمالي الزبائن"
@@ -47,7 +47,7 @@ export function OverviewPage() {
           change="9%"
           trend="up"
           icon={Users}
-          iconClassName="bg-emerald-100 text-emerald-600"
+          iconClassName="bg-brand-100 text-brand-800"
         />
         <StatCard
           label="إجمالي المتاجر"
@@ -55,7 +55,7 @@ export function OverviewPage() {
           change="5%"
           trend="up"
           icon={Store}
-          iconClassName="bg-sky-100 text-sky-600"
+          iconClassName="bg-brand-100 text-brand-800"
         />
       </div>
 
@@ -72,13 +72,13 @@ export function OverviewPage() {
             label="المنتجات النشطة"
             value="8,456"
             icon={Package}
-            iconWrapClassName="bg-emerald-100 text-emerald-600"
+            iconWrapClassName="bg-brand-100 text-brand-950"
           />
           <KpiMiniCard
             label="الحملات النشطة"
             value="23"
             icon={TrendingUp}
-            iconWrapClassName="bg-amber-100 text-amber-600"
+            iconWrapClassName="bg-brand-100 text-brand-800"
           />
           <KpiMiniCard
             label="الشكاوى المفتوحة"

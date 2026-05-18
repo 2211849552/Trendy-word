@@ -128,7 +128,7 @@ export function NotificationsPage() {
           <h1 className="text-2xl font-bold text-slate-900">إدارة الإشعارات</h1>
           <p className="text-sm text-slate-500">مركز التنبيهات والإشعارات</p>
         </div>
-        <button onClick={markAllAsRead} className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm">
+        <button onClick={markAllAsRead} className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-sm">
           <CheckCircle2 className="size-4" />
           تحديد الكل كمقروء
         </button>
@@ -219,7 +219,7 @@ export function NotificationsPage() {
               {!notif.isRead && (
                 <button 
                   onClick={() => markAsRead(notif.id)}
-                  className="text-brand-600 hover:bg-brand-100 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
+                  className="text-brand-900 hover:bg-brand-100 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
                   title="تحديد كمقروء"
                 >
                   <Check className="size-4" />
@@ -227,7 +227,7 @@ export function NotificationsPage() {
               )}
               <button 
                 onClick={() => openDetails(notif)}
-                className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
+                className="icon-btn-view"
                 title="عرض التفاصيل"
               >
                 <Eye className="size-4" />

@@ -7,9 +7,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-  Area,
-  AreaChart,
 } from 'recharts'
+import { CHART_LINE_ORDERS, CHART_LINE_REVENUE } from '../theme/chartColors.js'
 
 const monthly = [
   { month: 'يناير', revenue: 42000, orders: 820 },
@@ -26,7 +25,7 @@ export function LineChartCard() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-slate-900">الإيرادات والطلبات الشهرية</h2>
         <div className="flex gap-2">
-           <span className="rounded-lg bg-brand-50 px-3 py-1 text-xs font-bold text-brand-600">آخر 6 أشهر</span>
+           <span className="rounded-lg bg-brand-50 px-3 py-1 text-xs font-bold text-brand-900">آخر 6 أشهر</span>
         </div>
       </div>
       
@@ -73,22 +72,29 @@ export function LineChartCard() {
             <Legend
               verticalAlign="bottom"
               align="center"
-              iconType="circle"
               wrapperStyle={{ paddingTop: '20px' }}
-              formatter={(value) => (
-                <span className="text-sm font-semibold text-slate-600 ml-2">
-                  {value === 'revenue' ? 'الإيرادات' : 'الطلبات'}
-                </span>
-              )}
+              formatter={(value) => {
+                const color = value === 'revenue' ? CHART_LINE_REVENUE : CHART_LINE_ORDERS
+                const label = value === 'revenue' ? 'الإيرادات' : 'الطلبات'
+                return (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 ml-2">
+                    <span
+                      className="inline-block size-2.5 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    {label}
+                  </span>
+                )
+              }}
             />
             <Line
               yAxisId="rev"
               type="monotone"
               dataKey="revenue"
               name="revenue"
-              stroke="#6366f1"
+              stroke={CHART_LINE_REVENUE}
               strokeWidth={3}
-              dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }}
+              dot={{ r: 4, fill: CHART_LINE_REVENUE, strokeWidth: 0 }}
               activeDot={{ r: 6, strokeWidth: 0 }}
             />
             <Line
@@ -96,9 +102,9 @@ export function LineChartCard() {
               type="monotone"
               dataKey="orders"
               name="orders"
-              stroke="#f43f5e"
+              stroke={CHART_LINE_ORDERS}
               strokeWidth={3}
-              dot={{ r: 4, fill: '#f43f5e', strokeWidth: 0 }}
+              dot={{ r: 4, fill: CHART_LINE_ORDERS, strokeWidth: 0 }}
               activeDot={{ r: 6, strokeWidth: 0 }}
             />
           </LineChart>

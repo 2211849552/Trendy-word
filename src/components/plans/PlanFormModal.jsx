@@ -124,7 +124,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                 onChange={(e) => setField('name', e.target.value)}
                 placeholder="مثال: الخطة السنوية المتقدمة"
                 required
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
               />
             </div>
 
@@ -142,7 +142,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                     value={form.price}
                     onChange={(e) => setField('price', e.target.value)}
                     required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
                   />
                 </div>
               </div>
@@ -154,7 +154,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                   id="plan-duration"
                   value={form.duration}
                   onChange={(e) => setField('duration', e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
                 >
                   {DURATION_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -173,7 +173,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                 id="plan-status"
                 value={form.status}
                 onChange={(e) => setField('status', e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -194,7 +194,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
             </button>
             <button
               type="submit"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-sky-600 px-8 text-sm font-bold text-white shadow-md transition-all hover:bg-sky-700 hover:shadow-lg focus:ring-4 focus:ring-sky-500/20 active:scale-95"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-900 px-8 text-sm font-bold text-white shadow-md transition-all hover:bg-brand-950 hover:shadow-lg focus:ring-4 focus:ring-brand-900/20 active:scale-95"
             >
               {isEdit ? 'تأكيد الحفظ' : 'إنشاء الخطة'}
             </button>

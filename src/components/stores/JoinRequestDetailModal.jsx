@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Gift, FileText, CheckCircle2 } from 'lucide-react'
+import { X, FileText, CheckCircle2 } from 'lucide-react'
+import { StoreImage } from './StoreImage.jsx'
 
 function InfoCard({ label, value, className = '' }) {
   return (
@@ -164,9 +165,11 @@ export function JoinRequestDetailModal({
           ) : (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="text-center">
-                <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 via-amber-400 to-orange-400 shadow-md ring-2 ring-amber-200/80">
-                  <Gift className="size-8 text-amber-950/90" strokeWidth={1.75} aria-hidden />
-                </div>
+                <StoreImage
+                  src={request.image}
+                  name={request.storeName}
+                  className="mx-auto size-24 rounded-2xl shadow-md ring-2 ring-slate-100"
+                />
                 <h3 className="mt-4 text-xl font-bold text-slate-900">{request.storeName}</h3>
                 <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
                   {request.description}
@@ -189,9 +192,35 @@ export function JoinRequestDetailModal({
                 <InfoCard
                   label="تاريخ الطلب"
                   value={request.date}
-                  className="border-sky-100 bg-sky-50/90"
+                  className="border-brand-100 bg-brand-50/90"
                 />
               </div>
+
+              {request.sampleProducts?.length > 0 && (
+                <div>
+                  <p className="mb-3 text-sm font-semibold text-slate-800">عينات المنتجات المقترحة</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {request.sampleProducts.map((product, idx) => (
+                      <article
+                        key={`${product.name}-${idx}`}
+                        className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm ring-1 ring-slate-50"
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-28 w-full object-cover"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="p-3 text-right">
+                          <p className="text-sm font-bold leading-snug text-slate-900">{product.name}</p>
+                          <p className="mt-1 text-xs text-slate-500">{product.category}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <p className="mb-2 text-sm font-semibold text-slate-800">الوثيقة الرسمية</p>

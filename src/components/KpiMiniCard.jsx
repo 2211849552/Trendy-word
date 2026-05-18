@@ -6,13 +6,13 @@ export function KpiMiniCard({ label, value, icon: Icon, iconWrapClassName }) {
     >
       <div className="flex items-center gap-4">
         <div
-          className={`flex size-14 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 group-hover:scale-110 ${iconWrapClassName ?? 'bg-brand-50 text-brand-600'}`}
+          className={`flex size-14 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 group-hover:scale-110 ${iconWrapClassName ?? 'bg-brand-50 text-brand-900'}`}
         >
           <Icon className="size-7" strokeWidth={2} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-slate-900 group-hover:text-brand-600 transition-colors">
+          <p className="mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-slate-900 group-hover:text-brand-900 transition-colors">
             {value}
           </p>
         </div>

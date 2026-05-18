@@ -1,13 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Search, SlidersHorizontal, Shirt, ShoppingBag, Sparkles, Eye, Trash2, CheckCircle, Download } from 'lucide-react'
+import { Search, SlidersHorizontal, Eye, Trash2, CheckCircle, Download } from 'lucide-react'
 import { StoreDetailModal } from './StoreDetailModal.jsx'
-
-function RowIcon({ type }) {
-  const cls = 'size-4 text-slate-600'
-  if (type === 'bag') return <ShoppingBag className={cls} aria-hidden />
-  if (type === 'sparkles') return <Sparkles className={cls} aria-hidden />
-  return <Shirt className={cls} aria-hidden />
-}
+import { StoreImage } from './StoreImage.jsx'
 
 export function StoreListView({ stores, onDeleteStore, onBackToJoin }) {
   const [query, setQuery] = useState('')
@@ -103,14 +97,14 @@ export function StoreListView({ stores, onDeleteStore, onBackToJoin }) {
           <button
             type="button"
             onClick={onBackToJoin}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            className="rounded-xl border border-brand-200 bg-white px-4 py-2.5 text-sm font-semibold text-brand-950 shadow-sm transition-colors hover:bg-brand-50"
           >
             طلبات الانضمام
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+            className="btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm"
           >
             <Download className="size-4" aria-hidden />
             طباعة قائمة المتاجر
@@ -173,9 +167,11 @@ export function StoreListView({ stores, onDeleteStore, onBackToJoin }) {
                 <tr key={row.id} className="hover:bg-slate-50/60">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 print:hidden">
-                        <RowIcon type={row.icon} />
-                      </span>
+                      <StoreImage
+                        src={row.image}
+                        name={row.name}
+                        className="size-11 shrink-0 rounded-xl ring-1 ring-slate-100 print:hidden"
+                      />
                       <div>
                         <div className="font-semibold text-slate-900">{row.name}</div>
                         <div className="text-xs text-slate-500">{row.city}</div>
@@ -205,7 +201,7 @@ export function StoreListView({ stores, onDeleteStore, onBackToJoin }) {
                           setSelectedStore(row)
                           setDetailModalOpen(true)
                         }}
-                        className="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+                        className="flex size-9 items-center justify-center rounded-lg bg-brand-950 text-white shadow-sm transition-colors hover:bg-brand-800"
                         aria-label={`عرض تفاصيل ${row.name}`}
                       >
                         <Eye className="size-4" aria-hidden />

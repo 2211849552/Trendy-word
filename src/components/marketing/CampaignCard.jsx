@@ -1,5 +1,6 @@
 import { Eye, Pencil, Play, Pause, Trash2 } from 'lucide-react'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
+import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
 function fmtNum(n) {
   return n.toLocaleString('ar-LY')
@@ -9,24 +10,20 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
   const badge = statusBadgeClass[campaign.status] ?? statusBadgeClass.finished
   
   // Custom display for status if paused
-  const displayStatus = campaign.paused ? 'متوقف' : statusLabels[campaign.status]
-  const displayBadge = campaign.paused 
-    ? 'bg-slate-100 text-slate-700 ring-slate-200' 
-    : badge
+  const isStopped = campaign.paused || campaign.status === 'stopped'
+  const displayStatus = isStopped ? 'متوقف' : statusLabels[campaign.status]
+  const displayBadge = isStopped ? statusBadgeClass.stopped : badge
 
   return (
     <article
       className="flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100/80"
       dir="rtl"
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-end gap-2">
         <span
           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${displayBadge}`}
         >
           {displayStatus}
-        </span>
-        <span className="text-2xl leading-none" aria-hidden>
-          {campaign.emoji}
         </span>
       </div>
 
@@ -38,15 +35,21 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
 
       <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
         <li className="flex justify-between gap-2">
-          <span className="font-bold tabular-nums text-brand-600">{fmtNum(campaign.stores)}</span>
+          <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.stores.value}`}>
+            {fmtNum(campaign.stores)}
+          </span>
           <span className="text-slate-500">عدد المتاجر</span>
         </li>
         <li className="flex justify-between gap-2">
-          <span className="font-bold tabular-nums text-orange-600">{fmtNum(campaign.products)}</span>
+          <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.products.value}`}>
+            {fmtNum(campaign.products)}
+          </span>
           <span className="text-slate-500">عدد المنتجات</span>
         </li>
         <li className="flex justify-between gap-2">
-          <span className="font-bold tabular-nums text-emerald-600">{fmtNum(campaign.views)}</span>
+          <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.views.value}`}>
+            {fmtNum(campaign.views)}
+          </span>
           <span className="text-slate-500">المشاهدات</span>
         </li>
       </ul>
@@ -60,7 +63,7 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         <button
           type="button"
           onClick={() => onView?.(campaign)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 min-[420px]:flex-none"
+          className="btn-action-solid flex-1 min-[420px]:flex-none"
         >
           <Eye className="size-4 shrink-0" aria-hidden />
           عرض
@@ -68,7 +71,7 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         <button
           type="button"
           onClick={() => onEdit?.(campaign)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 min-[420px]:flex-none"
+          className="btn-action-solid flex-1 min-[420px]:flex-none"
         >
           <Pencil className="size-4 shrink-0" aria-hidden />
           تعديل

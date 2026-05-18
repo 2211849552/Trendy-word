@@ -175,7 +175,7 @@ export function DisputesPage() {
               onClick={() => setActiveStatusFilter(status)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
                 activeStatusFilter === status 
-                  ? 'bg-brand-600 text-white' 
+                  ? 'bg-brand-900 text-white' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -192,7 +192,7 @@ export function DisputesPage() {
               onClick={() => setActiveTypeFilter(type)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
                 activeTypeFilter === type 
-                  ? 'bg-brand-600 text-white' 
+                  ? 'bg-brand-900 text-white' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -269,7 +269,7 @@ export function DisputesPage() {
                     )}
                     <button 
                       onClick={() => openDetailsModal(dispute)}
-                      className="flex items-center gap-1 px-3 py-1 rounded-full border border-brand-200 text-xs font-bold text-brand-600 bg-white hover:bg-brand-50 transition-colors"
+                      className="btn-action-solid gap-1 px-3 py-1.5 text-xs"
                     >
                        عرض التفاصيل <Eye className="size-3" />
                     </button>
@@ -298,7 +298,7 @@ export function DisputesPage() {
                                     setOpenDropdownId(null)
                                   }}
                                   className={`w-full text-right px-4 py-2 text-xs font-bold hover:bg-slate-50 transition-colors ${
-                                    dispute.status === opt ? 'bg-slate-50 text-brand-600' : 'text-slate-700'
+                                    dispute.status === opt ? 'bg-slate-50 text-brand-900' : 'text-slate-700'
                                   }`}
                                 >
                                   {opt}
@@ -348,7 +348,7 @@ export function DisputesPage() {
                       <p className="text-xs text-slate-500 mt-1">تم إرفاق صورة توضيحية للمنتج - اضغط للتكبير</p>
                     </div>
                  </div>
-                 <div className="size-8 rounded-full bg-white flex items-center justify-center text-brand-600 shadow-sm">
+                 <div className="size-8 rounded-full bg-white flex items-center justify-center text-brand-900 shadow-sm">
                     <Search className="size-4" />
                  </div>
               </div>
@@ -380,7 +380,7 @@ export function DisputesPage() {
                <button onClick={() => {
                  setReplyModalOpen(false)
                  triggerToast('تم إرسال الرد بنجاح')
-               }} className="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-700 shadow-sm transition-colors">
+               }} className="rounded-xl bg-brand-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-950 shadow-sm transition-colors">
                  إرسال الرد
                </button>
                <button onClick={() => setReplyModalOpen(false)} className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
@@ -466,7 +466,7 @@ export function DisputesPage() {
                         <p className="text-sm font-medium text-slate-700">صورة توضيحية للمنتج موضوع الشكوى</p>
                         <button 
                           onClick={() => setShowImageModal(true)}
-                          className="text-brand-600 text-sm font-bold mt-2 flex items-center gap-1 hover:underline"
+                          className="text-brand-900 text-sm font-bold mt-2 flex items-center gap-1 hover:underline"
                         >
                            اضغط للتكبير <Search className="size-3" />
                         </button>

@@ -1,40 +1,76 @@
 @import 'tailwindcss';
 
+/* Trendy — أزرق داكن (#1e1e4d) كما في واجهة إدارة الخطط */
 @theme {
   --font-sans: 'Cairo', ui-sans-serif, system-ui, sans-serif;
-  
-  --color-brand-50: #f5f7ff;
-  --color-brand-100: #ebf0fe;
-  --color-brand-200: #dce4fd;
-  --color-brand-300: #c1ccfb;
-  --color-brand-400: #9ea9f7;
-  --color-brand-500: #7a82f0;
-  --color-brand-600: #6366f1; /* Indigo-600 */
-  --color-brand-700: #5553e1;
-  --color-brand-800: #4643b8;
-  --color-brand-900: #3d3b94;
-  --color-brand-950: #252457;
 
-  --shadow-premium: 0 10px 15px -3px rgba(99, 102, 241, 0.1), 0 4px 6px -4px rgba(99, 102, 241, 0.1);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --color-brand-50: #f4f7fa;
+  --color-brand-100: #e8ecf4;
+  --color-brand-200: #cdd5e8;
+  --color-brand-300: #9aa8c4;
+  --color-brand-400: #6b7a9e;
+  --color-brand-500: #4a5680;
+  --color-brand-600: #353d6b;
+  --color-brand-700: #2a315c;
+  --color-brand-800: #232a52;
+  --color-brand-900: #1e1e4d;
+  --color-brand-950: #1e1e4d;
+
+  --shadow-premium: 0 10px 15px -3px rgba(30, 30, 77, 0.12), 0 4px 6px -4px rgba(30, 30, 77, 0.08);
+  --shadow-glass: 0 8px 32px 0 rgba(30, 30, 77, 0.06);
 }
 
 @layer base {
   body {
-    @apply m-0 min-h-dvh bg-[#f8f9ff] font-sans text-slate-800 antialiased;
+    @apply m-0 min-h-dvh bg-brand-50 font-sans text-slate-800 antialiased;
   }
 
   #root {
     @apply min-h-dvh w-full max-w-none;
   }
+
+  ::selection {
+    @apply bg-brand-800/20 text-brand-950;
+  }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-glass;
+    @apply border border-brand-100/80 bg-white shadow-glass backdrop-blur-md;
   }
-  
+
   .premium-gradient {
-    @apply bg-gradient-to-br from-brand-600 to-brand-800;
+    @apply bg-brand-900;
+  }
+
+  /* عنصر القائمة النشط — خلفية بيضاء ونص أزرق داكن */
+  .nav-item-active {
+    @apply bg-white text-brand-950 shadow-sm;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-800 focus:outline-none focus:ring-4 focus:ring-brand-950/20 active:scale-[0.98];
+  }
+
+  .btn-primary-lg {
+    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-brand-950 px-8 text-sm font-bold text-white shadow-md transition-colors hover:bg-brand-800 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-brand-950/20 active:scale-[0.98];
+  }
+
+  .input-brand {
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-950/10;
+  }
+
+  /* أزرار عرض / تعديل في الجداول والبطاقات */
+  .btn-action-solid {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-800;
+  }
+
+  .icon-btn-view,
+  .icon-btn-edit {
+    @apply rounded-lg bg-brand-950 p-2 text-white transition-colors hover:bg-brand-800;
+  }
+
+  .btn-action-outline {
+    @apply inline-flex items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-950 transition-colors hover:bg-brand-100;
   }
 }

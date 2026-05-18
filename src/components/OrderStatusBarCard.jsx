@@ -64,7 +64,7 @@ export function OrderStatusBarCard() {
             />
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6366f1" />
+                <stop offset="0%" stopColor="#0f172a" />
                 <stop offset="100%" stopColor="#4f46e5" />
               </linearGradient>
             </defs>

@@ -11,11 +11,9 @@ import {
   Users,
   UserPlus,
   Bell,
-  HelpCircle,
   ChevronDown,
-  ChevronUp,
   ShoppingCart,
-  Truck
+  Truck,
 } from 'lucide-react'
 
 const navItems = [
@@ -23,11 +21,7 @@ const navItems = [
   { id: 'stores', label: 'إدارة المتاجر', icon: Store },
   { id: 'plans', label: 'إدارة الخطط', icon: CreditCard },
   { id: 'marketing', label: 'التسويق والمحتوى', icon: Megaphone },
-  {
-    id: 'catalog',
-    label: 'إدارة الكتالوج',
-    icon: List,
-  },
+  { id: 'catalog', label: 'إدارة الكتالوج', icon: List },
   { id: 'disputes', label: 'الشكاوى والنزاعات', icon: MessageCircle },
   { id: 'finance', label: 'الإدارة المالية', icon: DollarSign },
   { id: 'offers', label: 'العروض والخصومات', icon: Tag },
@@ -39,7 +33,7 @@ const navItems = [
 ]
 
 export function Sidebar({ activeId = 'overview', onNavigate }) {
-  const [openMenus, setOpenMenus] = useState({ catalog: true })
+  const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (id) => {
     setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -48,34 +42,24 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
   return (
     <aside
       dir="rtl"
-      className="flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-2xl"
+      className="flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-xl"
     >
-      <div className="shrink-0 px-6 py-8">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/20">
-            <Store className="size-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">
-              Trendy
-            </h1>
-            <p className="text-[10px] font-medium uppercase tracking-widest text-brand-300/60">
-              Admin Control
-            </p>
-          </div>
-        </div>
+      <div className="shrink-0 border-b border-white/10 px-6 py-7">
+        <h1 className="text-xl font-bold tracking-tight text-white">Trendy</h1>
+        <p className="mt-1 text-xs font-medium text-white/55">لوحة تحكم المتجر</p>
       </div>
 
       <nav
-        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-4 scrollbar-hide"
+        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4"
         aria-label="القائمة الرئيسية"
       >
         {navItems.map(({ id, label, icon: Icon, items }) => {
           const isActive = id === activeId || items?.some((sub) => sub.id === activeId)
           const isOpen = openMenus[id]
+          const isLeafActive = isActive && !items
 
           return (
-            <div key={id} className="mb-1">
+            <div key={id} className="mb-0.5">
               <button
                 type="button"
                 onClick={() => {
@@ -86,34 +70,36 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                   }
                 }}
                 className={[
-                  'group flex w-full items-center justify-between rounded-xl px-4 py-3 text-start text-sm font-medium transition-all duration-200',
-                  isActive && !items
-                    ? 'premium-gradient text-white shadow-lg shadow-brand-600/20'
+                  'group flex w-full items-center justify-between rounded-xl px-4 py-3 text-start text-sm font-semibold transition-all duration-200',
+                  isLeafActive
+                    ? 'nav-item-active'
                     : isActive && items
-                    ? 'bg-white/5 text-white'
-                    : 'text-brand-100/60 hover:bg-white/5 hover:text-white',
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white',
                 ].join(' ')}
               >
                 <div className="flex items-center gap-3">
                   <Icon
                     className={[
-                      'size-5 shrink-0 transition-transform duration-200 group-hover:scale-110',
-                      isActive ? 'text-white' : 'text-brand-400/60 group-hover:text-brand-300',
+                      'size-5 shrink-0',
+                      isLeafActive
+                        ? 'text-brand-950'
+                        : 'text-white/60 group-hover:text-white',
                     ].join(' ')}
-                    strokeWidth={isActive ? 2.5 : 2}
+                    strokeWidth={isLeafActive ? 2.25 : 2}
                     aria-hidden
                   />
                   <span>{label}</span>
                 </div>
-                {items && (
+                {items ? (
                   <div className={['transition-transform duration-200', isOpen ? 'rotate-180' : ''].join(' ')}>
-                    <ChevronDown className="size-4 opacity-40" />
+                    <ChevronDown className="size-4 opacity-50" />
                   </div>
-                )}
+                ) : null}
               </button>
 
-              {items && isOpen && (
-                <div className="mt-1 flex flex-col gap-1 pr-11">
+              {items && isOpen ? (
+                <div className="mt-1 flex flex-col gap-0.5 pr-4">
                   {items.map((subItem) => {
                     const isSubActive = subItem.id === activeId
                     return (
@@ -122,25 +108,20 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                         type="button"
                         onClick={() => onNavigate?.(subItem.id)}
                         className={[
-                          'flex w-full items-center rounded-lg py-2 text-start text-[13px] font-medium transition-colors relative',
-                          isSubActive
-                            ? 'text-brand-300'
-                            : 'text-brand-100/40 hover:text-brand-200',
+                          'flex w-full items-center rounded-lg px-4 py-2 text-start text-[13px] font-medium transition-all',
+                          isSubActive ? 'nav-item-active' : 'text-white/55 hover:bg-white/10 hover:text-white',
                         ].join(' ')}
                       >
-                        {isSubActive && <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-400 shadow-[0_0_8px_rgba(165,180,252,0.6)]" />}
                         {subItem.label}
                       </button>
                     )
                   })}
                 </div>
-              )}
+              ) : null}
             </div>
           )
         })}
       </nav>
-
-
     </aside>
   )
 }

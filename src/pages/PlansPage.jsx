@@ -15,16 +15,18 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { PlanFormModal } from '../components/plans/PlanFormModal.jsx'
 import { StatCard } from '../components/StatCard.jsx'
 
+import { CHART_BRAND_SCALE } from '../theme/chartColors.js'
+
 const planDistribution = [
-  { name: 'الخطة الأساسية', value: 49, color: '#3b82f6' },
-  { name: 'الخطة المتقدمة', value: 35, color: '#22c55e' },
-  { name: 'الخطة الاحترافية', value: 16, color: '#fb923c' },
+  { name: 'الخطة الأساسية', value: 49, color: CHART_BRAND_SCALE[0] },
+  { name: 'الخطة المتقدمة', value: 35, color: CHART_BRAND_SCALE[2] },
+  { name: 'الخطة الاحترافية', value: 16, color: CHART_BRAND_SCALE[3] },
 ]
 
 const subscriptionSummary = [
-  { label: 'الخطة الأساسية', count: 120, dotClass: 'bg-sky-500' },
-  { label: 'الخطة المتقدمة', count: 85, dotClass: 'bg-emerald-500' },
-  { label: 'الخطة الاحترافية', count: 40, dotClass: 'bg-amber-500' },
+  { label: 'الخطة الأساسية', count: 120, dotClass: 'bg-brand-950' },
+  { label: 'الخطة المتقدمة', count: 85, dotClass: 'bg-brand-600' },
+  { label: 'الخطة الاحترافية', count: 40, dotClass: 'bg-brand-400' },
 ]
 
 const initialPlans = [
@@ -173,7 +175,7 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
         <button
           type="button"
           onClick={() => onEdit?.(plan)}
-          className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          className="btn-action-solid col-span-2 py-2.5"
         >
           <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
           تعديل
@@ -342,7 +344,7 @@ export function PlansPage() {
         <button
           type="button"
           onClick={openAddModal}
-          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-950"
         >
           <Plus className="size-5" strokeWidth={2.25} aria-hidden />
           إضافة خطة اشتراك
@@ -380,7 +382,7 @@ export function PlansPage() {
           change="—"
           trend="up"
           icon={CreditCard}
-          iconClassName="bg-sky-100 text-sky-600"
+          iconClassName="bg-brand-100 text-brand-800"
         />
       </div>
 
@@ -400,7 +402,7 @@ export function PlansPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="البحث عن خطة اشتراك..."
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pe-12 ps-4 text-sm text-slate-900 shadow-sm outline-none ring-slate-200/80 transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pe-12 ps-4 text-sm text-slate-900 shadow-sm outline-none ring-slate-200/80 transition placeholder:text-slate-400 focus:border-brand-900 focus:ring-2 focus:ring-brand-100"
         />
       </div>
 

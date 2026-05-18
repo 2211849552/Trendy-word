@@ -66,7 +66,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
   }
 
   const fieldClass =
-    'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-500/20'
+    'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-900 focus:bg-white focus:ring-2 focus:ring-brand-900/20'
 
   const overlay = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
@@ -200,7 +200,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-700"
+              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand-950"
             >
               إضافة الحملة
             </button>

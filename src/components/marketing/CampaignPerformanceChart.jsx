@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import { campaignPerformanceSeries } from '../../data/campaigns.js'
+import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
 export function CampaignPerformanceChart() {
   return (
@@ -62,8 +63,22 @@ export function CampaignPerformanceChart() {
               verticalAlign="bottom"
               align="center"
               formatter={(value) => {
-                const map = { stores: 'عدد المتاجر', products: 'عدد المنتجات', views: 'المشاهدات' }
-                return <span className="text-sm text-slate-600">{map[value] ?? value}</span>
+                const map = {
+                  stores: { label: 'عدد المتاجر', color: CAMPAIGN_METRICS.stores.stroke },
+                  products: { label: 'عدد المنتجات', color: CAMPAIGN_METRICS.products.stroke },
+                  views: { label: 'المشاهدات', color: CAMPAIGN_METRICS.views.stroke },
+                }
+                const item = map[value]
+                if (!item) return value
+                return (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                    <span
+                      className="inline-block size-2.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    {item.label}
+                  </span>
+                )
               }}
             />
             <Line
@@ -71,9 +86,9 @@ export function CampaignPerformanceChart() {
               type="monotone"
               dataKey="stores"
               name="stores"
-              stroke="#a855f7"
+              stroke={CAMPAIGN_METRICS.stores.stroke}
               strokeWidth={2.5}
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: CAMPAIGN_METRICS.stores.stroke }}
               activeDot={{ r: 5 }}
             />
             <Line
@@ -81,9 +96,9 @@ export function CampaignPerformanceChart() {
               type="monotone"
               dataKey="products"
               name="products"
-              stroke="#f97316"
+              stroke={CAMPAIGN_METRICS.products.stroke}
               strokeWidth={2.5}
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: CAMPAIGN_METRICS.products.stroke }}
               activeDot={{ r: 5 }}
             />
             <Line
@@ -91,9 +106,9 @@ export function CampaignPerformanceChart() {
               type="monotone"
               dataKey="views"
               name="views"
-              stroke="#22c55e"
+              stroke={CAMPAIGN_METRICS.views.stroke}
               strokeWidth={2.5}
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: CAMPAIGN_METRICS.views.stroke }}
               activeDot={{ r: 5 }}
             />
           </LineChart>

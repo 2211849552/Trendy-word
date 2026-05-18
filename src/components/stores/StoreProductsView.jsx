@@ -81,10 +81,11 @@ export function StoreProductsView({ storeId, onBack }) {
           {storeProducts.map((product, idx) => (
             <div key={product.sku} className="flex flex-col rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
               <div className="flex h-48 items-center justify-center bg-slate-50">
-                <img 
-                  src={`https://images.unsplash.com/photo-${idx % 2 === 0 ? '1521572163474-6864f9cf17ab' : '1591047139829-d91aecb6caea'}?auto=format&fit=crop&w=400&q=80`} 
+                <img
+                  src={product.image}
                   alt={product.name}
                   className="h-full w-full object-cover"
+                  loading="lazy"
                 />
               </div>
               <div className="flex flex-1 flex-col p-5">
@@ -100,13 +101,13 @@ export function StoreProductsView({ storeId, onBack }) {
                   <span className={`rounded-lg px-2 py-1 text-xs font-bold ${product.stock > 0 ? 'bg-slate-900 text-white' : 'bg-red-100 text-red-700'}`}>
                     {product.stock > 0 ? `${product.stock} متوفر` : 'نفد'}
                   </span>
-                  <span className="text-2xl font-bold text-brand-600" dir="ltr">
+                  <span className="text-2xl font-bold text-brand-900" dir="ltr">
                     {product.price} <span className="text-sm font-medium">د.ل</span>
                   </span>
                 </div>
 
                 <div className="mt-4 border-t border-slate-100 pt-4">
-                  <button className="w-full rounded-xl border border-brand-200 bg-brand-50 py-2.5 text-brand-600 hover:bg-brand-100 flex justify-center items-center gap-2 transition-colors font-bold text-sm">
+                  <button type="button" className="btn-action-solid w-full py-2.5 text-sm">
                     <Eye className="size-4" />
                     عرض التفاصيل
                   </button>
@@ -157,7 +158,7 @@ export function StoreProductsView({ storeId, onBack }) {
               </div>
               <div className="flex gap-3 justify-end mt-8 pt-4 border-t">
                 <button onClick={() => setShowAddProduct(false)} className="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium hover:bg-slate-50 transition-colors">إلغاء</button>
-                <button onClick={() => setShowAddProduct(false)} className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 transition-colors shadow-sm">إضافة المنتج</button>
+                <button onClick={() => setShowAddProduct(false)} className="rounded-lg bg-brand-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-950 transition-colors shadow-sm">إضافة المنتج</button>
               </div>
             </div>
           </div>

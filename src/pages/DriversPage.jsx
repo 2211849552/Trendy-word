@@ -93,7 +93,7 @@ export function DriversPage() {
         </div>
         <button 
           onClick={() => setAddModalOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-sm"
         >
           <Plus className="size-4" />
           إضافة سائق
@@ -211,7 +211,7 @@ export function DriversPage() {
                       </button>
                       <button 
                         onClick={() => openDetails(d)}
-                        className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
+                        className="icon-btn-view"
                         title="عرض التفاصيل"
                       >
                         <Eye className="size-4" />
@@ -361,7 +361,7 @@ export function DriversPage() {
               <div className="flex items-center gap-3 pt-4">
                 <button 
                   type="submit"
-                  className="flex-1 rounded-lg bg-brand-600 px-6 py-3 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
+                  className="flex-1 rounded-lg bg-brand-900 px-6 py-3 text-sm font-bold text-white hover:bg-brand-950 transition-colors"
                 >
                   إضافة السائق
                 </button>

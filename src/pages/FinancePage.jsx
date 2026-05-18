@@ -12,7 +12,7 @@ const monthlyRevenueData = [
 ]
 
 const paymentMethodsData = [
-  { name: 'محفظة إلكترونية', value: 67, color: '#3b82f6' },
+  { name: 'محفظة إلكترونية', value: 67, color: '#334155' },
   { name: 'نقدي', value: 33, color: '#10b981' },
 ]
 
@@ -288,7 +288,7 @@ export function FinancePage() {
                   <td className="px-6 py-4">
                     <button 
                       onClick={() => openDetails(tx)}
-                      className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
+                      className="icon-btn-view"
                     >
                       <Eye className="size-5" />
                     </button>

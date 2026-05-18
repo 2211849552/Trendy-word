@@ -203,7 +203,7 @@ export function CustomersPage() {
                       </button>
                       <button 
                         onClick={() => openDetails(c)}
-                        className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
+                        className="icon-btn-view"
                         title="عرض التفاصيل"
                       >
                         <Eye className="size-4" />
@@ -277,7 +277,7 @@ export function CustomersPage() {
                     <p className="text-sm text-slate-600 mt-1">د.ل</p>
                  </div>
                  <div className="rounded-xl bg-brand-50/50 border border-brand-100 p-5 text-center flex flex-col items-center justify-center">
-                    <p className="font-bold text-brand-600 text-3xl mb-1">{selectedCustomer.orders}</p>
+                    <p className="font-bold text-brand-900 text-3xl mb-1">{selectedCustomer.orders}</p>
                     <p className="text-sm text-slate-600 mt-1">طلب</p>
                  </div>
               </div>

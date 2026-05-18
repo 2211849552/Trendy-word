@@ -18,13 +18,13 @@ const initialOffers = [
     id: 2,
     title: 'خصم نهاية الموسم',
     discount: '50%',
-    store: 'متجر الإلكترونيات الذكية',
+    store: 'متجر الأزياء العصرية',
     startDate: '2026-04-01',
     endDate: '2026-05-31',
     productsCount: 1,
     status: 'نشط',
     minAmount: null,
-    products: ['هاتف ذكي سامسونج']
+    products: ['جاكيت شتوي مبطن']
   },
   {
     id: 3,
@@ -36,7 +36,7 @@ const initialOffers = [
     productsCount: 2,
     status: 'مجدول',
     minAmount: 100,
-    products: ['نظارة شمسية', 'تيشيرت صيفي']
+    products: ['فستان صيفي مشجر', 'تيشيرت صيفي']
   }
 ];
 
@@ -124,8 +124,8 @@ export function OffersPage() {
               
               <h3 className="text-lg font-bold text-slate-900 text-center mb-4">{offer.title}</h3>
               
-              <div className="bg-red-50 rounded-xl py-6 text-center mb-6">
-                <p className="text-4xl font-bold text-red-600 mb-1" dir="ltr">{offer.discount}</p>
+              <div className="mb-6 rounded-xl bg-brand-50 py-6 text-center ring-1 ring-brand-100">
+                <p className="mb-1 text-4xl font-bold text-brand-950" dir="ltr">{offer.discount}</p>
                 <p className="text-sm text-slate-600">خصم</p>
               </div>
 
@@ -144,7 +144,7 @@ export function OffersPage() {
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span className="text-slate-500">المنتجات:</span>
-                  <span className="font-medium text-brand-600">{offer.productsCount}</span>
+                  <span className="font-medium text-brand-900">{offer.productsCount}</span>
                 </div>
                 {offer.minAmount && (
                   <div className="flex justify-between items-center text-slate-600">
@@ -158,7 +158,7 @@ export function OffersPage() {
             <div className="p-4 pt-0">
                <button 
                  onClick={() => openDetails(offer)}
-                 className="w-full rounded-xl bg-brand-600 py-3 text-sm font-bold text-white hover:bg-brand-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                 className="w-full rounded-xl bg-brand-900 py-3 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-sm flex items-center justify-center gap-2"
                >
                  <Eye className="size-4" />
                  عرض التفاصيل
@@ -197,9 +197,9 @@ export function OffersPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl bg-red-50/50 border border-red-50 p-8 text-center flex flex-col items-center justify-center">
-                <p className="font-bold text-red-600 text-6xl mb-2" dir="ltr">{selectedOffer.discount}</p>
-                <p className="text-sm text-slate-600 font-medium">نسبة الخصم</p>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-brand-100 bg-brand-50/50 p-8 text-center">
+                <p className="mb-2 text-6xl font-bold text-brand-950" dir="ltr">{selectedOffer.discount}</p>
+                <p className="text-sm font-medium text-slate-600">نسبة الخصم</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

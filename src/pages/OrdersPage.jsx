@@ -204,7 +204,7 @@ export function OrdersPage() {
                   <td className="px-6 py-4 text-center">
                     <button 
                       onClick={() => openDetails(order)}
-                      className="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg transition-colors"
+                      className="icon-btn-view"
                       title="عرض التفاصيل"
                     >
                       <Eye className="size-4" />

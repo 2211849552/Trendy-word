@@ -101,7 +101,6 @@ export function MarketingPage() {
               views: 0,
               dateFrom: form.dateFrom,
               dateTo: form.dateTo,
-              emoji: '📣',
               paused: false,
             },
           ])
@@ -123,7 +122,7 @@ export function MarketingPage() {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-700"
+          className="btn-primary shrink-0"
         >
           <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           إنشاء حملة إعلانية
@@ -137,7 +136,7 @@ export function MarketingPage() {
           change={marketingStats.viewsChange}
           trend="up"
           icon={Eye}
-          iconClassName="bg-brand-100 text-brand-600"
+          iconClassName="bg-brand-100 text-brand-900"
         />
         <StatCard
           label="الحملات المنتهية"
@@ -153,7 +152,7 @@ export function MarketingPage() {
           change="—"
           trend="up"
           icon={CircleCheck}
-          iconClassName="bg-amber-100 text-amber-600"
+          iconClassName="bg-brand-100 text-brand-800"
         />
         <StatCard
           label="الحملات النشطة"
@@ -161,7 +160,7 @@ export function MarketingPage() {
           change={marketingStats.activeChange}
           trend="up"
           icon={TrendingUp}
-          iconClassName="bg-emerald-100 text-emerald-600"
+          iconClassName="bg-brand-100 text-brand-950"
         />
       </div>
 
@@ -179,7 +178,7 @@ export function MarketingPage() {
               className={[
                 'rounded-full px-4 py-2 text-sm font-semibold transition-colors',
                 filter === key
-                  ? 'bg-brand-600 text-white shadow-sm'
+                  ? 'bg-brand-900 text-white shadow-sm'
                   : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50',
               ].join(' ')}
             >

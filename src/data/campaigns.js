@@ -43,7 +43,6 @@ export const campaigns = [
     views: 15600,
     dateFrom: '2026-06-01',
     dateTo: '2026-08-31',
-    emoji: '☀️',
     paused: false,
   },
   {
@@ -57,7 +56,6 @@ export const campaigns = [
     views: 25400,
     dateFrom: '2026-04-15',
     dateTo: '2026-05-15',
-    emoji: '🎉',
     paused: false,
   },
   {
@@ -71,7 +69,6 @@ export const campaigns = [
     views: 12800,
     dateFrom: '2026-03-01',
     dateTo: '2026-03-31',
-    emoji: '🎯',
     paused: false,
   },
   {
@@ -85,7 +82,6 @@ export const campaigns = [
     views: 4200,
     dateFrom: '2026-02-01',
     dateTo: '2026-02-28',
-    emoji: '⏸️',
     paused: true,
   },
 ]
@@ -100,7 +96,7 @@ export const statusLabels = {
 
 export const statusBadgeClass = {
   active: 'bg-emerald-100 text-emerald-800 ring-emerald-200/80',
-  scheduled: 'bg-sky-100 text-sky-800 ring-sky-200/80',
+  scheduled: 'bg-brand-100 text-brand-800 ring-brand-200/80',
   finished: 'bg-slate-100 text-slate-700 ring-slate-200/80',
-  stopped: 'bg-amber-100 text-amber-900 ring-amber-200/80',
+  stopped: 'bg-rose-100 text-rose-700 ring-rose-200/80',
 }
