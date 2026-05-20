@@ -93,18 +93,18 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80 animate-in zoom-in-95 duration-200"
         dir="rtl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-5">
-          <h2 id={titleId} className="text-xl font-bold text-slate-900">
+        <header className="flex items-center justify-between gap-3 border-b border-white/5 bg-brand-300/50 px-6 py-5">
+          <h2 id={titleId} className="text-xl font-bold text-white">
             {isEdit ? 'تعديل بيانات الخطة' : 'إنشاء خطة اشتراك جديدة'}
           </h2>
           <button
             type="button"
             onClick={() => onClose?.()}
-            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-200/50 hover:text-slate-700"
+            className="rounded-xl p-2 text-white/50 transition-colors hover:bg-slate-200/50 hover:text-white/80"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.5} />
@@ -114,7 +114,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-6">
             <div className="group">
-              <label htmlFor="plan-name" className="mb-2 block text-sm font-bold text-slate-700">
+              <label htmlFor="plan-name" className="mb-2 block text-sm font-bold text-white/80">
                 اسم الخطة <span className="text-rose-500">*</span>
               </label>
               <input
@@ -124,13 +124,13 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                 onChange={(e) => setField('name', e.target.value)}
                 placeholder="مثال: الخطة السنوية المتقدمة"
                 required
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
+                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-medium text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="plan-price" className="mb-2 block text-sm font-bold text-slate-700">
+                <label htmlFor="plan-price" className="mb-2 block text-sm font-bold text-white/80">
                   السعر (د.ل) <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -142,19 +142,19 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                     value={form.price}
                     onChange={(e) => setField('price', e.target.value)}
                     required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
+                    className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
                   />
                 </div>
               </div>
               <div>
-                <label htmlFor="plan-duration" className="mb-2 block text-sm font-bold text-slate-700">
+                <label htmlFor="plan-duration" className="mb-2 block text-sm font-bold text-white/80">
                   دورة الفوترة
                 </label>
                 <select
                   id="plan-duration"
                   value={form.duration}
                   onChange={(e) => setField('duration', e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
+                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
                 >
                   {DURATION_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -166,14 +166,14 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
             </div>
 
             <div>
-              <label htmlFor="plan-status" className="mb-2 block text-sm font-bold text-slate-700">
+              <label htmlFor="plan-status" className="mb-2 block text-sm font-bold text-white/80">
                 حالة الخطة
               </label>
               <select
                 id="plan-status"
                 value={form.status}
                 onChange={(e) => setField('status', e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-900/10"
+                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -184,17 +184,17 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
             </div>
           </div>
 
-          <footer className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
+          <footer className="mt-8 flex flex-col-reverse gap-3 border-t border-white/5 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => onClose?.()}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-8 text-sm font-bold text-white/80 shadow-premium transition-all hover:bg-brand-300 hover:border-white/20"
             >
               إلغاء الإجراء
             </button>
             <button
               type="submit"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-900 px-8 text-sm font-bold text-white shadow-md transition-all hover:bg-brand-950 hover:shadow-lg focus:ring-4 focus:ring-brand-900/20 active:scale-95"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-900 px-8 text-sm font-bold text-white shadow-premium transition-all hover:bg-brand-950 hover:shadow-lg focus:ring-4 focus:ring-brand-900/20 active:scale-95"
             >
               {isEdit ? 'تأكيد الحفظ' : 'إنشاء الخطة'}
             </button>

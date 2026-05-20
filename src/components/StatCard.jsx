@@ -14,11 +14,11 @@ export function StatCard({
   return (
     <article
       dir="rtl"
-      className="group rounded-2xl bg-white p-6 shadow-sm border border-brand-100/50 transition-all duration-300 hover:shadow-premium hover:-translate-y-1"
+      className="group rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50 transition-all duration-300 hover:shadow-premium hover:-translate-y-1"
     >
       <div className="flex items-start justify-between">
         <div
-          className={`flex size-12 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${iconClassName ?? 'bg-brand-50 text-brand-900'}`}
+          className={`flex size-12 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${iconClassName ?? 'bg-brand-100 text-white'}`}
         >
           <Icon className="size-6" strokeWidth={2} aria-hidden />
         </div>
@@ -29,13 +29,13 @@ export function StatCard({
           </span>
         )}
         {neutral && (
-           <span className="text-sm font-semibold text-slate-400">—</span>
+           <span className="text-sm font-semibold text-white/50">—</span>
         )}
       </div>
       
       <div className="mt-5">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-slate-900 group-hover:text-brand-700 transition-colors">
+        <p className="text-sm font-medium text-white/60">{label}</p>
+        <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-white group-hover:text-brand-700 transition-colors">
           {value}
         </p>
       </div>

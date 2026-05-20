@@ -66,7 +66,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
   }
 
   const fieldClass =
-    'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-900 focus:bg-white focus:ring-2 focus:ring-brand-900/20'
+    'w-full rounded-xl border border-white/10 bg-brand-300/80 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-900 focus:bg-brand-200 focus:ring-2 focus:ring-brand-900/20'
 
   const overlay = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
@@ -80,17 +80,17 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-campaign-title"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4">
-          <h2 id="create-campaign-title" className="text-lg font-bold text-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200 px-5 py-4">
+          <h2 id="create-campaign-title" className="text-lg font-bold text-white">
             إنشاء حملة إعلانية
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.25} />
@@ -99,7 +99,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-6">
           <div>
-            <label htmlFor="camp-name" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="camp-name" className="mb-1.5 block text-sm font-semibold text-white/90">
               اسم الحملة <span className="text-rose-600">*</span>
             </label>
             <input
@@ -113,7 +113,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label htmlFor="camp-desc" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="camp-desc" className="mb-1.5 block text-sm font-semibold text-white/90">
               الوصف <span className="text-rose-600">*</span>
             </label>
             <textarea
@@ -130,7 +130,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label htmlFor="camp-store" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="camp-store" className="mb-1.5 block text-sm font-semibold text-white/90">
               اسم المتجر <span className="text-rose-600">*</span>
             </label>
             <input
@@ -146,7 +146,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label htmlFor="camp-link" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="camp-link" className="mb-1.5 block text-sm font-semibold text-white/90">
               رابط الحملة
             </label>
             <input
@@ -161,7 +161,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="camp-from" className="mb-1.5 block text-sm font-semibold text-slate-800">
+              <label htmlFor="camp-from" className="mb-1.5 block text-sm font-semibold text-white/90">
                 تاريخ البدء <span className="text-rose-600">*</span>
               </label>
               <input
@@ -176,7 +176,7 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
               ) : null}
             </div>
             <div>
-              <label htmlFor="camp-to" className="mb-1.5 block text-sm font-semibold text-slate-800">
+              <label htmlFor="camp-to" className="mb-1.5 block text-sm font-semibold text-white/90">
                 تاريخ الانتهاء <span className="text-rose-600">*</span>
               </label>
               <input
@@ -190,17 +190,17 @@ export function CreateCampaignModal({ open, onClose, onSubmit }) {
             </div>
           </div>
 
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-white/5 pt-5 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand-950"
+              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-brand-950"
             >
               إضافة الحملة
             </button>

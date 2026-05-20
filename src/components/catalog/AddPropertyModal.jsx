@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import { PROPERTY_TYPE_LABELS } from '../../data/catalog.js'
 
 const fieldClass =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-900 focus:bg-white focus:ring-2 focus:ring-brand-900/20'
+  'w-full rounded-xl border border-white/10 bg-brand-300/80 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-900 focus:bg-brand-200 focus:ring-2 focus:ring-brand-900/20'
 
 /**
  * @param {{
@@ -103,17 +103,17 @@ export function AddPropertyModal({ open, onClose, categories, onSubmit }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-prop-title"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4">
-          <h2 id="add-prop-title" className="text-lg font-bold text-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200 px-5 py-4">
+          <h2 id="add-prop-title" className="text-lg font-bold text-white">
             إضافة خاصية جديدة
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.25} />
@@ -122,7 +122,7 @@ export function AddPropertyModal({ open, onClose, categories, onSubmit }) {
 
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-6">
           <div>
-            <label htmlFor="prop-name" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="prop-name" className="mb-1.5 block text-sm font-semibold text-white/90">
               اسم الخاصية <span className="text-rose-600">*</span>
             </label>
             <input
@@ -138,7 +138,7 @@ export function AddPropertyModal({ open, onClose, categories, onSubmit }) {
           </div>
 
           <div>
-            <label htmlFor="prop-type" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="prop-type" className="mb-1.5 block text-sm font-semibold text-white/90">
               نوع الخاصية <span className="text-rose-600">*</span>
             </label>
             <select
@@ -155,32 +155,32 @@ export function AddPropertyModal({ open, onClose, categories, onSubmit }) {
             </select>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3">
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/5 bg-brand-300/50 px-3 py-3">
             <input
               type="checkbox"
               checked={required}
               onChange={(e) => setRequired(e.target.checked)}
-              className="size-4 rounded border-slate-300 text-[#0056D2] focus:ring-[#0056D2]"
+              className="size-4 rounded border-white/20 text-[#0056D2] focus:ring-[#0056D2]"
             />
-            <span className="text-sm font-semibold text-slate-800">خاصية مطلوبة</span>
+            <span className="text-sm font-semibold text-white/90">خاصية مطلوبة</span>
           </label>
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-slate-800">
+            <p className="mb-2 text-sm font-semibold text-white/90">
               التصنيفات المرتبطة <span className="text-rose-600">*</span>
             </p>
-            <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+            <div className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-brand-200">
               {sortedCategories.map((c) => {
                 const checked = selectedCats.has(c.id)
                 return (
                   <label
                     key={c.id}
                     className={[
-                      'flex cursor-pointer items-center justify-between gap-3 border-b border-slate-100 px-3 py-2.5 last:border-b-0',
-                      checked ? 'bg-slate-50' : 'hover:bg-slate-50/80',
+                      'flex cursor-pointer items-center justify-between gap-3 border-b border-white/5 px-3 py-2.5 last:border-b-0',
+                      checked ? 'bg-brand-300' : 'hover:bg-brand-300/80',
                     ].join(' ')}
                   >
-                    <span className="flex items-center gap-2 text-sm font-medium text-slate-800">
+                    <span className="flex items-center gap-2 text-sm font-medium text-white/90">
                       <span className="text-lg" aria-hidden>
                         {c.emoji}
                       </span>
@@ -190,30 +190,30 @@ export function AddPropertyModal({ open, onClose, categories, onSubmit }) {
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleCategory(c.id)}
-                      className="size-4 rounded border-slate-300 text-[#0056D2] focus:ring-[#0056D2]"
+                      className="size-4 rounded border-white/20 text-[#0056D2] focus:ring-[#0056D2]"
                     />
                   </label>
                 )
               })}
             </div>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-white/60">
               تم تحديد {selectedCount} {selectedCount === 1 ? 'تصنيف' : 'تصنيفات'}
             </p>
           </div>
 
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-white/5 pt-5 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-[#0056D2] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#0046b0]"
+              className="rounded-xl bg-[#0056D2] px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-[#0046b0]"
             >
               إضافة الخاصية
             </button>

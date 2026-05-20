@@ -60,7 +60,7 @@ export function NotificationsPage() {
       case 'order': return <Package className="size-6 text-orange-400" />
       case 'store': return <Store className="size-6 text-brand-500" />
       case 'dispute': return <AlertTriangle className="size-6 text-amber-500" />
-      default: return <Bell className="size-6 text-slate-500" />
+      default: return <Bell className="size-6 text-white/60" />
     }
   }
 
@@ -71,33 +71,33 @@ export function NotificationsPage() {
       {selectedNotif && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedNotif(null)} />
-          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-brand-200 border border-white/10 shadow-premium">
                   {getIcon(selectedNotif.type)}
                 </div>
-                <h2 className="text-lg font-bold text-slate-900">تفاصيل الإشعار</h2>
+                <h2 className="text-lg font-bold text-white">تفاصيل الإشعار</h2>
               </div>
-              <button onClick={() => setSelectedNotif(null)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 transition-colors">
+              <button onClick={() => setSelectedNotif(null)} className="rounded-xl p-2 text-white/50 hover:bg-brand-300 transition-colors">
                 <X className="size-5" />
               </button>
             </div>
             <div className="p-6">
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{selectedNotif.title}</h3>
+                <h3 className="text-xl font-bold text-white mb-2">{selectedNotif.title}</h3>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                  <span className="text-xs text-white/50 font-mono flex items-center gap-1">
                     <Bell className="size-3" />
                     {selectedNotif.date}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-0.5 text-xs font-bold text-slate-600">
+                  <span className="rounded-full bg-brand-300 px-3 py-0.5 text-xs font-bold text-white/70">
                     {selectedNotif.type === 'order' ? 'طلب جديد' : selectedNotif.type === 'store' ? 'تحديث' : 'شكوى'}
                   </span>
                 </div>
               </div>
               
-              <div className="rounded-2xl bg-slate-50 p-5 border border-slate-100 leading-relaxed text-slate-700">
+              <div className="rounded-2xl bg-brand-300 p-5 border border-white/5 leading-relaxed text-white/80">
                 {selectedNotif.text}
               </div>
 
@@ -110,10 +110,10 @@ export function NotificationsPage() {
                 </div>
               )}
             </div>
-            <div className="flex gap-3 p-5 bg-slate-50 border-t border-slate-100">
+            <div className="flex gap-3 p-5 bg-brand-300 border-t border-white/5">
               <button
                 onClick={() => setSelectedNotif(null)}
-                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-md hover:bg-slate-800 transition-all active:scale-95"
+                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-premium hover:bg-slate-800 transition-all active:scale-95"
               >
                 إغلاق
               </button>
@@ -123,12 +123,12 @@ export function NotificationsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div className="flex flex-col items-start gap-1">
-          <h1 className="text-2xl font-bold text-slate-900">إدارة الإشعارات</h1>
-          <p className="text-sm text-slate-500">مركز التنبيهات والإشعارات</p>
+          <h1 className="text-2xl font-bold text-white">إدارة الإشعارات</h1>
+          <p className="text-sm text-white/60">مركز التنبيهات والإشعارات</p>
         </div>
-        <button onClick={markAllAsRead} className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-sm">
+        <button onClick={markAllAsRead} className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-premium">
           <CheckCircle2 className="size-4" />
           تحديد الكل كمقروء
         </button>
@@ -136,36 +136,36 @@ export function NotificationsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center relative">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <Bell className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">إجمالي الإشعارات</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{totalCount}</p>
+          <p className="text-sm font-medium text-white/60">إجمالي الإشعارات</p>
+          <p className="mt-1 text-2xl font-bold text-white">{totalCount}</p>
         </div>
         
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-500">
             <AlertCircle className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">غير مقروءة</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{unreadCount}</p>
+          <p className="text-sm font-medium text-white/60">غير مقروءة</p>
+          <p className="mt-1 text-2xl font-bold text-white">{unreadCount}</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
             <CheckCircle2 className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">مقروءة</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{readCount}</p>
+          <p className="text-sm font-medium text-white/60">مقروءة</p>
+          <p className="mt-1 text-2xl font-bold text-white">{readCount}</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
             <AlertCircle className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">إشعارات اليوم</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{todayCount}</p>
+          <p className="text-sm font-medium text-white/60">إشعارات اليوم</p>
+          <p className="mt-1 text-2xl font-bold text-white">{todayCount}</p>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ export function NotificationsPage() {
           <div 
             key={notif.id} 
             className={`rounded-xl border p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-              notif.isRead ? 'bg-white border-slate-200 opacity-75' : 'bg-brand-50/30 border-brand-200 shadow-sm'
+              notif.isRead ? 'bg-brand-200 border-white/10 opacity-75' : 'bg-brand-100/30 border-brand-200 shadow-premium'
             }`}
           >
             <div className="flex items-start gap-4 flex-1">
@@ -184,7 +184,7 @@ export function NotificationsPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className={`font-bold text-lg ${notif.isRead ? 'text-slate-700' : 'text-slate-900'}`}>
+                  <h3 className={`font-bold text-lg ${notif.isRead ? 'text-white/80' : 'text-white'}`}>
                     {notif.title}
                   </h3>
                   {!notif.isRead && notif.tags.map(tag => (
@@ -197,17 +197,17 @@ export function NotificationsPage() {
                     </span>
                   ))}
                 </div>
-                <p className={`${notif.isRead ? 'text-slate-500' : 'text-slate-700 font-medium'}`}>
+                <p className={`${notif.isRead ? 'text-white/60' : 'text-white/80 font-medium'}`}>
                   {notif.text}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                  <span className="text-xs text-white/50 font-mono flex items-center gap-1">
                     <Bell className="size-3" />
                     {notif.date}
                   </span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                    notif.type === 'order' ? 'bg-slate-100 text-slate-500' : 
-                    notif.type === 'store' ? 'bg-slate-100 text-slate-500' : 'bg-slate-100 text-slate-500'
+                    notif.type === 'order' ? 'bg-brand-300 text-white/60' : 
+                    notif.type === 'store' ? 'bg-brand-300 text-white/60' : 'bg-brand-300 text-white/60'
                   }`}>
                     {notif.type === 'order' ? 'طلب جديد' : notif.type === 'store' ? 'تحديث' : 'شكوى'}
                   </span>
@@ -219,7 +219,7 @@ export function NotificationsPage() {
               {!notif.isRead && (
                 <button 
                   onClick={() => markAsRead(notif.id)}
-                  className="text-brand-900 hover:bg-brand-100 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
+                  className="text-white hover:bg-brand-300 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
                   title="تحديد كمقروء"
                 >
                   <Check className="size-4" />
@@ -237,9 +237,9 @@ export function NotificationsPage() {
         ))}
 
         {notifications.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+          <div className="text-center py-12 bg-brand-200 rounded-xl border border-white/10">
             <Bell className="size-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">لا توجد إشعارات حالياً</p>
+            <p className="text-white/60 font-medium">لا توجد إشعارات حالياً</p>
           </div>
         )}
       </div>

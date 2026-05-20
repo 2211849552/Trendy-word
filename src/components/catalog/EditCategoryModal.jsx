@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import { CLOTHING_ICON_OPTIONS, CLOTHING_SIZES } from '../../data/catalog.js'
 
 const fieldClass =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-900 focus:bg-white focus:ring-2 focus:ring-brand-900/20'
+  'w-full rounded-xl border border-white/10 bg-brand-300/80 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-900 focus:bg-brand-200 focus:ring-2 focus:ring-brand-900/20'
 
 /**
  * @param {{
@@ -73,17 +73,17 @@ export function EditCategoryModal({ category, onClose, onSave }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-category-title"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4">
-          <h2 id="edit-category-title" className="text-lg font-bold text-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200 px-5 py-4">
+          <h2 id="edit-category-title" className="text-lg font-bold text-white">
             تعديل التصنيف
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.25} />
@@ -92,7 +92,7 @@ export function EditCategoryModal({ category, onClose, onSave }) {
 
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-6">
           <div>
-            <label htmlFor="edit-cat-name" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="edit-cat-name" className="mb-1.5 block text-sm font-semibold text-white/90">
               اسم التصنيف
             </label>
             <input
@@ -107,15 +107,15 @@ export function EditCategoryModal({ category, onClose, onSave }) {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-slate-800">الأيقونة</p>
+            <p className="mb-2 text-sm font-semibold text-white/90">الأيقونة</p>
             <div className="flex flex-wrap items-center gap-3">
               <div
-                className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-2xl"
+                className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-brand-300 text-2xl"
                 aria-hidden
               >
                 {emoji}
               </div>
-              <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-slate-100 bg-slate-50/50 p-2">
+              <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-white/5 bg-brand-300/50 p-2">
                 <div className="flex w-max gap-2 pb-1">
                   {CLOTHING_ICON_OPTIONS.map((icon) => {
                     const selected = icon === emoji
@@ -128,7 +128,7 @@ export function EditCategoryModal({ category, onClose, onSave }) {
                           'flex size-11 shrink-0 items-center justify-center rounded-lg text-xl transition',
                           selected
                             ? 'bg-[#0056D2] text-white ring-2 ring-[#0056D2]/30'
-                            : 'bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-100',
+                            : 'bg-brand-200 text-white/90 ring-1 ring-slate-200 hover:bg-brand-300',
                         ].join(' ')}
                         aria-pressed={selected}
                         aria-label={`اختيار أيقونة ${icon}`}
@@ -143,8 +143,8 @@ export function EditCategoryModal({ category, onClose, onSave }) {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-slate-800">المقاسات المتاحة</p>
-            <p className="mb-2 text-xs text-slate-500">اختر المقاسات التي يدعمها هذا التصنيف (S، M، L، XL)</p>
+            <p className="mb-2 text-sm font-semibold text-white/90">المقاسات المتاحة</p>
+            <p className="mb-2 text-xs text-white/60">اختر المقاسات التي يدعمها هذا التصنيف (S، M، L، XL)</p>
             <div className="flex flex-wrap gap-2">
               {CLOTHING_SIZES.map((s) => {
                 const on = sizes.has(s)
@@ -157,7 +157,7 @@ export function EditCategoryModal({ category, onClose, onSave }) {
                       'min-w-[3rem] rounded-xl px-4 py-2 text-sm font-bold tabular-nums transition',
                       on
                         ? 'bg-[#0056D2] text-white ring-2 ring-[#0056D2]/25'
-                        : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200',
+                        : 'bg-brand-300 text-white/70 ring-1 ring-slate-200 hover:bg-slate-200',
                     ].join(' ')}
                     aria-pressed={on}
                   >
@@ -170,17 +170,17 @@ export function EditCategoryModal({ category, onClose, onSave }) {
 
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-white/5 pt-5 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-[#0056D2] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#0046b0]"
+              className="rounded-xl bg-[#0056D2] px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-[#0046b0]"
             >
               حفظ التعديلات
             </button>

@@ -18,10 +18,10 @@ const data = [
 
 export function OrderStatusBarCard() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm border border-brand-100/50" dir="rtl">
+    <section className="rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-slate-900">حالة الطلبات</h2>
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <h2 className="text-lg font-bold text-white">حالة الطلبات</h2>
+        <div className="flex items-center gap-2 text-xs font-bold text-white/50 uppercase tracking-wider">
           <div className="size-2 rounded-full bg-brand-500 animate-pulse" />
           تحديث مباشر
         </div>
@@ -73,7 +73,7 @@ export function OrderStatusBarCard() {
       </div>
       
       <div className="mt-6 flex justify-center gap-6 border-t border-slate-50 pt-6">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+        <div className="flex items-center gap-2 text-sm font-semibold text-white/70">
           <span className="size-3 shrink-0 rounded-full bg-brand-500" aria-hidden />
           عدد الطلبات
         </div>

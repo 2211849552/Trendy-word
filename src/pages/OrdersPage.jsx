@@ -63,11 +63,11 @@ export function OrdersPage() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'قيد التنفيذ': return 'bg-brand-100 text-brand-700'
+      case 'قيد التنفيذ': return 'bg-brand-300 text-brand-700'
       case 'قيد الشحن': return 'bg-yellow-100 text-yellow-700'
       case 'تم التسليم': return 'bg-emerald-100 text-emerald-700'
       case 'ملغي': return 'bg-red-100 text-red-700'
-      default: return 'bg-slate-100 text-slate-700'
+      default: return 'bg-brand-300 text-white/80'
     }
   }
 
@@ -85,55 +85,55 @@ export function OrdersPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col items-start gap-1 border-b border-slate-200 pb-5">
-        <h1 className="text-2xl font-bold text-slate-900">إدارة الطلبات</h1>
-        <p className="text-sm text-slate-500">إدارة شاملة لجميع الطلبات في المنصة</p>
+      <div className="flex flex-col items-start gap-1 border-b border-white/10 pb-5">
+        <h1 className="text-2xl font-bold text-white">إدارة الطلبات</h1>
+        <p className="text-sm text-white/60">إدارة شاملة لجميع الطلبات في المنصة</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center relative">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <ShoppingCart className="size-6" />
           </div>
           <div className="absolute top-4 left-4 flex items-center gap-1 text-emerald-600 font-bold text-xs">
             <span>15% ↑</span>
           </div>
-          <p className="text-sm font-medium text-slate-500">الطلبات الجديدة</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">1</p>
+          <p className="text-sm font-medium text-white/60">الطلبات الجديدة</p>
+          <p className="mt-1 text-2xl font-bold text-white">1</p>
         </div>
         
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-yellow-50 text-yellow-500">
             <Truck className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">قيد الشحن</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">1</p>
+          <p className="text-sm font-medium text-white/60">قيد الشحن</p>
+          <p className="mt-1 text-2xl font-bold text-white">1</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
             <CheckCircle className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">تم التسليم</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">1</p>
+          <p className="text-sm font-medium text-white/60">تم التسليم</p>
+          <p className="mt-1 text-2xl font-bold text-white">1</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm text-center flex flex-col items-center justify-center">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-500">
             <XCircle className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-500">الطلبات الملغاة</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">0</p>
+          <p className="text-sm font-medium text-white/60">الطلبات الملغاة</p>
+          <p className="mt-1 text-2xl font-bold text-white">0</p>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-xl border border-white/10 bg-brand-200 p-4 shadow-premium">
         <select 
           value={activeStatus}
           onChange={e => setActiveStatus(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
+          className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
         >
           <option>جميع الحالات</option>
           <option>قيد التنفيذ</option>
@@ -143,22 +143,22 @@ export function OrdersPage() {
         </select>
         
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
           <input
             type="text"
             placeholder="البحث عن طلب..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-white focus:border-brand-500"
+            className="w-full rounded-lg border border-white/10 bg-brand-300 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-brand-200 focus:border-brand-500"
           />
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm whitespace-nowrap">
-            <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200">
+            <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
                 <th className="px-6 py-4 font-medium">رقم الطلب</th>
                 <th className="px-6 py-4 font-medium">الزبون</th>
@@ -172,20 +172,20 @@ export function OrdersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredOrders.map(order => (
-                <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-900">{order.id}</td>
-                  <td className="px-6 py-4 text-slate-600">{order.customer}</td>
-                  <td className="px-6 py-4 text-slate-600">{order.store}</td>
-                  <td className="px-6 py-4 font-bold text-slate-900 text-center">{order.total}</td>
+                <tr key={order.id} className="hover:bg-brand-300 transition-colors">
+                  <td className="px-6 py-4 font-bold text-white">{order.id}</td>
+                  <td className="px-6 py-4 text-white/70">{order.customer}</td>
+                  <td className="px-6 py-4 text-white/70">{order.store}</td>
+                  <td className="px-6 py-4 font-bold text-white text-center">{order.total}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <div className="size-5 flex items-center justify-center rounded bg-brand-50 text-brand-500">
+                      <div className="size-5 flex items-center justify-center rounded bg-brand-100 text-brand-500">
                         <CreditCard className="size-3" />
                       </div>
-                      <span className="text-[10px] text-slate-500">{order.payment}</span>
+                      <span className="text-[10px] text-white/60">{order.payment}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-500 font-mono text-xs">{order.date}</td>
+                  <td className="px-6 py-4 text-white/60 font-mono text-xs">{order.date}</td>
                   <td className="px-6 py-4">
                     <div className="relative inline-block w-full">
                       <select 
@@ -214,7 +214,7 @@ export function OrdersPage() {
               ))}
               {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan="8" className="px-6 py-12 text-center text-white/60">
                     لا توجد طلبات مطابقة للبحث.
                   </td>
                 </tr>
@@ -222,8 +222,8 @@ export function OrdersPage() {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-slate-200 bg-slate-50/50 text-left">
-          <p className="text-sm text-slate-500">
+        <div className="p-4 border-t border-white/10 bg-brand-300/50 text-left">
+          <p className="text-sm text-white/60">
             عرض {filteredOrders.length} من {orders.length} طلب
           </p>
         </div>
@@ -232,64 +232,64 @@ export function OrdersPage() {
       {/* Details Modal */}
       {detailsModalOpen && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-2xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             
-            <div className="flex items-center justify-between border-b border-slate-100 p-6">
-              <h2 className="text-2xl font-bold text-slate-900">تفاصيل الطلب</h2>
-              <button onClick={() => setDetailsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <div className="flex items-center justify-between border-b border-white/5 p-6">
+              <h2 className="text-2xl font-bold text-white">تفاصيل الطلب</h2>
+              <button onClick={() => setDetailsModalOpen(false)} className="text-white/50 hover:text-white/70 transition-colors">
                 <XCircle className="size-6" />
               </button>
             </div>
 
             <div className="p-6 space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+              <div className="flex justify-between items-center border-b border-white/5 pb-4">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${getStatusStyle(selectedOrder.status)}`}>
                   {selectedOrder.status}
                 </span>
                 <div className="text-left">
-                  <h3 className="text-2xl font-bold text-slate-900">{selectedOrder.id}</h3>
-                  <p className="text-sm text-slate-500 mt-1">{selectedOrder.date}</p>
+                  <h3 className="text-2xl font-bold text-white">{selectedOrder.id}</h3>
+                  <p className="text-sm text-white/60 mt-1">{selectedOrder.date}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 flex items-center gap-4">
+                  <div className="size-10 rounded-full bg-brand-200 border border-white/10 flex items-center justify-center text-white/50">
                     <User className="size-5" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-slate-500 mb-0.5">الزبون</p>
-                    <p className="font-bold text-slate-900">{selectedOrder.customer}</p>
+                    <p className="text-xs text-white/60 mb-0.5">الزبون</p>
+                    <p className="font-bold text-white">{selectedOrder.customer}</p>
                   </div>
                 </div>
                 
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 flex items-center gap-4">
+                  <div className="size-10 rounded-full bg-brand-200 border border-white/10 flex items-center justify-center text-white/50">
                     <Store className="size-5" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-slate-500 mb-0.5">المتجر</p>
-                    <p className="font-bold text-slate-900">{selectedOrder.store}</p>
+                    <p className="text-xs text-white/60 mb-0.5">المتجر</p>
+                    <p className="font-bold text-white">{selectedOrder.store}</p>
                   </div>
                 </div>
 
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 flex items-center gap-4">
+                  <div className="size-10 rounded-full bg-brand-200 border border-white/10 flex items-center justify-center text-white/50">
                     <Package className="size-5" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-slate-500 mb-0.5">المنتجات</p>
-                    <p className="font-bold text-slate-900">{selectedOrder.products}</p>
+                    <p className="text-xs text-white/60 mb-0.5">المنتجات</p>
+                    <p className="font-bold text-white">{selectedOrder.products}</p>
                   </div>
                 </div>
 
-                <div className="rounded-xl bg-brand-50 border border-brand-100 p-5 flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-white border border-brand-200 flex items-center justify-center text-brand-500">
+                <div className="rounded-xl bg-brand-100 border border-brand-100 p-5 flex items-center gap-4">
+                  <div className="size-10 rounded-full bg-brand-200 border border-brand-200 flex items-center justify-center text-brand-500">
                     <CreditCard className="size-5" />
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-brand-500 mb-0.5">الإجمالي والدفع</p>
-                    <p className="font-bold text-slate-900">{selectedOrder.total} ({selectedOrder.payment})</p>
+                    <p className="font-bold text-white">{selectedOrder.total} ({selectedOrder.payment})</p>
                   </div>
                 </div>
               </div>

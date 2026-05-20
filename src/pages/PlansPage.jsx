@@ -81,8 +81,8 @@ function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
 
 function PlansDistributionChart() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
-      <h2 className="text-base font-semibold text-slate-900">توزيع المتاجر حسب الخطط</h2>
+    <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+      <h2 className="text-base font-semibold text-white">توزيع المتاجر حسب الخطط</h2>
       <div className="mt-4 h-[280px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -118,16 +118,16 @@ function PlansDistributionChart() {
 
 function SubscriptionSummaryCard() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
-      <h2 className="text-base font-semibold text-slate-900">ملخص الاشتراكات</h2>
+    <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+      <h2 className="text-base font-semibold text-white">ملخص الاشتراكات</h2>
       <ul className="mt-4 space-y-2">
         {subscriptionSummary.map((row) => (
           <li
             key={row.label}
-            className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-xl bg-brand-300 px-4 py-3"
           >
-            <span className="text-lg font-bold tabular-nums text-slate-900">{row.count}</span>
-            <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <span className="text-lg font-bold tabular-nums text-white">{row.count}</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-white/80">
               <span className={`size-2.5 shrink-0 rounded-full ${row.dotClass}`} aria-hidden />
               {row.label}
             </span>
@@ -144,11 +144,11 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
 
   return (
     <article
-      className="flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80 hover:shadow-md transition-shadow"
+      className="flex flex-col rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80 hover:shadow-premium transition-shadow"
       dir="rtl"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+        <h3 className="text-lg font-bold text-white">{plan.name}</h3>
         <span
           className={[
             'rounded-full px-3 py-1 text-[11px] font-bold',
@@ -160,12 +160,12 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
       </div>
 
       <p className="mt-4">
-        <span className="text-3xl font-bold tabular-nums text-slate-900">{plan.price}</span>
-        <span className="me-1.5 text-sm font-medium text-slate-500">د.ل / {periodLabel}</span>
+        <span className="text-3xl font-bold tabular-nums text-white">{plan.price}</span>
+        <span className="me-1.5 text-sm font-medium text-white/60">د.ل / {periodLabel}</span>
       </p>
 
-      <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
-        <Users className="size-4 shrink-0 text-slate-400" strokeWidth={2} aria-hidden />
+      <p className="mt-3 flex items-center gap-2 text-sm text-white/60">
+        <Users className="size-4 shrink-0 text-white/50" strokeWidth={2} aria-hidden />
         <span>
           {plan.subscribers} متجر مشترك
         </span>
@@ -183,7 +183,7 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
         <button
           type="button"
           onClick={() => onDelete?.(plan)}
-          className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-sm transition-colors hover:bg-red-100"
+          className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
         >
           <Trash2 className="size-4" strokeWidth={2} />
           حذف
@@ -290,10 +290,10 @@ export function PlansPage() {
       {deletePlan && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeletePlan(null)} />
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-              <h2 className="text-lg font-bold text-slate-900">تأكيد حذف الخطة</h2>
-              <button onClick={() => setDeletePlan(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
+              <h2 className="text-lg font-bold text-white">تأكيد حذف الخطة</h2>
+              <button onClick={() => setDeletePlan(null)} className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors">
                 <X className="size-5" />
               </button>
             </div>
@@ -301,23 +301,23 @@ export function PlansPage() {
               <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
                 <Trash2 className="size-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900">هل أنت متأكد؟</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                أنت على وشك حذف خطة <span className="font-bold text-slate-900">«{deletePlan.name}»</span> نهائياً. سيؤثر هذا على المشتركين الحاليين.
+              <h3 className="text-xl font-bold text-white">هل أنت متأكد؟</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/60">
+                أنت على وشك حذف خطة <span className="font-bold text-white">«{deletePlan.name}»</span> نهائياً. سيؤثر هذا على المشتركين الحاليين.
               </p>
             </div>
-            <div className="flex flex-col gap-2 p-5 bg-slate-50 border-t border-slate-100 sm:flex-row-reverse sm:gap-3">
+            <div className="flex flex-col gap-2 p-5 bg-brand-300 border-t border-white/5 sm:flex-row-reverse sm:gap-3">
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-sm hover:bg-rose-700 transition-colors"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium hover:bg-rose-700 transition-colors"
               >
                 تأكيد الحذف
               </button>
               <button
                 type="button"
                 onClick={() => setDeletePlan(null)}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-4 text-sm font-bold text-white/80 shadow-premium hover:bg-brand-300 transition-colors"
               >
                 إلغاء
               </button>
@@ -336,15 +336,15 @@ export function PlansPage() {
 
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">
             إدارة الخطط
           </h1>
-          <p className="mt-1 text-slate-500">إدارة خطط الاشتراك وتسعير المنصة</p>
+          <p className="mt-1 text-white/60">إدارة خطط الاشتراك وتسعير المنصة</p>
         </div>
         <button
           type="button"
           onClick={openAddModal}
-          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-950"
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition-colors hover:bg-brand-950"
         >
           <Plus className="size-5" strokeWidth={2.25} aria-hidden />
           إضافة خطة اشتراك
@@ -382,7 +382,7 @@ export function PlansPage() {
           change="—"
           trend="up"
           icon={CreditCard}
-          iconClassName="bg-brand-100 text-brand-800"
+          iconClassName="bg-brand-300 text-white/90"
         />
       </div>
 
@@ -393,7 +393,7 @@ export function PlansPage() {
 
       <div className="relative mt-8" dir="rtl">
         <Search
-          className="pointer-events-none absolute top-1/2 end-4 size-5 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute top-1/2 end-4 size-5 -translate-y-1/2 text-white/50"
           strokeWidth={2}
           aria-hidden
         />
@@ -402,7 +402,7 @@ export function PlansPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="البحث عن خطة اشتراك..."
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pe-12 ps-4 text-sm text-slate-900 shadow-sm outline-none ring-slate-200/80 transition placeholder:text-slate-400 focus:border-brand-900 focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-xl border border-white/10 bg-brand-200 py-3 pe-12 ps-4 text-sm text-white shadow-premium outline-none ring-slate-200/80 transition placeholder:text-white/50 focus:border-brand-900 focus:ring-2 focus:ring-brand-100"
         />
       </div>
 
@@ -419,7 +419,7 @@ export function PlansPage() {
       </div>
 
       {filteredPlans.length === 0 ? (
-        <p className="mt-6 text-center text-sm text-slate-500">لا توجد خطط مطابقة للبحث.</p>
+        <p className="mt-6 text-center text-sm text-white/60">لا توجد خطط مطابقة للبحث.</p>
       ) : null}
     </>
   )

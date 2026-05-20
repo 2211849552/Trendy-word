@@ -16,7 +16,7 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
 
   return (
     <article
-      className="flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100/80"
+      className="flex flex-col rounded-2xl bg-brand-200 p-5 shadow-premium ring-1 ring-slate-100/80"
       dir="rtl"
     >
       <div className="flex items-start justify-end gap-2">
@@ -27,39 +27,39 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         </span>
       </div>
 
-      <h3 className="mt-3 text-lg font-bold text-slate-900">{campaign.title}</h3>
-      <p className="mt-1 text-sm leading-relaxed text-slate-600">{campaign.description}</p>
+      <h3 className="mt-3 text-lg font-bold text-white">{campaign.title}</h3>
+      <p className="mt-1 text-sm leading-relaxed text-white/70">{campaign.description}</p>
 
-      <p className="mt-3 text-sm font-medium text-slate-500">المتجر</p>
-      <p className="text-sm font-semibold text-slate-800">{campaign.storeName}</p>
+      <p className="mt-3 text-sm font-medium text-white/60">المتجر</p>
+      <p className="text-sm font-semibold text-white/90">{campaign.storeName}</p>
 
-      <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
+      <ul className="mt-4 space-y-2 border-t border-white/5 pt-4 text-sm">
         <li className="flex justify-between gap-2">
           <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.stores.value}`}>
             {fmtNum(campaign.stores)}
           </span>
-          <span className="text-slate-500">عدد المتاجر</span>
+          <span className="text-white/60">عدد المتاجر</span>
         </li>
         <li className="flex justify-between gap-2">
           <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.products.value}`}>
             {fmtNum(campaign.products)}
           </span>
-          <span className="text-slate-500">عدد المنتجات</span>
+          <span className="text-white/60">عدد المنتجات</span>
         </li>
         <li className="flex justify-between gap-2">
           <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.views.value}`}>
             {fmtNum(campaign.views)}
           </span>
-          <span className="text-slate-500">المشاهدات</span>
+          <span className="text-white/60">المشاهدات</span>
         </li>
       </ul>
 
-      <p className="mt-3 text-xs text-slate-500">
-        من <span className="tabular-nums font-medium text-slate-700">{campaign.dateFrom}</span> إلى{' '}
-        <span className="tabular-nums font-medium text-slate-700">{campaign.dateTo}</span>
+      <p className="mt-3 text-xs text-white/60">
+        من <span className="tabular-nums font-medium text-white/80">{campaign.dateFrom}</span> إلى{' '}
+        <span className="tabular-nums font-medium text-white/80">{campaign.dateTo}</span>
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/5 pt-4">
         <button
           type="button"
           onClick={() => onView?.(campaign)}
@@ -79,10 +79,10 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         <button
           type="button"
           onClick={() => onToggle?.(campaign)}
-          className={`flex size-10 items-center justify-center rounded-xl border shadow-sm transition-colors ${
+          className={`flex size-10 items-center justify-center rounded-xl border shadow-premium transition-colors ${
             campaign.paused 
               ? 'border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-100' 
-              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              : 'border-white/10 bg-brand-200 text-white/70 hover:bg-brand-300'
           }`}
           aria-label={campaign.paused ? "تفعيل" : "إلغاء تفعيل"}
           title={campaign.paused ? "تفعيل" : "إلغاء تفعيل"}
@@ -96,7 +96,7 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         <button
           type="button"
           onClick={() => onDelete?.(campaign)}
-          className="flex size-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-600 shadow-sm hover:bg-rose-100"
+          className="flex size-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-600 shadow-premium hover:bg-rose-100"
           aria-label="حذف"
         >
           <Trash2 className="size-4" aria-hidden />

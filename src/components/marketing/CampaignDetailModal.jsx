@@ -43,17 +43,17 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="campaign-detail-title"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4">
-          <h2 id="campaign-detail-title" className="text-lg font-bold text-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200 px-5 py-4">
+          <h2 id="campaign-detail-title" className="text-lg font-bold text-white">
             تفاصيل الحملة
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.25} />
@@ -62,18 +62,18 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
 
         <div className="space-y-6 px-5 py-6">
           <div className="text-center">
-            <h3 className="text-xl font-bold text-slate-900">{campaign.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">{campaign.description}</p>
+            <h3 className="text-xl font-bold text-white">{campaign.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">{campaign.description}</p>
           </div>
 
-          <div className="border-t border-slate-100 pt-6">
+          <div className="border-t border-white/5 pt-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/90 px-4 py-3">
-                <p className="text-xs font-medium text-slate-500">المتجر</p>
-                <p className="mt-1 text-sm font-bold text-slate-900">{campaign.storeName}</p>
+              <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
+                <p className="text-xs font-medium text-white/60">المتجر</p>
+                <p className="mt-1 text-sm font-bold text-white">{campaign.storeName}</p>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/90 px-4 py-3">
-                <p className="text-xs font-medium text-slate-500">الحالة</p>
+              <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
+                <p className="text-xs font-medium text-white/60">الحالة</p>
                 <p className="mt-2">
                   <span
                     className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${statusClass}`}

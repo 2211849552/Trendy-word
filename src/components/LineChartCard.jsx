@@ -21,11 +21,11 @@ const monthly = [
 
 export function LineChartCard() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm border border-brand-100/50" dir="rtl">
+    <section className="rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-slate-900">الإيرادات والطلبات الشهرية</h2>
+        <h2 className="text-lg font-bold text-white">الإيرادات والطلبات الشهرية</h2>
         <div className="flex gap-2">
-           <span className="rounded-lg bg-brand-50 px-3 py-1 text-xs font-bold text-brand-900">آخر 6 أشهر</span>
+           <span className="rounded-lg bg-brand-100 px-3 py-1 text-xs font-bold text-white">آخر 6 أشهر</span>
         </div>
       </div>
       
@@ -77,7 +77,7 @@ export function LineChartCard() {
                 const color = value === 'revenue' ? CHART_LINE_REVENUE : CHART_LINE_ORDERS
                 const label = value === 'revenue' ? 'الإيرادات' : 'الطلبات'
                 return (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 ml-2">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/70 ml-2">
                     <span
                       className="inline-block size-2.5 rounded-full"
                       style={{ backgroundColor: color }}

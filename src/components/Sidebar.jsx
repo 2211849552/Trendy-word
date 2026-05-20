@@ -74,8 +74,8 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                   isLeafActive
                     ? 'nav-item-active'
                     : isActive && items
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white',
+                      ? 'bg-brand-200/10 text-white'
+                      : 'text-white/70 hover:bg-brand-200/10 hover:text-white',
                 ].join(' ')}
               >
                 <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                     className={[
                       'size-5 shrink-0',
                       isLeafActive
-                        ? 'text-brand-950'
+                        ? 'text-white'
                         : 'text-white/60 group-hover:text-white',
                     ].join(' ')}
                     strokeWidth={isLeafActive ? 2.25 : 2}
@@ -109,7 +109,7 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
                         onClick={() => onNavigate?.(subItem.id)}
                         className={[
                           'flex w-full items-center rounded-lg px-4 py-2 text-start text-[13px] font-medium transition-all',
-                          isSubActive ? 'nav-item-active' : 'text-white/55 hover:bg-white/10 hover:text-white',
+                          isSubActive ? 'nav-item-active' : 'text-white/55 hover:bg-brand-200/10 hover:text-white',
                         ].join(' ')}
                       >
                         {subItem.label}

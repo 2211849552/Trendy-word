@@ -7,7 +7,7 @@ export function StoreImage({ src, name, className = 'size-full' }) {
   const imageSrc = failed ? DEFAULT_STORE_IMAGE : (src || DEFAULT_STORE_IMAGE)
 
   return (
-    <div className={`relative overflow-hidden bg-slate-100 ${className}`}>
+    <div className={`relative overflow-hidden bg-brand-300 ${className}`}>
       {!failed ? (
         <img
           src={imageSrc}
@@ -19,7 +19,7 @@ export function StoreImage({ src, name, className = 'size-full' }) {
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="flex size-full items-center justify-center text-brand-800">
+        <div className="flex size-full items-center justify-center text-white/90">
           <Store className="size-6" strokeWidth={1.75} aria-hidden />
         </div>
       )}

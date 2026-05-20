@@ -112,10 +112,10 @@ export function MarketingPage() {
 
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between" dir="rtl">
         <header>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">
             التسويق والمحتوى
           </h1>
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1 text-white/60">
             إدارة الحملات الإعلانية والمحتوى الترويجي
           </p>
         </header>
@@ -136,7 +136,7 @@ export function MarketingPage() {
           change={marketingStats.viewsChange}
           trend="up"
           icon={Eye}
-          iconClassName="bg-brand-100 text-brand-900"
+          iconClassName="bg-brand-300 text-white"
         />
         <StatCard
           label="الحملات المنتهية"
@@ -144,7 +144,7 @@ export function MarketingPage() {
           change="—"
           trend="up"
           icon={Archive}
-          iconClassName="bg-slate-100 text-slate-600"
+          iconClassName="bg-brand-300 text-white/70"
         />
         <StatCard
           label="الحملات المجدولة"
@@ -152,7 +152,7 @@ export function MarketingPage() {
           change="—"
           trend="up"
           icon={CircleCheck}
-          iconClassName="bg-brand-100 text-brand-800"
+          iconClassName="bg-brand-300 text-white/90"
         />
         <StatCard
           label="الحملات النشطة"
@@ -160,7 +160,7 @@ export function MarketingPage() {
           change={marketingStats.activeChange}
           trend="up"
           icon={TrendingUp}
-          iconClassName="bg-brand-100 text-brand-950"
+          iconClassName="bg-brand-300 text-white"
         />
       </div>
 
@@ -178,8 +178,8 @@ export function MarketingPage() {
               className={[
                 'rounded-full px-4 py-2 text-sm font-semibold transition-colors',
                 filter === key
-                  ? 'bg-brand-900 text-white shadow-sm'
-                  : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50',
+                  ? 'bg-brand-900 text-white shadow-premium'
+                  : 'bg-brand-200 text-white/70 ring-1 ring-slate-200 hover:bg-brand-300',
               ].join(' ')}
             >
               {statusLabels[key]}
@@ -188,7 +188,7 @@ export function MarketingPage() {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="rounded-2xl bg-white py-12 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-100/80">
+          <p className="rounded-2xl bg-brand-200 py-12 text-center text-sm text-white/60 shadow-premium ring-1 ring-slate-100/80">
             لا توجد حملات في هذا التصنيف.
           </p>
         ) : (
@@ -211,10 +211,10 @@ export function MarketingPage() {
       {deleteCampaign && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeleteCampaign(null)} />
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-              <h2 className="text-lg font-bold text-slate-900">تأكيد حذف الحملة</h2>
-              <button onClick={() => setDeleteCampaign(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
+              <h2 className="text-lg font-bold text-white">تأكيد حذف الحملة</h2>
+              <button onClick={() => setDeleteCampaign(null)} className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors">
                 <X className="size-5" />
               </button>
             </div>
@@ -222,23 +222,23 @@ export function MarketingPage() {
               <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
                 <Trash2 className="size-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900">هل أنت متأكد؟</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                أنت على وشك حذف الحملة <span className="font-bold text-slate-900">«{deleteCampaign.title}»</span> نهائياً.
+              <h3 className="text-xl font-bold text-white">هل أنت متأكد؟</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/60">
+                أنت على وشك حذف الحملة <span className="font-bold text-white">«{deleteCampaign.title}»</span> نهائياً.
               </p>
             </div>
-            <div className="flex flex-col gap-2 p-5 bg-slate-50 border-t border-slate-100 sm:flex-row-reverse sm:gap-3">
+            <div className="flex flex-col gap-2 p-5 bg-brand-300 border-t border-white/5 sm:flex-row-reverse sm:gap-3">
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-sm hover:bg-rose-700 transition-colors"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium hover:bg-rose-700 transition-colors"
               >
                 تأكيد الحذف
               </button>
               <button
                 type="button"
                 onClick={() => setDeleteCampaign(null)}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-4 text-sm font-bold text-white/80 shadow-premium hover:bg-brand-300 transition-colors"
               >
                 إلغاء
               </button>

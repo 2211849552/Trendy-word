@@ -41,7 +41,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
   if (!open || !campaign) return null
 
   const fieldClass =
-    'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-900 focus:bg-white focus:ring-2 focus:ring-brand-900/20'
+    'w-full rounded-xl border border-white/10 bg-brand-300/80 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-900 focus:bg-brand-200 focus:ring-2 focus:ring-brand-900/20'
 
   const validate = () => {
     const e = {}
@@ -80,17 +80,17 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-campaign-title"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4">
-          <h2 id="edit-campaign-title" className="text-lg font-bold text-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200 px-5 py-4">
+          <h2 id="edit-campaign-title" className="text-lg font-bold text-white">
             تعديل الحملة
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.25} />
@@ -99,7 +99,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-6">
           <div>
-            <label htmlFor="edit-name" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="edit-name" className="mb-1.5 block text-sm font-semibold text-white/90">
               اسم الحملة
             </label>
             <input
@@ -115,7 +115,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
           </div>
 
           <div>
-            <label htmlFor="edit-desc" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="edit-desc" className="mb-1.5 block text-sm font-semibold text-white/90">
               الوصف
             </label>
             <textarea
@@ -134,7 +134,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
           </div>
 
           <div>
-            <label htmlFor="edit-store" className="mb-1.5 block text-sm font-semibold text-slate-800">
+            <label htmlFor="edit-store" className="mb-1.5 block text-sm font-semibold text-white/90">
               اسم المتجر
             </label>
             <input
@@ -153,7 +153,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="edit-from" className="mb-1.5 block text-sm font-semibold text-slate-800">
+              <label htmlFor="edit-from" className="mb-1.5 block text-sm font-semibold text-white/90">
                 تاريخ البدء
               </label>
               <input
@@ -171,7 +171,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
               ) : null}
             </div>
             <div>
-              <label htmlFor="edit-to" className="mb-1.5 block text-sm font-semibold text-slate-800">
+              <label htmlFor="edit-to" className="mb-1.5 block text-sm font-semibold text-white/90">
                 تاريخ الانتهاء
               </label>
               <input
@@ -188,17 +188,17 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
             </div>
           </div>
 
-          <div className="flex gap-3 border-t border-slate-100 pt-5" dir="rtl">
+          <div className="flex gap-3 border-t border-white/5 pt-5" dir="rtl">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand-950"
+              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-brand-950"
             >
               حفظ التعديلات
             </button>

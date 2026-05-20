@@ -1,28 +1,28 @@
 @import 'tailwindcss';
 
-/* Trendy — أزرق داكن (#1e1e4d) كما في واجهة إدارة الخطط */
 @theme {
   --font-sans: 'Cairo', ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #f4f7fa;
-  --color-brand-100: #e8ecf4;
-  --color-brand-200: #cdd5e8;
-  --color-brand-300: #9aa8c4;
-  --color-brand-400: #6b7a9e;
-  --color-brand-500: #4a5680;
-  --color-brand-600: #353d6b;
-  --color-brand-700: #2a315c;
-  --color-brand-800: #232a52;
-  --color-brand-900: #1e1e4d;
-  --color-brand-950: #1e1e4d;
+  /* Premium Dark Theme with Neon Accents */
+  --color-brand-50: #131127;
+  --color-brand-100: #1b1836;
+  --color-brand-200: #242240;
+  --color-brand-300: #3b385c;
+  --color-brand-400: #5d5885;
+  --color-brand-500: #8b3dff;
+  --color-brand-600: #a366ff;
+  --color-brand-700: #b533ff;
+  --color-brand-800: #c866ff;
+  --color-brand-900: #242240;
+  --color-brand-950: #18162e;
 
-  --shadow-premium: 0 10px 15px -3px rgba(30, 30, 77, 0.12), 0 4px 6px -4px rgba(30, 30, 77, 0.08);
-  --shadow-glass: 0 8px 32px 0 rgba(30, 30, 77, 0.06);
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 @layer base {
   body {
-    @apply m-0 min-h-dvh bg-brand-50 font-sans text-slate-800 antialiased;
+    @apply m-0 min-h-dvh bg-brand-50 font-sans text-white antialiased;
   }
 
   #root {
@@ -30,47 +30,47 @@
   }
 
   ::selection {
-    @apply bg-brand-800/20 text-brand-950;
+    @apply bg-brand-700/40 text-white;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply border border-brand-100/80 bg-white shadow-glass backdrop-blur-md;
+    @apply border border-white/5 bg-brand-200 shadow-glass rounded-2xl;
   }
 
   .premium-gradient {
-    @apply bg-brand-900;
+    @apply bg-gradient-to-r from-[#b533ff] to-[#4285f4];
   }
 
-  /* عنصر القائمة النشط — خلفية بيضاء ونص أزرق داكن */
+  /* Active Nav Item */
   .nav-item-active {
-    @apply bg-white text-brand-950 shadow-sm;
+    @apply bg-gradient-to-r from-[#b533ff] to-[#4285f4] text-white shadow-lg font-bold;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-800 focus:outline-none focus:ring-4 focus:ring-brand-950/20 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#b533ff] to-[#4285f4] px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:opacity-90 focus:outline-none focus:ring-4 focus:ring-brand-700/30 active:scale-[0.98] border-0;
   }
 
   .btn-primary-lg {
-    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-brand-950 px-8 text-sm font-bold text-white shadow-md transition-colors hover:bg-brand-800 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-brand-950/20 active:scale-[0.98];
+    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#b533ff] to-[#4285f4] px-8 text-sm font-bold text-white shadow-lg transition-all hover:opacity-90 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-brand-700/30 active:scale-[0.98] border-0;
   }
 
   .input-brand {
-    @apply w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-950/10;
+    @apply w-full rounded-xl border border-white/10 bg-brand-100 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-700 focus:bg-brand-200 focus:ring-2 focus:ring-brand-700/30 placeholder-white/40;
   }
 
-  /* أزرار عرض / تعديل في الجداول والبطاقات */
+  /* Action Buttons */
   .btn-action-solid {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-800;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-100 border border-white/5 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-300;
   }
 
   .icon-btn-view,
   .icon-btn-edit {
-    @apply rounded-lg bg-brand-950 p-2 text-white transition-colors hover:bg-brand-800;
+    @apply rounded-lg bg-brand-100 border border-white/5 p-2 text-white transition-all hover:bg-brand-300;
   }
 
   .btn-action-outline {
-    @apply inline-flex items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-950 transition-colors hover:bg-brand-100;
+    @apply inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-brand-100 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-brand-300;
   }
 }

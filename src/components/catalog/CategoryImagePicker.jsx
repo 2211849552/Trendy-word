@@ -12,7 +12,7 @@ export function CategoryImagePicker({ value, onChange }) {
             onClick={() => onChange(preset.url)}
             className={`overflow-hidden rounded-xl ring-2 transition-all ${
               value === preset.url
-                ? 'ring-brand-900 scale-[1.02] shadow-md'
+                ? 'ring-brand-900 scale-[1.02] shadow-premium'
                 : 'ring-transparent hover:ring-brand-200'
             }`}
             title={preset.label}

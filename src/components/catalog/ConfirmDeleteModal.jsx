@@ -45,37 +45,37 @@ export function ConfirmDeleteModal({ open, title = 'تأكيد الحذف', mess
         aria-modal="true"
         aria-labelledby="confirm-delete-title"
         aria-describedby="confirm-delete-desc"
-        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80"
+        className="relative w-full max-w-md rounded-2xl bg-brand-200 p-6 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
         <div className="flex items-start justify-between gap-3">
-          <h2 id="confirm-delete-title" className="text-lg font-bold text-slate-900">
+          <h2 id="confirm-delete-title" className="text-lg font-bold text-white">
             {title}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
             aria-label="إغلاق"
           >
             <X className="size-5" strokeWidth={2.25} />
           </button>
         </div>
-        <p id="confirm-delete-desc" className="mt-4 text-sm leading-relaxed text-slate-600">
+        <p id="confirm-delete-desc" className="mt-4 text-sm leading-relaxed text-white/70">
           {message}
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
           >
             إلغاء
           </button>
           <button
             type="button"
             onClick={() => onConfirm?.()}
-            className="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-rose-700"
+            className="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-rose-700"
           >
             حذف نهائياً
           </button>

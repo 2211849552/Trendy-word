@@ -6,10 +6,10 @@ import { StoreImage } from './StoreImage.jsx'
 function InfoCard({ label, value, className = '' }) {
   return (
     <div
-      className={`rounded-xl border border-slate-100 bg-slate-50/90 px-4 py-3 ${className}`}
+      className={`rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 ${className}`}
     >
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-bold text-slate-900">{value}</p>
+      <p className="text-xs font-medium text-white/60">{label}</p>
+      <p className="mt-1 text-sm font-bold text-white">{value}</p>
     </div>
   )
 }
@@ -68,11 +68,11 @@ export function JoinRequestDetailModal({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
-          <h2 className="text-lg font-bold text-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200/95 px-5 py-4 backdrop-blur">
+          <h2 className="text-lg font-bold text-white">
             {modalState === 'confirmAccept' ? 'تأكيد قبول المتجر' : 
              modalState === 'confirmReject' ? 'تأكيد رفض المتجر' : 
              modalState === 'success' ? 'تم الإجراء بنجاح' :
@@ -81,7 +81,7 @@ export function JoinRequestDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-2 text-white/50 transition-colors hover:bg-brand-300 hover:text-white/70"
           >
             <X className="size-5" />
           </button>
@@ -95,10 +95,10 @@ export function JoinRequestDetailModal({
               }`}>
                 <CheckCircle2 className="size-10" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">
+              <h3 className="text-2xl font-bold text-white mb-2">
                 {successType === 'accept' ? 'تم قبول المتجر بنجاح!' : 'تم رفض الطلب بنجاح'}
               </h3>
-              <p className="text-sm text-slate-500 mb-8 px-4 leading-relaxed">
+              <p className="text-sm text-white/60 mb-8 px-4 leading-relaxed">
                 {successType === 'accept' 
                   ? `تم تفعيل حساب متجر «${request.storeName}» وسيتم إرسال بريد إلكتروني لإبلاغهم بالقبول.`
                   : `تم إرسال سبب الرفض إلى متجر «${request.storeName}» عبر البريد الإلكتروني.`}
@@ -112,15 +112,15 @@ export function JoinRequestDetailModal({
               <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-4 border-4 border-emerald-100">
                 <CheckCircle2 className="size-10" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">هل أنت متأكد من قبول المتجر؟</h3>
-              <p className="text-sm text-slate-500 mb-8 px-4">
-                بمجرد القبول، سيتمكن متجر <span className="font-bold text-slate-900">«{request.storeName}»</span> من البدء في رفع منتجاته واستقبال الطلبات.
+              <h3 className="text-xl font-bold text-white mb-2">هل أنت متأكد من قبول المتجر؟</h3>
+              <p className="text-sm text-white/60 mb-8 px-4">
+                بمجرد القبول، سيتمكن متجر <span className="font-bold text-white">«{request.storeName}»</span> من البدء في رفع منتجاته واستقبال الطلبات.
               </p>
               <div className="flex flex-col gap-3">
                 <button onClick={confirmAccept} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-emerald-700 transition-all active:scale-95">
                   تأكيد القبول والارسال
                 </button>
-                <button onClick={() => setModalState('details')} className="w-full rounded-xl border border-slate-200 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                <button onClick={() => setModalState('details')} className="w-full rounded-xl border border-white/10 py-3.5 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors">
                   رجوع
                 </button>
               </div>
@@ -131,15 +131,15 @@ export function JoinRequestDetailModal({
                 <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-rose-50 text-rose-600 mb-4 border-4 border-rose-100">
                   <X className="size-10" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">رفض طلب الانضمام</h3>
-                <p className="text-sm text-slate-500">
+                <h3 className="text-xl font-bold text-white mb-1">رفض طلب الانضمام</h3>
+                <p className="text-sm text-white/60">
                   يرجى توضيح سبب الرفض ليتم إرساله للمتجر <span className="font-bold">{request.storeName}</span>
                 </p>
               </div>
               
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">سبب الرفض <span className="text-rose-500">*</span></label>
+                  <label className="mb-2 block text-sm font-bold text-white/80">سبب الرفض <span className="text-rose-500">*</span></label>
                   <textarea
                     value={rejectReason}
                     onChange={(e) => {
@@ -148,7 +148,7 @@ export function JoinRequestDetailModal({
                     }}
                     rows={4}
                     placeholder="مثال: المستندات المرفقة غير واضحة، أو المتجر لا يستوفي الشروط..."
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm outline-none focus:border-rose-300 focus:bg-white focus:ring-4 focus:ring-rose-500/10 transition-all"
+                    className="w-full rounded-xl border border-white/10 bg-brand-300 p-4 text-sm outline-none focus:border-rose-300 focus:bg-brand-200 focus:ring-4 focus:ring-rose-500/10 transition-all"
                   />
                   {reasonError && <p className="mt-1.5 text-xs font-bold text-rose-600">{reasonError}</p>}
                 </div>
@@ -156,7 +156,7 @@ export function JoinRequestDetailModal({
                   <button onClick={confirmRejectAction} className="w-full rounded-xl bg-rose-600 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-rose-700 transition-all active:scale-95">
                     تأكيد الرفض والارسال
                   </button>
-                  <button onClick={() => setModalState('details')} className="w-full rounded-xl border border-slate-200 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                  <button onClick={() => setModalState('details')} className="w-full rounded-xl border border-white/10 py-3.5 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors">
                     رجوع
                   </button>
                 </div>
@@ -168,10 +168,10 @@ export function JoinRequestDetailModal({
                 <StoreImage
                   src={request.image}
                   name={request.storeName}
-                  className="mx-auto size-24 rounded-2xl shadow-md ring-2 ring-slate-100"
+                  className="mx-auto size-24 rounded-2xl shadow-premium ring-2 ring-slate-100"
                 />
-                <h3 className="mt-4 text-xl font-bold text-slate-900">{request.storeName}</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
+                <h3 className="mt-4 text-xl font-bold text-white">{request.storeName}</h3>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/70">
                   {request.description}
                 </p>
                 <span className="mt-3 inline-flex rounded-full bg-amber-100 px-4 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200/80">
@@ -192,18 +192,18 @@ export function JoinRequestDetailModal({
                 <InfoCard
                   label="تاريخ الطلب"
                   value={request.date}
-                  className="border-brand-100 bg-brand-50/90"
+                  className="border-brand-100 bg-brand-100/90"
                 />
               </div>
 
               {request.sampleProducts?.length > 0 && (
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">عينات المنتجات المقترحة</p>
+                  <p className="mb-3 text-sm font-semibold text-white/90">عينات المنتجات المقترحة</p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     {request.sampleProducts.map((product, idx) => (
                       <article
                         key={`${product.name}-${idx}`}
-                        className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm ring-1 ring-slate-50"
+                        className="overflow-hidden rounded-xl border border-white/5 bg-brand-200 shadow-premium ring-1 ring-slate-50"
                       >
                         <img
                           src={product.image}
@@ -213,8 +213,8 @@ export function JoinRequestDetailModal({
                           referrerPolicy="no-referrer"
                         />
                         <div className="p-3 text-right">
-                          <p className="text-sm font-bold leading-snug text-slate-900">{product.name}</p>
-                          <p className="mt-1 text-xs text-slate-500">{product.category}</p>
+                          <p className="text-sm font-bold leading-snug text-white">{product.name}</p>
+                          <p className="mt-1 text-xs text-white/60">{product.category}</p>
                         </div>
                       </article>
                     ))}
@@ -223,7 +223,7 @@ export function JoinRequestDetailModal({
               )}
 
               <div>
-                <p className="mb-2 text-sm font-semibold text-slate-800">الوثيقة الرسمية</p>
+                <p className="mb-2 text-sm font-semibold text-white/90">الوثيقة الرسمية</p>
                 <button
                   type="button"
                   onClick={handleDocClick}
@@ -236,11 +236,11 @@ export function JoinRequestDetailModal({
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-5">
+              <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-5">
                 <button
                   type="button"
                   onClick={() => setModalState('confirmAccept')}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white shadow-premium transition-colors hover:bg-emerald-700"
                 >
                   <CheckCircle2 className="size-5 shrink-0" aria-hidden />
                   قبول الطلب
@@ -248,9 +248,9 @@ export function JoinRequestDetailModal({
                 <button
                   type="button"
                   onClick={() => setModalState('confirmReject')}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rose-700"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 text-sm font-bold text-white shadow-premium transition-colors hover:bg-rose-700"
                 >
-                  <span className="flex size-5 items-center justify-center rounded-full bg-white/20">
+                  <span className="flex size-5 items-center justify-center rounded-full bg-brand-200/20">
                     <X className="size-3.5" strokeWidth={3} aria-hidden />
                   </span>
                   رفض الطلب

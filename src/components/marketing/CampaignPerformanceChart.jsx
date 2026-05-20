@@ -13,8 +13,8 @@ import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
 export function CampaignPerformanceChart() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100/80" dir="rtl">
-      <h2 className="text-base font-semibold text-slate-900">أداء الحملات الإعلانية</h2>
+    <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+      <h2 className="text-base font-semibold text-white">أداء الحملات الإعلانية</h2>
       <div className="mt-4 h-[300px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -71,7 +71,7 @@ export function CampaignPerformanceChart() {
                 const item = map[value]
                 if (!item) return value
                 return (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                  <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
                     <span
                       className="inline-block size-2.5 rounded-full"
                       style={{ backgroundColor: item.color }}

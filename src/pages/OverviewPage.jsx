@@ -18,10 +18,10 @@ export function OverviewPage() {
   return (
     <>
       <header className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">
           نظرة عامة
         </h1>
-        <p className="mt-1 text-slate-500">ملخص شامل لأداء المنصة</p>
+        <p className="mt-1 text-white/60">ملخص شامل لأداء المنصة</p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
@@ -31,7 +31,7 @@ export function OverviewPage() {
           change="22%"
           trend="up"
           icon={DollarSign}
-          iconClassName="bg-brand-100 text-brand-800"
+          iconClassName="bg-brand-300 text-white/90"
         />
         <StatCard
           label="الطلبات الشهرية"
@@ -39,7 +39,7 @@ export function OverviewPage() {
           change="18%"
           trend="up"
           icon={ShoppingCart}
-          iconClassName="bg-brand-100 text-brand-950"
+          iconClassName="bg-brand-300 text-white"
         />
         <StatCard
           label="إجمالي الزبائن"
@@ -47,7 +47,7 @@ export function OverviewPage() {
           change="9%"
           trend="up"
           icon={Users}
-          iconClassName="bg-brand-100 text-brand-800"
+          iconClassName="bg-brand-300 text-white/90"
         />
         <StatCard
           label="إجمالي المتاجر"
@@ -55,7 +55,7 @@ export function OverviewPage() {
           change="5%"
           trend="up"
           icon={Store}
-          iconClassName="bg-brand-100 text-brand-800"
+          iconClassName="bg-brand-300 text-white/90"
         />
       </div>
 
@@ -72,13 +72,13 @@ export function OverviewPage() {
             label="المنتجات النشطة"
             value="8,456"
             icon={Package}
-            iconWrapClassName="bg-brand-100 text-brand-950"
+            iconWrapClassName="bg-brand-300 text-white"
           />
           <KpiMiniCard
             label="الحملات النشطة"
             value="23"
             icon={TrendingUp}
-            iconWrapClassName="bg-brand-100 text-brand-800"
+            iconWrapClassName="bg-brand-300 text-white/90"
           />
           <KpiMiniCard
             label="الشكاوى المفتوحة"

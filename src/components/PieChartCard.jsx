@@ -37,9 +37,9 @@ function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name
 
 export function PieChartCard() {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm border border-brand-100/50" dir="rtl">
+    <section className="rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-slate-900">توزيع المتاجر</h2>
+        <h2 className="text-lg font-bold text-white">توزيع المتاجر</h2>
       </div>
       
       <div className="h-[280px] w-full" dir="ltr">
@@ -75,7 +75,7 @@ export function PieChartCard() {
               verticalAlign="bottom"
               align="center"
               formatter={(value) => (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 ml-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/70 ml-2">
                   <span
                     className="inline-block size-2.5 rounded-full"
                     style={{ backgroundColor: legendColors[value] ?? '#64748b' }}
