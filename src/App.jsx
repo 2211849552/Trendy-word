@@ -35,7 +35,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-dvh flex-row bg-brand-100" dir="ltr">
-      <main dir="rtl" className="min-w-0 flex-1 overflow-auto px-6 py-8 lg:px-10">
+      <main dir="rtl" className="min-w-0 flex-1 overflow-auto px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="mx-auto max-w-7xl">
           {renderPage(activeNav)}
         </div>

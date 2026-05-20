@@ -52,6 +52,7 @@ export function StoreManagementPage() {
   return (
     <StoreJoinRequestsView 
       requests={joinRequests}
+      registeredStores={registeredStores}
       onAccept={handleAcceptRequest}
       onReject={handleRejectRequest}
       onOpenList={() => setView('list')} 

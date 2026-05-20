@@ -42,6 +42,22 @@ function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name
   )
 }
 
+function CustomLegend({ payload }) {
+  return (
+    <ul className="flex flex-wrap justify-center gap-4 mt-2">
+      {payload.map((entry, index) => (
+        <li key={`item-${index}`} className="flex items-center gap-1.5 text-sm font-bold text-white">
+          <span
+            className="inline-block size-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          {entry.value}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export function PieChartCard() {
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50" dir="rtl">
@@ -81,15 +97,7 @@ export function PieChartCard() {
             <Legend
               verticalAlign="bottom"
               align="center"
-              formatter={(value) => (
-                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white ml-2">
-                  <span
-                    className="inline-block size-3 rounded-full"
-                    style={{ backgroundColor: legendColors[value] ?? '#64748b' }}
-                  />
-                  {value}
-                </span>
-              )}
+              content={<CustomLegend />}
             />
           </PieChart>
         </ResponsiveContainer>

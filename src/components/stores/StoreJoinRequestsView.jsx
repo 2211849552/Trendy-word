@@ -16,7 +16,7 @@ import { StatCard } from '../StatCard.jsx'
 import { JoinRequestDetailModal } from './JoinRequestDetailModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
 
-export function StoreJoinRequestsView({ requests, onAccept, onReject, onOpenList }) {
+export function StoreJoinRequestsView({ requests, registeredStores = [], onAccept, onReject, onOpenList }) {
   const [modalRequestId, setModalRequestId] = useState(null)
   const modalRequest = requests.find((r) => r.id === modalRequestId) ?? null
 
@@ -24,6 +24,11 @@ export function StoreJoinRequestsView({ requests, onAccept, onReject, onOpenList
     // Basic implementation for printing the page
     window.print()
   }
+
+  const activeCount = registeredStores.filter(s => s.status === 'active').length;
+  const bannedCount = registeredStores.filter(s => s.status === 'disabled').length;
+  const totalProducts = registeredStores.reduce((sum, s) => sum + (s.products || 0), 0);
+
 
   return (
     <>
@@ -70,7 +75,7 @@ export function StoreJoinRequestsView({ requests, onAccept, onReject, onOpenList
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
         <StatCard
           label="إجمالي المنتجات"
-          value="902"
+          value={String(totalProducts)}
           change="8%"
           trend="up"
           icon={ShoppingBag}
@@ -86,7 +91,7 @@ export function StoreJoinRequestsView({ requests, onAccept, onReject, onOpenList
         />
         <StatCard
           label="المتاجر المحظورة"
-          value="1"
+          value={String(bannedCount)}
           change="—"
           trend="up"
           icon={Ban}
@@ -94,7 +99,7 @@ export function StoreJoinRequestsView({ requests, onAccept, onReject, onOpenList
         />
         <StatCard
           label="المتاجر النشطة"
-          value="4"
+          value={String(activeCount)}
           change="12%"
           trend="up"
           icon={Store}

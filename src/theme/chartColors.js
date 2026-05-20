@@ -1,30 +1,29 @@
-/** ألوان المخططات — درجات قريبة من لون الـ dashboard (#1e1e4d) */
 export const BRAND_NAVY = '#1e1e4d'
 
 export const CHART_BRAND_SCALE = [
-  '#1e1e4d',
-  '#2a315c',
-  '#334155',
-  '#475569',
-  '#64748b',
+  '#8b5cf6', // Violet 500
+  '#3b82f6', // Blue 500
+  '#64748b', // Slate 500
+  '#94a3b8',
+  '#cbd5e1',
 ]
 
 /** ألوان مقاييس التسويق — متناسقة مع أداء الحملات مع تباين أوضح */
 export const CAMPAIGN_METRICS = {
   views: {
-    stroke: '#1e1e4d',
+    stroke: '#60a5fa', // Bright Blue (Active / Revenue)
     card: 'border-brand-200 bg-brand-50/90',
     value: 'text-brand-950',
     label: 'text-brand-800',
   },
   stores: {
-    stroke: '#3d5a80',
+    stroke: '#94a3b8', // Slate 400 (Orders / Pending)
     card: 'border-[#b8c5dc] bg-[#e8edf6]',
     value: 'text-[#2e4568]',
     label: 'text-[#3d5a80]',
   },
   products: {
-    stroke: '#7b8fa8',
+    stroke: '#cbd5e1', // Slate 300 (Disabled)
     card: 'border-slate-300 bg-slate-100/90',
     value: 'text-slate-600',
     label: 'text-slate-700',

@@ -19,6 +19,25 @@ const monthly = [
   { month: 'يونيو', revenue: 67000, orders: 1127 },
 ]
 
+function CustomLegend({ payload }) {
+  return (
+    <ul className="flex flex-wrap justify-center gap-4 pt-4">
+      {payload.map((entry, index) => {
+        const label = entry.value === 'revenue' ? 'الإيرادات' : 'الطلبات'
+        return (
+          <li key={`item-${index}`} className="flex items-center gap-1.5 text-sm font-bold text-white">
+            <span
+              className="inline-block size-3 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            {label}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export function LineChartCard() {
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50" dir="rtl">
@@ -72,20 +91,7 @@ export function LineChartCard() {
             <Legend
               verticalAlign="bottom"
               align="center"
-              wrapperStyle={{ paddingTop: '20px' }}
-              formatter={(value) => {
-                const color = value === 'revenue' ? CHART_LINE_REVENUE : CHART_LINE_ORDERS
-                const label = value === 'revenue' ? 'الإيرادات' : 'الطلبات'
-                return (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white ml-2">
-                    <span
-                      className="inline-block size-3 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                    {label}
-                  </span>
-                )
-              }}
+              content={<CustomLegend />}
             />
             <Line
               yAxisId="rev"
