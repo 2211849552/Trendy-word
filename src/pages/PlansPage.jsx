@@ -17,17 +17,7 @@ import { StatCard } from '../components/StatCard.jsx'
 
 import { CHART_BRAND_SCALE } from '../theme/chartColors.js'
 
-const planDistribution = [
-  { name: 'الخطة الأساسية', value: 49, color: CHART_BRAND_SCALE[0] },
-  { name: 'الخطة المتقدمة', value: 35, color: CHART_BRAND_SCALE[2] },
-  { name: 'الخطة الاحترافية', value: 16, color: CHART_BRAND_SCALE[3] },
-]
 
-const subscriptionSummary = [
-  { label: 'الخطة الأساسية', count: 120, dotClass: 'bg-brand-950' },
-  { label: 'الخطة المتقدمة', count: 85, dotClass: 'bg-brand-600' },
-  { label: 'الخطة الاحترافية', count: 40, dotClass: 'bg-brand-400' },
-]
 
 const initialPlans = [
   {
@@ -69,7 +59,7 @@ function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
     <text
       x={x}
       y={y}
-      fill="#334155"
+      fill="#ffffff"
       textAnchor={x > cx ? 'start' : 'end'}
       dominantBaseline="central"
       className="text-[11px] font-medium"
@@ -79,7 +69,13 @@ function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
   )
 }
 
-function PlansDistributionChart() {
+function PlansDistributionChart({ plans }) {
+  const chartData = plans.map((plan, index) => ({
+    name: plan.name,
+    value: plan.subscribers || 0,
+    color: CHART_BRAND_SCALE[index % CHART_BRAND_SCALE.length] || CHART_BRAND_SCALE[0]
+  }))
+
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
       <h2 className="text-base font-semibold text-white">توزيع المتاجر حسب الخطط</h2>
@@ -87,7 +83,7 @@ function PlansDistributionChart() {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={planDistribution}
+              data={chartData}
               cx="50%"
               cy="50%"
               labelLine={false}
@@ -97,12 +93,12 @@ function PlansDistributionChart() {
               paddingAngle={2}
               dataKey="value"
             >
-              {planDistribution.map((entry) => (
+              {chartData.map((entry) => (
                 <Cell key={entry.name} fill={entry.color} />
               ))}
             </Pie>
             <Tooltip
-              formatter={(v) => [`${v}%`, 'النسبة']}
+              formatter={(v) => [`${v}`, 'المتاجر']}
               contentStyle={{
                 borderRadius: 12,
                 border: '1px solid #e2e8f0',
@@ -116,19 +112,25 @@ function PlansDistributionChart() {
   )
 }
 
-function SubscriptionSummaryCard() {
+function SubscriptionSummaryCard({ plans }) {
+  const summary = plans.map((plan, index) => ({
+    label: plan.name,
+    count: plan.subscribers || 0,
+    color: CHART_BRAND_SCALE[index % CHART_BRAND_SCALE.length] || CHART_BRAND_SCALE[0]
+  }))
+
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
       <h2 className="text-base font-semibold text-white">ملخص الاشتراكات</h2>
-      <ul className="mt-4 space-y-2">
-        {subscriptionSummary.map((row) => (
+      <ul className="mt-4 max-h-[280px] overflow-y-auto space-y-2 pe-2">
+        {summary.map((row) => (
           <li
             key={row.label}
             className="flex items-center justify-between gap-3 rounded-xl bg-brand-300 px-4 py-3"
           >
             <span className="text-lg font-bold tabular-nums text-white">{row.count}</span>
             <span className="flex items-center gap-2 text-sm font-medium text-white/80">
-              <span className={`size-2.5 shrink-0 rounded-full ${row.dotClass}`} aria-hidden />
+              <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden />
               {row.label}
             </span>
           </li>
@@ -387,8 +389,8 @@ export function PlansPage() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <SubscriptionSummaryCard />
-        <PlansDistributionChart />
+        <SubscriptionSummaryCard plans={plans} />
+        <PlansDistributionChart plans={plans} />
       </div>
 
       <div className="relative mt-8" dir="rtl">
