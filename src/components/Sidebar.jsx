@@ -46,7 +46,7 @@ export function Sidebar({ activeId = 'overview', onNavigate }) {
     >
       <div className="shrink-0 border-b border-white/10 px-6 py-7">
         <h1 className="text-xl font-bold tracking-tight text-white">Trendy</h1>
-        <p className="mt-1 text-xs font-medium text-white/55">لوحة تحكم المتجر</p>
+        <p className="mt-1 text-xs font-medium text-white/55">لوحة تحكم الإدارة العليا</p>
       </div>
 
       <nav
