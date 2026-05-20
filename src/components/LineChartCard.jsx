@@ -32,17 +32,17 @@ export function LineChartCard() {
       <div className="h-[280px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={monthly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
-              axisLine={{ stroke: '#f1f5f9' }}
+              tick={{ fill: '#ffffff', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
+              axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
               tickLine={false}
             />
             <YAxis
               yAxisId="rev"
               orientation="left"
-              tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
+              tick={{ fill: '#ffffff', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
               domain={[0, 80000]}
@@ -51,7 +51,7 @@ export function LineChartCard() {
             <YAxis
               yAxisId="ord"
               orientation="right"
-              tick={{ fill: '#94a3b8', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}
+              tick={{ fill: '#ffffff', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
               domain={[0, 1500]}
@@ -77,9 +77,9 @@ export function LineChartCard() {
                 const color = value === 'revenue' ? CHART_LINE_REVENUE : CHART_LINE_ORDERS
                 const label = value === 'revenue' ? 'الإيرادات' : 'الطلبات'
                 return (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/70 ml-2">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white ml-2">
                     <span
-                      className="inline-block size-2.5 rounded-full"
+                      className="inline-block size-3 rounded-full"
                       style={{ backgroundColor: color }}
                     />
                     {label}

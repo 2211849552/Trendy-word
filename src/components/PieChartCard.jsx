@@ -1,6 +1,8 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { CAMPAIGN_METRICS, CHART_DISTRIBUTION_COLORS } from '../theme/chartColors.js'
 
+import { registeredStores, joinRequests } from '../data/stores.js'
+
 const COLORS = CHART_DISTRIBUTION_COLORS
 
 const legendColors = {
@@ -9,11 +11,16 @@ const legendColors = {
   موقوفة: CAMPAIGN_METRICS.products.stroke,
 }
 
+// Compute dynamic pie data from the actual store lists
+const activeCount = registeredStores.filter(s => s.status === 'active').length;
+const pendingCount = registeredStores.filter(s => s.status === 'pending').length + joinRequests.length;
+const disabledCount = registeredStores.filter(s => s.status === 'disabled').length;
+
 const pieData = [
-  { name: 'نشطة', value: 84 },
-  { name: 'قيد المراجعة', value: 12 },
-  { name: 'موقوفة', value: 4 },
-]
+  { name: 'نشطة', value: activeCount },
+  { name: 'قيد المراجعة', value: pendingCount },
+  { name: 'موقوفة', value: disabledCount },
+].filter(d => d.value > 0);
 
 function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) {
   const RAD = Math.PI / 180
@@ -75,9 +82,9 @@ export function PieChartCard() {
               verticalAlign="bottom"
               align="center"
               formatter={(value) => (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/70 ml-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white ml-2">
                   <span
-                    className="inline-block size-2.5 rounded-full"
+                    className="inline-block size-3 rounded-full"
                     style={{ backgroundColor: legendColors[value] ?? '#64748b' }}
                   />
                   {value}

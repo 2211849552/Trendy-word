@@ -73,4 +73,9 @@
   .btn-action-outline {
     @apply inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-brand-100 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-brand-300;
   }
+
+  /* Override Recharts legend text color for dark mode */
+  .recharts-legend-item-text {
+    color: #ffffff !important;
+  }
 }
