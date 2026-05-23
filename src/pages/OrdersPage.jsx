@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ShoppingCart, Truck, CheckCircle, XCircle, Search, Eye, Package, Calendar, CreditCard, Store, User, ChevronDown } from 'lucide-react'
+import { ShoppingCart, Truck, CheckCircle, XCircle, Search, Eye, Package, Calendar, CreditCard, Store, User } from 'lucide-react'
 
 const initialOrders = [
   {
@@ -40,13 +40,6 @@ export function OrdersPage() {
   const [activeStatus, setActiveStatus] = useState('جميع الحالات')
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
-  const [showToast, setShowToast] = useState(false)
-
-  const updateStatus = (id, newStatus) => {
-    setOrders(orders.map(order => order.id === id ? { ...order, status: newStatus } : order))
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -74,16 +67,6 @@ export function OrdersPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20 animate-in fade-in duration-500 relative">
       
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
-          <div className="flex items-center gap-3 rounded-2xl bg-emerald-600 px-6 py-3.5 text-white shadow-2xl">
-            <CheckCircle className="size-5" />
-            <span className="font-bold">تم تحديث حالة الطلب بنجاح</span>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col items-start gap-1 border-b border-white/10 pb-5">
         <h1 className="text-2xl font-bold text-white">إدارة الطلبات</h1>
@@ -187,19 +170,9 @@ export function OrdersPage() {
                   </td>
                   <td className="px-6 py-4 text-white/60 font-mono text-xs">{order.date}</td>
                   <td className="px-6 py-4">
-                    <div className="relative inline-block w-full">
-                      <select 
-                        value={order.status}
-                        onChange={(e) => updateStatus(order.id, e.target.value)}
-                        className={`w-full appearance-none rounded-full px-3 py-1.5 text-[11px] font-bold outline-none cursor-pointer border-none ${getStatusStyle(order.status)}`}
-                      >
-                        <option value="قيد التنفيذ">قيد التنفيذ</option>
-                        <option value="قيد الشحن">قيد الشحن</option>
-                        <option value="تم التسليم">تم التسليم</option>
-                        <option value="ملغي">ملغي</option>
-                      </select>
-                      <ChevronDown className="absolute left-2 top-1/2 -translate-y-1/2 size-3 pointer-events-none opacity-50" />
-                    </div>
+                    <span className={`inline-block rounded-full px-3 py-1.5 text-[11px] font-bold ${getStatusStyle(order.status)}`}>
+                      {order.status}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button 

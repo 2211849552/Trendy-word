@@ -35,15 +35,15 @@ export function StoreManagementPage() {
     setJoinRequests(prev => prev.filter(r => r.id !== requestId))
   }
 
-  const handleDeleteStore = (storeId) => {
-    setRegisteredStores(prev => prev.filter(s => s.id !== storeId))
+  const handleToggleStoreStatus = (storeId) => {
+    setRegisteredStores(prev => prev.map(s => s.id === storeId ? { ...s, status: s.status === 'active' ? 'disabled' : 'active' } : s))
   }
 
   if (view === 'list') {
     return (
       <StoreListView 
         stores={registeredStores}
-        onDeleteStore={handleDeleteStore}
+        onToggleStoreStatus={handleToggleStoreStatus}
         onBackToJoin={() => setView('join')} 
       />
     )
