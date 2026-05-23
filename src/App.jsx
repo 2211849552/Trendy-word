@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar.jsx'
 import { MarketingPage } from './pages/MarketingPage.jsx'
 import { OverviewPage } from './pages/OverviewPage.jsx'
@@ -32,6 +32,15 @@ function renderPage(activeNav) {
 
 export default function App() {
   const [activeNav, setActiveNav] = useState('overview')
+  const [isDarkMode, setIsDarkMode] = useState(true)
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.add('light')
+    }
+  }, [isDarkMode])
 
   return (
     <div className="flex min-h-dvh flex-row bg-brand-100" dir="ltr">
@@ -41,7 +50,12 @@ export default function App() {
         </div>
       </main>
 
-      <Sidebar activeId={activeNav} onNavigate={setActiveNav} />
+      <Sidebar 
+        activeId={activeNav} 
+        onNavigate={setActiveNav} 
+        isDarkMode={isDarkMode} 
+        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} 
+      />
     </div>
   )
 }
