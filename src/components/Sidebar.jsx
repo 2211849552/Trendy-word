@@ -14,6 +14,8 @@ import {
   ChevronDown,
   ShoppingCart,
   Truck,
+  Moon,
+  Sun,
 } from 'lucide-react'
 
 const navItems = [
@@ -145,7 +147,9 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
               ].join(' ')}
             />
           </button>
-          <span className="text-sm font-semibold text-white/70">Dark</span>
+          <span className="text-white/70">
+            {isDarkMode ? <Moon className="size-4" /> : <Sun className="size-4" />}
+          </span>
         </div>
       </div>
     </aside>
