@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, MessageSquare, CheckCircle2, Eye, AlertCircle, Calendar, Package, Store, User, ChevronDown, Camera, X, Send, Lock, AlertTriangle, UserMinus, ShieldAlert, DollarSign, Check } from 'lucide-react'
+import { Search, MessageSquare, CheckCircle2, Eye, AlertCircle, Calendar, Package, Store, User, Camera, X, Send, Lock, AlertTriangle, UserMinus, ShieldAlert, DollarSign, Check } from 'lucide-react'
 
 const initialDisputes = [
   { 
@@ -31,13 +31,11 @@ export function DisputesPage() {
   const [activeStatusFilter, setActiveStatusFilter] = useState('الكل')
   const [activeTypeFilter, setActiveTypeFilter] = useState('الكل')
   const [searchQuery, setSearchQuery] = useState('')
-  const [openDropdownId, setOpenDropdownId] = useState(null)
-  
   // Modals state
-  const [replyModalOpen, setReplyModalOpen] = useState(false)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [selectedDispute, setSelectedDispute] = useState(null)
   const [showImageModal, setShowImageModal] = useState(false)
+  const [replyText, setReplyText] = useState('')
 
   // Success Toast state
   const [showToast, setShowToast] = useState(false)
@@ -51,12 +49,8 @@ export function DisputesPage() {
 
   const placeholderProductImage = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=1000'
 
-  const openReplyModal = (dispute) => {
-    setSelectedDispute(dispute)
-    setReplyModalOpen(true)
-  }
-
   const openDetailsModal = (dispute) => {
+    setReplyText('')
     setSelectedDispute(dispute)
     setDetailsModalOpen(true)
   }
@@ -276,50 +270,12 @@ export function DisputesPage() {
                     
                     {dispute.status !== 'مغلقة' && (
                       <>
-                        <div className="relative">
-                          <button 
-                            onClick={() => setOpenDropdownId(openDropdownId === dispute.id ? null : dispute.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
-                            dispute.status === 'مفتوحة' ? 'border-red-200 bg-red-50 text-red-600' :
-                            dispute.status === 'قيد المراجعة' ? 'border-yellow-200 bg-yellow-50 text-yellow-600' :
-                            dispute.status === 'تم الحل' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-white/10 bg-brand-300 text-white/70'
-                          }`}>
-                             {dispute.status}
-                             <ChevronDown className="size-3" />
-                          </button>
-
-                          {openDropdownId === dispute.id && (
-                            <div className="absolute right-0 top-full mt-1 w-32 rounded-lg bg-brand-200 shadow-xl ring-1 ring-slate-900/5 z-20 overflow-hidden">
-                              {['مفتوحة', 'قيد المراجعة', 'تم الحل', 'مغلقة'].map((opt) => (
-                                <button
-                                  key={opt}
-                                  onClick={() => {
-                                    setDisputes(disputes.map(d => d.id === dispute.id ? { ...d, status: opt } : d))
-                                    setOpenDropdownId(null)
-                                  }}
-                                  className={`w-full text-right px-4 py-2 text-xs font-bold hover:bg-brand-300 transition-colors ${
-                                    dispute.status === opt ? 'bg-brand-300 text-white' : 'text-white/80'
-                                  }`}
-                                >
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <button 
-                          onClick={() => openReplyModal(dispute)}
-                          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-premium"
-                        >
-                           إضافة رد <Send className="size-3.5" />
-                        </button>
                         <button 
                           onClick={() => {
                             setDisputes(disputes.map(d => d.id === dispute.id ? { ...d, status: 'مغلقة' } : d))
                             triggerToast('تم إغلاق الشكوى')
                           }}
-                          className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-slate-700 hover:bg-slate-800 transition-colors shadow-premium"
+                          className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-brand-300 hover:bg-brand-100 transition-colors shadow-premium border border-white/10"
                         >
                            إغلاق
                         </button>
@@ -356,40 +312,6 @@ export function DisputesPage() {
           </div>
         ))}
       </div>
-
-      {/* Add Reply Modal */}
-      {replyModalOpen && selectedDispute && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-white/5 p-6" dir="rtl">
-               <h2 className="text-xl font-bold text-white">إضافة رد على الشكوى</h2>
-               <button onClick={() => setReplyModalOpen(false)} className="text-white/50 hover:text-white/70">
-                 <X className="size-5" />
-               </button>
-            </div>
-            <div className="p-6 text-right">
-               <label className="block text-sm font-medium text-white/80 mb-2">الرد *</label>
-               <textarea 
-                 rows="6" 
-                 placeholder="اكتب ردك على الشكوى..." 
-                 className="w-full rounded-xl border border-white/10 bg-brand-200 p-4 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-y text-right"
-                 dir="rtl"
-               ></textarea>
-            </div>
-            <div className="flex items-center justify-start gap-3 border-t border-white/5 p-6" dir="rtl">
-               <button onClick={() => {
-                 setReplyModalOpen(false)
-                 triggerToast('تم إرسال الرد بنجاح')
-               }} className="rounded-xl bg-brand-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-950 shadow-premium transition-colors">
-                 إرسال الرد
-               </button>
-               <button onClick={() => setReplyModalOpen(false)} className="rounded-xl border border-white/10 bg-brand-200 px-6 py-2.5 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors">
-                 إلغاء
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Dispute Details Modal */}
       {detailsModalOpen && selectedDispute && (
@@ -477,9 +399,59 @@ export function DisputesPage() {
                   </div>
                )}
 
+               {/* Reply & Status */}
+               {selectedDispute.status !== 'مغلقة' && (
+                 <div className="mt-6 space-y-4" dir="rtl">
+                    <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد وتحديث الحالة</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="md:col-span-1">
+                        <label className="block text-sm font-medium text-white/70 mb-2">تعديل حالة الشكوى</label>
+                        <select
+                          value={selectedDispute.status}
+                          onChange={(e) => {
+                            const newStatus = e.target.value
+                            setDisputes(disputes.map(d => d.id === selectedDispute.id ? { ...d, status: newStatus } : d))
+                            setSelectedDispute({ ...selectedDispute, status: newStatus })
+                            triggerToast(`تم تحديث الحالة إلى ${newStatus}`)
+                          }}
+                          className="w-full rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                        >
+                          <option value="مفتوحة">مفتوحة</option>
+                          <option value="قيد المراجعة">قيد المراجعة</option>
+                          <option value="تم الحل">تم الحل</option>
+                          <option value="مغلقة">مغلقة</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="اكتب ردك هنا..."
+                            className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                          />
+                          <button
+                            onClick={() => {
+                              if (!replyText.trim()) return
+                              setReplyText('')
+                              triggerToast('تم إرسال الرد بنجاح')
+                            }}
+                            className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0"
+                          >
+                            <Send className="size-4" />
+                            إرسال
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                 </div>
+               )}
+
                {/* Available Actions */}
                <div className="mt-8">
-                  <h3 className="text-lg font-bold text-white text-right mb-4 border-b pb-2" dir="rtl">الإجراءات المتاحة</h3>
+                  <h3 className="text-lg font-bold text-white text-right mb-4 border-b border-white/10 pb-2" dir="rtl">الإجراءات المتاحة</h3>
                   
                   <div className="space-y-6">
                     {/* Financial Actions */}
@@ -490,13 +462,13 @@ export function DisputesPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button 
                           onClick={() => handleAction('refund')}
-                          className="w-full rounded-xl bg-emerald-600 py-4 text-center font-bold text-white hover:bg-emerald-700 transition-colors shadow-premium text-lg flex items-center justify-center gap-2"
+                          className="w-full rounded-xl bg-brand-100 py-4 text-center font-bold text-white hover:bg-brand-300 transition-colors shadow-premium text-lg flex items-center justify-center gap-2 border border-white/10"
                         >
                            استرداد للزبون 💰
                         </button>
                         <button 
                           onClick={() => handleAction('deduct')}
-                          className="w-full rounded-xl bg-red-600 py-4 text-center font-bold text-white hover:bg-red-700 transition-colors shadow-premium text-lg flex items-center justify-center gap-2"
+                          className="w-full rounded-xl bg-brand-100 py-4 text-center font-bold text-white hover:bg-brand-300 transition-colors shadow-premium text-lg flex items-center justify-center gap-2 border border-white/10"
                         >
                            خصم من التاجر 💳
                         </button>
@@ -511,25 +483,25 @@ export function DisputesPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button 
                           onClick={() => handleAction('ban_store')}
-                          className="w-full rounded-xl bg-orange-600 py-4 text-center font-bold text-white hover:bg-orange-700 transition-colors shadow-premium text-lg flex items-center justify-center gap-2"
+                          className="w-full rounded-xl bg-brand-100 py-4 text-center font-bold text-white hover:bg-brand-300 transition-colors shadow-premium text-lg flex items-center justify-center gap-2 border border-white/10"
                         >
                            حظر المتجر 🚫
                         </button>
                         <button 
                           onClick={() => handleAction('warn_merchant')}
-                          className="w-full rounded-xl bg-amber-500 py-4 text-center font-bold text-white hover:bg-amber-600 transition-colors shadow-premium text-lg flex items-center justify-center gap-2"
+                          className="w-full rounded-xl bg-brand-100 py-4 text-center font-bold text-white hover:bg-brand-300 transition-colors shadow-premium text-lg flex items-center justify-center gap-2 border border-white/10"
                         >
                            تحذير التاجر ⚠️
                         </button>
                         <button 
                           onClick={() => handleAction('ban_customer')}
-                          className="w-full rounded-xl bg-purple-600 py-4 text-center font-bold text-white hover:bg-purple-700 transition-colors shadow-premium text-lg flex items-center justify-center gap-2"
+                          className="w-full rounded-xl bg-brand-100 py-4 text-center font-bold text-white hover:bg-brand-300 transition-colors shadow-premium text-lg flex items-center justify-center gap-2 border border-white/10"
                         >
                            حظر الزبون ⛔
                         </button>
                         <button 
                           onClick={() => handleAction('close')}
-                          className="w-full rounded-xl bg-slate-600 py-4 text-center font-bold text-white hover:bg-slate-700 transition-colors shadow-premium text-lg flex items-center justify-center gap-2"
+                          className="w-full rounded-xl bg-brand-100 py-4 text-center font-bold text-white hover:bg-brand-300 transition-colors shadow-premium text-lg flex items-center justify-center gap-2 border border-white/10"
                         >
                            إغلاق الشكوى 🔒
                         </button>

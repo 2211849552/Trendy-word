@@ -1,7 +1,10 @@
 import { createPortal } from 'react-dom'
-import { X, User, MapPin, Phone, Mail, ShoppingBag, Package, Star, TrendingUp, Calendar, CheckCircle2, Eye, Trash2 } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { X, User, MapPin, Phone, Mail, ShoppingBag, Package, Star, TrendingUp, Calendar, CheckCircle2, Eye, Trash2, Search } from 'lucide-react'
 
 export function StoreDetailModal({ store, open, onClose }) {
+  const [query, setQuery] = useState('')
+
   if (!open || !store) return null
 
   // Mock stats for demo purposes
@@ -93,8 +96,19 @@ export function StoreDetailModal({ store, open, onClose }) {
               <h4 className="font-bold text-white">أحدث المنتجات</h4>
               <span className="text-xs text-white/50">إجمالي {store.catalog?.length || 0} منتج</span>
             </div>
+            <label className="relative block">
+              <span className="sr-only">البحث في المنتجات</span>
+              <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="البحث في المنتجات..."
+                className="w-full rounded-xl border border-white/10 bg-brand-300/80 py-2.5 pe-10 ps-3 text-sm text-white outline-none ring-brand-500/30 transition focus:border-brand-300 focus:bg-brand-200 focus:ring-2"
+              />
+            </label>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-              {(store.catalog || []).map((product, idx) => (
+              {(store.catalog || []).filter((p) => p.name.toLowerCase().includes(query.toLowerCase())).map((product, idx) => (
                 <div key={product.sku} className="rounded-2xl border border-white/5 bg-brand-200 p-4 shadow-premium flex items-center gap-4 hover:border-brand-200 transition-colors">
                   <div className="size-14 rounded-xl bg-brand-300 flex items-center justify-center overflow-hidden shrink-0">
                      <img
