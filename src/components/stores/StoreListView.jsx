@@ -155,22 +155,22 @@ export function StoreListView({ stores, onToggleStoreStatus, onBackToJoin }) {
           <h2 className="text-lg font-semibold text-white">قائمة المتاجر</h2>
         </div>
         <div className="overflow-x-auto print:overflow-visible">
-          <table className="w-full min-w-[800px] text-right text-sm print:min-w-full">
+          <table className="w-full min-w-0 text-right text-sm print:min-w-full">
             <thead>
               <tr className="border-b border-white/5 bg-brand-300/80 text-white/70">
-                <th className="px-4 py-3 font-semibold">المتجر</th>
-                <th className="px-4 py-3 font-semibold">التاجر</th>
-                <th className="px-4 py-3 font-semibold">البريد الإلكتروني</th>
-                <th className="px-4 py-3 font-semibold">الهاتف</th>
-                <th className="px-4 py-3 font-semibold">المنتجات</th>
-                <th className="px-4 py-3 font-semibold">الطلبات</th>
-                <th className="px-4 py-3 font-semibold print:hidden">إجراءات</th>
+                <th className="px-3 py-2 font-semibold">المتجر</th>
+                <th className="px-3 py-2 font-semibold">التاجر</th>
+                <th className="px-3 py-2 font-semibold">البريد الإلكتروني</th>
+                <th className="px-3 py-2 font-semibold">الهاتف</th>
+                <th className="px-3 py-2 font-semibold">المنتجات</th>
+                <th className="px-3 py-2 font-semibold">الطلبات</th>
+                <th className="px-3 py-2 font-semibold print:hidden">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRows.map((row) => (
                 <tr key={row.id} className={`transition-colors hover:bg-brand-300/60 ${row.status === 'disabled' ? 'opacity-60' : ''}`}>
-                  <td className="px-4 py-4">
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-3">
                       <StoreImage
                         src={row.image}
@@ -188,22 +188,22 @@ export function StoreListView({ stores, onToggleStoreStatus, onBackToJoin }) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-white/80">{row.merchant}</td>
-                  <td className="px-4 py-4 text-white/70 tabular-nums" dir="ltr">
+                  <td className="px-3 py-3 text-white/80">{row.merchant}</td>
+                  <td className="px-3 py-3 text-white/70 tabular-nums" dir="ltr">
                     {row.email}
                   </td>
-                  <td className="px-4 py-4 tabular-nums text-white/80" dir="ltr">
+                  <td className="px-3 py-3 tabular-nums text-white/80" dir="ltr">
                     {row.phone}
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-3 py-3">
                     <span className="inline-flex items-center gap-1.5 font-medium text-white/90 tabular-nums">
                       {row.products}
                     </span>
                   </td>
-                  <td className="px-4 py-4 font-medium tabular-nums text-white">
+                  <td className="px-3 py-3 font-medium tabular-nums text-white">
                     {row.orders}
                   </td>
-                  <td className="px-4 py-4 print:hidden">
+                  <td className="px-3 py-3 print:hidden">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"

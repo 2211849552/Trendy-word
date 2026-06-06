@@ -159,38 +159,38 @@ export function CustomersPage() {
       {/* Customers Table */}
       <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm whitespace-nowrap">
+          <table className="w-full text-right text-sm ">
             <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 font-medium">الاسم</th>
-                <th className="px-6 py-4 font-medium">البريد الإلكتروني</th>
-                <th className="px-6 py-4 font-medium">الهاتف</th>
-                <th className="px-6 py-4 font-medium">الموقع</th>
-                <th className="px-6 py-4 font-medium">الطلبات</th>
-                <th className="px-6 py-4 font-medium">الإنفاق الكلي</th>
-                <th className="px-6 py-4 font-medium">تاريخ الانضمام</th>
-                <th className="px-6 py-4 font-medium">الحالة</th>
-                <th className="px-6 py-4 font-medium">الإجراءات</th>
+                <th className="px-3 py-3 font-medium">الاسم</th>
+                <th className="px-3 py-3 font-medium">البريد الإلكتروني</th>
+                <th className="px-3 py-3 font-medium">الهاتف</th>
+                <th className="px-3 py-3 font-medium">الموقع</th>
+                <th className="px-3 py-3 font-medium">الطلبات</th>
+                <th className="px-3 py-3 font-medium">الإنفاق الكلي</th>
+                <th className="px-3 py-3 font-medium">تاريخ الانضمام</th>
+                <th className="px-3 py-3 font-medium">الحالة</th>
+                <th className="px-3 py-3 font-medium">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredCustomers.map(c => (
                 <tr key={c.id} className="hover:bg-brand-300 transition-colors">
-                  <td className="px-6 py-4 font-bold text-white">{c.name}</td>
-                  <td className="px-6 py-4 text-white/70 font-mono text-xs">{c.email}</td>
-                  <td className="px-6 py-4 text-white/70 font-mono text-xs">{c.phone}</td>
-                  <td className="px-6 py-4 text-white/70">{c.location}</td>
-                  <td className="px-6 py-4 font-medium text-white">{c.orders}</td>
-                  <td className="px-6 py-4 font-bold text-emerald-600" dir="ltr">{c.totalSpent} د.ل</td>
-                  <td className="px-6 py-4 text-white/60">{c.joinDate}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 font-bold text-white">{c.name}</td>
+                  <td className="px-3 py-3 text-white/70 font-mono text-xs">{c.email}</td>
+                  <td className="px-3 py-3 text-white/70 font-mono text-xs">{c.phone}</td>
+                  <td className="px-3 py-3 text-white/70">{c.location}</td>
+                  <td className="px-3 py-3 font-medium text-white">{c.orders}</td>
+                  <td className="px-3 py-3 font-bold text-emerald-600" dir="ltr">{c.totalSpent} د.ل</td>
+                  <td className="px-3 py-3 text-white/60">{c.joinDate}</td>
+                  <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                       c.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                     }`}>
                       {c.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => toggleStatus(c.id)}

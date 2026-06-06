@@ -250,33 +250,33 @@ export function FinancePage() {
           <h2 className="text-lg font-bold text-white">المعاملات المالية</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm whitespace-nowrap">
+          <table className="w-full text-right text-sm">
             <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 font-medium">رقم المعاملة</th>
-                <th className="px-6 py-4 font-medium">الزبون</th>
-                <th className="px-6 py-4 font-medium">المتجر</th>
-                <th className="px-6 py-4 font-medium">المبلغ</th>
-                <th className="px-6 py-4 font-medium">نوع العملية</th>
-                <th className="px-6 py-4 font-medium">التاريخ</th>
-                <th className="px-6 py-4 font-medium">الحالة</th>
-                <th className="px-6 py-4 font-medium">الإجراءات</th>
+                <th className="px-3 py-3 font-medium">رقم المعاملة</th>
+                <th className="px-3 py-3 font-medium">الزبون</th>
+                <th className="px-3 py-3 font-medium">المتجر</th>
+                <th className="px-3 py-3 font-medium">المبلغ</th>
+                <th className="px-3 py-3 font-medium">نوع العملية</th>
+                <th className="px-3 py-3 font-medium">التاريخ</th>
+                <th className="px-3 py-3 font-medium">الحالة</th>
+                <th className="px-3 py-3 font-medium">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTransactions.map(tx => (
                 <tr key={tx.id} className="hover:bg-brand-300 transition-colors">
-                  <td className="px-6 py-4 font-mono text-white/80">{tx.id}</td>
-                  <td className="px-6 py-4 font-medium text-white">{tx.customer}</td>
-                  <td className="px-6 py-4 text-white/70">{tx.store}</td>
-                  <td className="px-6 py-4 font-bold text-emerald-600" dir="ltr">{tx.amount} د.ل</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 font-mono text-white/80">{tx.id}</td>
+                  <td className="px-3 py-3 font-medium text-white">{tx.customer}</td>
+                  <td className="px-3 py-3 text-white/70">{tx.store}</td>
+                  <td className="px-3 py-3 font-bold text-emerald-600" dir="ltr">{tx.amount} د.ل</td>
+                  <td className="px-3 py-3">
                     <span className="flex items-center gap-1.5 text-white/80">
                       {tx.type} {tx.type === 'محفظة إلكترونية' ? <CreditCard className="size-4 text-brand-500" /> : <Banknote className="size-4 text-emerald-500" />}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-white/60">{tx.date}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 text-white/60">{tx.date}</td>
+                  <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                       tx.status === 'معلقة' ? 'bg-yellow-100 text-yellow-700' : 
                       tx.status === 'ناجحة' ? 'bg-emerald-100 text-emerald-700' : 
@@ -285,7 +285,7 @@ export function FinancePage() {
                       {tx.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3">
                     <button 
                       onClick={() => openDetails(tx)}
                       className="icon-btn-view"
@@ -297,7 +297,7 @@ export function FinancePage() {
               ))}
               {filteredTransactions.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-white/60">
+                  <td colSpan="8" className="px-3 py-12 text-center text-white/60">
                     لا توجد معاملات مطابقة للبحث أو الفلتر.
                   </td>
                 </tr>

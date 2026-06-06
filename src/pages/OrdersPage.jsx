@@ -140,27 +140,27 @@ export function OrdersPage() {
       {/* Orders Table */}
       <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm whitespace-nowrap">
+          <table className="w-full text-right text-sm ">
             <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 font-medium">رقم الطلب</th>
-                <th className="px-6 py-4 font-medium">الزبون</th>
-                <th className="px-6 py-4 font-medium">المتجر</th>
-                <th className="px-6 py-4 font-medium text-center">الإجمالي</th>
-                <th className="px-6 py-4 font-medium text-center">الدفع</th>
-                <th className="px-6 py-4 font-medium">التاريخ</th>
-                <th className="px-6 py-4 font-medium">الحالة</th>
-                <th className="px-6 py-4 font-medium text-center">الإجراءات</th>
+                <th className="px-3 py-3 font-medium">رقم الطلب</th>
+                <th className="px-3 py-3 font-medium">الزبون</th>
+                <th className="px-3 py-3 font-medium">المتجر</th>
+                <th className="px-3 py-3 font-medium text-center">الإجمالي</th>
+                <th className="px-3 py-3 font-medium text-center">الدفع</th>
+                <th className="px-3 py-3 font-medium">التاريخ</th>
+                <th className="px-3 py-3 font-medium">الحالة</th>
+                <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredOrders.map(order => (
                 <tr key={order.id} className="hover:bg-brand-300 transition-colors">
-                  <td className="px-6 py-4 font-bold text-white">{order.id}</td>
-                  <td className="px-6 py-4 text-white/70">{order.customer}</td>
-                  <td className="px-6 py-4 text-white/70">{order.store}</td>
-                  <td className="px-6 py-4 font-bold text-white text-center">{order.total}</td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-3 font-bold text-white">{order.id}</td>
+                  <td className="px-3 py-3 text-white/70">{order.customer}</td>
+                  <td className="px-3 py-3 text-white/70">{order.store}</td>
+                  <td className="px-3 py-3 font-bold text-white text-center">{order.total}</td>
+                  <td className="px-3 py-3 text-center">
                     <div className="flex flex-col items-center gap-1">
                       <div className="size-5 flex items-center justify-center rounded bg-brand-100 text-brand-500">
                         <CreditCard className="size-3" />
@@ -168,13 +168,13 @@ export function OrdersPage() {
                       <span className="text-[10px] text-white/60">{order.payment}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-white/60 font-mono text-xs">{order.date}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 text-white/60 font-mono text-xs">{order.date}</td>
+                  <td className="px-3 py-3">
                     <span className={`inline-block rounded-full px-3 py-1.5 text-[11px] font-bold ${getStatusStyle(order.status)}`}>
                       {order.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-3 text-center">
                     <button 
                       onClick={() => openDetails(order)}
                       className="icon-btn-view"

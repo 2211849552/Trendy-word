@@ -175,40 +175,40 @@ export function StaffPage() {
       {/* Staff Table */}
       <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm whitespace-nowrap">
+          <table className="w-full text-right text-sm ">
             <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 font-medium">الاسم</th>
-                <th className="px-6 py-4 font-medium">البريد الإلكتروني</th>
-                <th className="px-6 py-4 font-medium">الهاتف</th>
-                <th className="px-6 py-4 font-medium">الدور</th>
-                <th className="px-6 py-4 font-medium">تاريخ التوظيف</th>
-                <th className="px-6 py-4 font-medium">آخر دخول</th>
-                <th className="px-6 py-4 font-medium">الحالة</th>
-                <th className="px-6 py-4 font-medium text-center">الإجراءات</th>
+                <th className="px-3 py-3 font-medium">الاسم</th>
+                <th className="px-3 py-3 font-medium">البريد الإلكتروني</th>
+                <th className="px-3 py-3 font-medium">الهاتف</th>
+                <th className="px-3 py-3 font-medium">الدور</th>
+                <th className="px-3 py-3 font-medium">تاريخ التوظيف</th>
+                <th className="px-3 py-3 font-medium">آخر دخول</th>
+                <th className="px-3 py-3 font-medium">الحالة</th>
+                <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredStaff.map(s => (
                 <tr key={s.id} className="hover:bg-brand-300 transition-colors">
-                  <td className="px-6 py-4 font-bold text-white">{s.name}</td>
-                  <td className="px-6 py-4 text-white/70 font-mono text-xs">{s.email}</td>
-                  <td className="px-6 py-4 text-white/70 font-mono text-xs">{s.phone}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 font-bold text-white">{s.name}</td>
+                  <td className="px-3 py-3 text-white/70 font-mono text-xs">{s.email}</td>
+                  <td className="px-3 py-3 text-white/70 font-mono text-xs">{s.phone}</td>
+                  <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleBadgeColor(s.role)}`}>
                       {s.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-white/60">{s.hireDate}</td>
-                  <td className="px-6 py-4 text-white/60 text-xs">{s.lastLogin}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 text-white/60">{s.hireDate}</td>
+                  <td className="px-3 py-3 text-white/60 text-xs">{s.lastLogin}</td>
+                  <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                       s.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                     }`}>
                       {s.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       <button 
                         onClick={() => toggleStatus(s.id)}

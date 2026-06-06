@@ -353,7 +353,7 @@ export function PlansPage() {
         </button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
         <StatCard
           label="متوسط قيمة الاشتراك"
           value="107"

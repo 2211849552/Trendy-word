@@ -72,7 +72,7 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], onAccep
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
         <StatCard
           label="إجمالي المنتجات"
           value={String(totalProducts)}

@@ -163,42 +163,42 @@ export function DriversPage() {
       {/* Drivers Table */}
       <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm whitespace-nowrap">
+          <table className="w-full text-right text-sm ">
             <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 font-medium">الاسم</th>
-                <th className="px-6 py-4 font-medium">الهاتف</th>
-                <th className="px-6 py-4 font-medium">المركبة</th>
-                <th className="px-6 py-4 font-medium text-center">التقييم</th>
-                <th className="px-6 py-4 font-medium text-center">التوصيلات</th>
-                <th className="px-6 py-4 font-medium">الحالة</th>
-                <th className="px-6 py-4 font-medium text-center">الإجراءات</th>
+                <th className="px-3 py-3 font-medium">الاسم</th>
+                <th className="px-3 py-3 font-medium">الهاتف</th>
+                <th className="px-3 py-3 font-medium">المركبة</th>
+                <th className="px-3 py-3 font-medium text-center">التقييم</th>
+                <th className="px-3 py-3 font-medium text-center">التوصيلات</th>
+                <th className="px-3 py-3 font-medium">الحالة</th>
+                <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredDrivers.map(d => (
                 <tr key={d.id} className="hover:bg-brand-300 transition-colors">
-                  <td className="px-6 py-4 font-bold text-white">{d.name}</td>
-                  <td className="px-6 py-4 text-white/70 font-mono text-xs">{d.phone}</td>
-                  <td className="px-6 py-4 text-white/60 text-xs">
+                  <td className="px-3 py-3 font-bold text-white">{d.name}</td>
+                  <td className="px-3 py-3 text-white/70 font-mono text-xs">{d.phone}</td>
+                  <td className="px-3 py-3 text-white/60 text-xs">
                     <div className="flex items-center gap-1.5">
                       <Truck className="size-3 text-white/50" />
                       {d.vehicle}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Star className="size-3 fill-yellow-400 text-yellow-400" />
                       <span className="font-bold text-white/80">{d.rating}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center font-medium text-white/70">{d.deliveries}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 text-center font-medium text-white/70">{d.deliveries}</td>
+                  <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${getStatusStyle(d.status)}`}>
                       {d.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       <button 
                         onClick={() => toggleStatus(d.id)}

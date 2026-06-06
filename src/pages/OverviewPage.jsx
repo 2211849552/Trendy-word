@@ -24,7 +24,7 @@ export function OverviewPage() {
         <p className="mt-1 text-white/60">ملخص شامل لأداء المنصة</p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
         <StatCard
           label="الإيرادات (د.ل)"
           value="67,000"
@@ -67,7 +67,7 @@ export function OverviewPage() {
       <div className="mt-8 space-y-6">
         <OrderStatusBarCard />
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiMiniCard
             label="المنتجات النشطة"
             value="8,456"

@@ -202,7 +202,7 @@ export function CatalogManagementPage() {
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="ltr">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
         <StatCard
           label="التصنيفات النشطة"
           value={String(stats.activeCategories)}
@@ -377,7 +377,7 @@ export function CatalogManagementPage() {
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-white/5">
-              <table className="w-full min-w-[720px] border-collapse text-sm">
+              <table className="w-full min-w-0 border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-white/10 bg-brand-300/80 text-start">
                     <th className="px-4 py-3 font-semibold text-white/80">اسم الخاصية</th>
