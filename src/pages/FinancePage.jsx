@@ -1,6 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Download, Search, DollarSign, CheckCircle2, AlertCircle, BarChart2, Eye, X, CreditCard, Banknote } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
+import {
+  getAdProfits,
+  getSubscriptionProfits,
+  getDeliveryProfits,
+  getPlatformEarnings,
+} from '../api/adminFinance.js'
 
 const monthlyRevenueData = [
   { name: 'يناير', value: 45000 },
@@ -54,6 +60,30 @@ export function FinancePage() {
   
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [selectedTx, setSelectedTx] = useState(null)
+  const [platformEarnings, setPlatformEarnings] = useState(null)
+  const [adProfits, setAdProfits] = useState(null)
+  const [subscriptionProfits, setSubscriptionProfits] = useState(null)
+  const [deliveryProfits, setDeliveryProfits] = useState(null)
+
+  useEffect(() => {
+    getPlatformEarnings()
+      .then((data) => setPlatformEarnings(data?.data ?? data))
+      .catch(() => {})
+    getAdProfits()
+      .then((data) => setAdProfits(data?.data ?? data))
+      .catch(() => {})
+    getSubscriptionProfits()
+      .then((data) => setSubscriptionProfits(data?.data ?? data))
+      .catch(() => {})
+    getDeliveryProfits()
+      .then((data) => setDeliveryProfits(data?.data ?? data))
+      .catch(() => {})
+  }, [])
+
+  const formatAmount = (value, fallback) => {
+    if (value == null || value === '') return fallback
+    return `${Number(value).toLocaleString('ar-LY')} د.ل`
+  }
 
   const openDetails = (tx) => {
     setSelectedTx(tx)
@@ -120,7 +150,9 @@ export function FinancePage() {
             <DollarSign className="size-6" />
           </div>
           <p className="text-sm font-medium text-white/60">إجمالي الإيرادات</p>
-          <p className="mt-1 text-2xl font-bold text-white">226,000 د.ل</p>
+          <p className="mt-1 text-2xl font-bold text-white">
+            {formatAmount(platformEarnings?.total ?? platformEarnings?.amount, '226,000 د.ل')}
+          </p>
         </div>
         
         {/* Success Card */}
@@ -128,8 +160,10 @@ export function FinancePage() {
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <CheckCircle2 className="size-6" />
           </div>
-          <p className="text-sm font-medium text-white/60">المعاملات الناجحة</p>
-          <p className="mt-1 text-2xl font-bold text-white">1</p>
+          <p className="text-sm font-medium text-white/60">أرباح الاشتراكات</p>
+          <p className="mt-1 text-2xl font-bold text-white">
+            {formatAmount(subscriptionProfits?.total ?? subscriptionProfits?.amount, '—')}
+          </p>
         </div>
 
         {/* Failed Card */}
@@ -137,8 +171,10 @@ export function FinancePage() {
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-500">
             <AlertCircle className="size-6" />
           </div>
-          <p className="text-sm font-medium text-white/60">المعاملات الفاشلة</p>
-          <p className="mt-1 text-2xl font-bold text-white">0</p>
+          <p className="text-sm font-medium text-white/60">أرباح التوصيل</p>
+          <p className="mt-1 text-2xl font-bold text-white">
+            {formatAmount(deliveryProfits?.total ?? deliveryProfits?.amount, '—')}
+          </p>
         </div>
 
         {/* Avg Value Card */}
@@ -146,8 +182,10 @@ export function FinancePage() {
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
             <BarChart2 className="size-6" />
           </div>
-          <p className="text-sm font-medium text-white/60">متوسط قيمة المعاملة</p>
-          <p className="mt-1 text-2xl font-bold text-white">75333 د.ل</p>
+          <p className="text-sm font-medium text-white/60">أرباح الإعلانات</p>
+          <p className="mt-1 text-2xl font-bold text-white">
+            {formatAmount(adProfits?.total ?? adProfits?.amount, '—')}
+          </p>
         </div>
       </div>
 

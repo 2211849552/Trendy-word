@@ -1,12 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Search, Trash2, Edit, Eye, Archive, Tag, Package, CheckCircle, X, Check, ChevronDown } from 'lucide-react'
+import { DEFAULT_CATEGORY_IMAGE } from '../data/catalogData.js'
 import {
-  CLOTHING_CATEGORIES,
-  CLOTHING_ATTRIBUTES,
-  DEFAULT_CATEGORY_IMAGE,
-} from '../data/catalogData.js'
+  searchCatalogCategories,
+  searchCatalogAttributes,
+  extractCatalogList,
+  mapCategory,
+  mapAttribute,
+} from '../api/catalog.js'
+import {
+  getAdminCategories,
+  createAdminCategory,
+  updateAdminCategory,
+  deleteAdminCategory,
+} from '../api/adminCategories.js'
+import {
+  getAdminAttributes,
+  createAdminAttribute,
+  getAdminAttribute,
+  updateAdminAttribute,
+  deleteAdminAttribute,
+} from '../api/adminAttributes.js'
 import { CategoryImage } from '../components/catalog/CategoryImage.jsx'
 import { CategoryImagePicker } from '../components/catalog/CategoryImagePicker.jsx'
+
+// Mock data for demo mode (fallback when backend is unavailable)
+const MOCK_CATEGORIES = [
+  { id: 1, name: 'أزياء رجالية', image: DEFAULT_CATEGORY_IMAGE, count: 24, isActive: true },
+  { id: 2, name: 'أزياء نسائية', image: DEFAULT_CATEGORY_IMAGE, count: 36, isActive: true },
+  { id: 3, name: 'إلكترونيات', image: DEFAULT_CATEGORY_IMAGE, count: 12, isActive: true },
+  { id: 4, name: 'أحذية', image: DEFAULT_CATEGORY_IMAGE, count: 18, isActive: true },
+  { id: 5, name: 'ساعات', image: DEFAULT_CATEGORY_IMAGE, count: 8, isActive: false },
+]
+
+const MOCK_ATTRIBUTES = [
+  { id: 1, name: 'المقاس', type: 'قائمة', isRequired: true, options: ['S', 'M', 'L', 'XL', 'XXL'], relatedCats: ['أزياء رجالية', 'أزياء نسائية'] },
+  { id: 2, name: 'اللون', type: 'قائمة', isRequired: true, options: ['أحمر', 'أزرق', 'أسود', 'أبيض'], relatedCats: ['أزياء رجالية', 'أزياء نسائية', 'أحذية'] },
+  { id: 3, name: 'المادة', type: 'نص', isRequired: false, options: [], relatedCats: ['ساعات'] },
+]
 
 export function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories')
@@ -17,8 +48,11 @@ export function CategoriesPage() {
   const [showEditAttribute, setShowEditAttribute] = useState(false)
   const [showAttrDetails, setShowAttrDetails] = useState(false)
   
-  const [categories, setCategories] = useState(CLOTHING_CATEGORIES)
-  const [attributes, setAttributes] = useState(CLOTHING_ATTRIBUTES)
+  const [categories, setCategories] = useState([])
+  const [attributes, setAttributes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [isMockMode, setIsMockMode] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -31,70 +65,209 @@ export function CategoriesPage() {
   const [newAttrName, setNewAttrName] = useState('')
   const [attrOptions, setAttrOptions] = useState([])
 
+  useEffect(() => {
+    const q = searchQuery.trim()
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      setLoadError('')
+      try {
+        if (activeTab === 'categories') {
+          const data = q
+            ? await searchCatalogCategories({ query: q })
+            : await getAdminCategories()
+          setCategories(extractCatalogList(data).map((item) => mapCategory(item, DEFAULT_CATEGORY_IMAGE)))
+        } else {
+          const data = q
+            ? await searchCatalogAttributes({ query: q })
+            : await getAdminAttributes()
+          setAttributes(extractCatalogList(data).map(mapAttribute))
+        }
+      } catch {
+        setIsMockMode(true)
+        if (activeTab === 'categories') {
+          setCategories(MOCK_CATEGORIES)
+        } else {
+          setAttributes(MOCK_ATTRIBUTES)
+        }
+        setLoadError('')
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, activeTab])
+
   const triggerToast = (msg) => {
     setToastMessage(msg)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCatName.trim()) return
-    const newCat = {
-      id: Date.now(),
-      name: newCatName,
-      image: newCatImage,
-      count: 0,
-      isActive: true,
+
+    if (isMockMode) {
+      const created = {
+        id: Date.now(),
+        name: newCatName.trim(),
+        image: newCatImage,
+        count: 0,
+        isActive: true,
+      }
+      setCategories((prev) => [created, ...prev])
+      setNewCatName('')
+      setShowAddCategory(false)
+      triggerToast('تم إضافة التصنيف بنجاح')
+      return
     }
-    setCategories([newCat, ...categories])
-    setNewCatName('')
-    setNewCatImage(DEFAULT_CATEGORY_IMAGE)
-    setShowAddCategory(false)
-    triggerToast('تم إضافة التصنيف بنجاح')
-  }
 
-  const handleEditCategory = () => {
-    if (!newCatName.trim()) return
-    setCategories(
-      categories.map((c) =>
-        c.id === selectedItem.id ? { ...c, name: newCatName, image: newCatImage } : c,
-      ),
-    )
-    setShowEditCategory(false)
-    triggerToast('تم تحديث التصنيف بنجاح')
-  }
-
-  const handleDeleteCategory = (id) => {
-    setCategories(categories.filter(c => c.id !== id))
-    triggerToast('تم حذف التصنيف بنجاح')
-  }
-
-  const handleAddAttribute = () => {
-    if (!newAttrName.trim()) return
-    const newAttr = {
-      id: Date.now(),
-      name: newAttrName,
-      type: 'قائمة',
-      isRequired: true,
-      options: ['S', 'M', 'L', 'XL', 'XXL'],
-      relatedCats: ['أزياء رجالية', 'أزياء نسائية']
+    try {
+      const data = await createAdminCategory({
+        name: newCatName.trim(),
+      })
+      const created = mapCategory(data?.data ?? data, DEFAULT_CATEGORY_IMAGE)
+      setCategories((prev) => [created, ...prev])
+      setNewCatName('')
+      setShowAddCategory(false)
+      triggerToast('تم إضافة التصنيف بنجاح')
+    } catch {
+      triggerToast('تعذّر إضافة التصنيف. حاول مرة أخرى.')
     }
-    setAttributes([newAttr, ...attributes])
-    setNewAttrName('')
-    setShowAddAttribute(false)
-    triggerToast('تم إضافة الخاصية بنجاح')
   }
 
-  const handleEditAttribute = () => {
+  const handleEditCategory = async () => {
+    if (!newCatName.trim() || !selectedItem) return
+
+    if (isMockMode) {
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.id === selectedItem.id
+            ? { ...c, name: newCatName.trim(), image: newCatImage }
+            : c,
+        ),
+      )
+      setShowEditCategory(false)
+      triggerToast('تم تحديث التصنيف بنجاح')
+      return
+    }
+
+    try {
+      const data = await updateAdminCategory(selectedItem.id, {
+        name: newCatName.trim(),
+        image: newCatImage,
+        image_url: newCatImage,
+      })
+      const updated = mapCategory(data?.data ?? data, DEFAULT_CATEGORY_IMAGE)
+      setCategories((prev) =>
+        prev.map((c) => (c.id === selectedItem.id ? { ...c, ...updated } : c)),
+      )
+      setShowEditCategory(false)
+      triggerToast('تم تحديث التصنيف بنجاح')
+    } catch {
+      triggerToast('تعذّر تحديث التصنيف. حاول مرة أخرى.')
+    }
+  }
+
+  const handleDeleteCategory = async (id) => {
+    if (isMockMode) {
+      setCategories((prev) => prev.filter((c) => c.id !== id))
+      triggerToast('تم حذف التصنيف بنجاح')
+      return
+    }
+
+    try {
+      await deleteAdminCategory(id)
+      setCategories((prev) => prev.filter((c) => c.id !== id))
+      triggerToast('تم حذف التصنيف بنجاح')
+    } catch {
+      triggerToast('تعذّر حذف التصنيف. حاول مرة أخرى.')
+    }
+  }
+
+  const handleAddAttribute = async () => {
     if (!newAttrName.trim()) return
-    setAttributes(attributes.map(a => a.id === selectedItem.id ? { ...a, name: newAttrName, options: attrOptions } : a))
-    setShowEditAttribute(false)
-    triggerToast('تم تحديث الخاصية بنجاح')
+
+    if (isMockMode) {
+      const created = {
+        id: Date.now(),
+        name: newAttrName.trim(),
+        type: 'قائمة',
+        isRequired: true,
+        options: ['S', 'M', 'L', 'XL', 'XXL'],
+        relatedCats: [],
+      }
+      setAttributes((prev) => [created, ...prev])
+      setNewAttrName('')
+      setShowAddAttribute(false)
+      triggerToast('تم إضافة الخاصية بنجاح')
+      return
+    }
+
+    try {
+      const data = await createAdminAttribute({
+        name: newAttrName.trim(),
+        type: 'list',
+        is_required: true,
+        options: ['S', 'M', 'L', 'XL', 'XXL'],
+      })
+      const created = mapAttribute(data?.data ?? data)
+      setAttributes((prev) => [created, ...prev])
+      setNewAttrName('')
+      setShowAddAttribute(false)
+      triggerToast('تم إضافة الخاصية بنجاح')
+    } catch {
+      triggerToast('تعذّر إضافة الخاصية. حاول مرة أخرى.')
+    }
   }
 
-  const handleDeleteAttribute = (id) => {
-    setAttributes(attributes.filter(a => a.id !== id))
-    triggerToast('تم حذف الخاصية بنجاح')
+  const handleEditAttribute = async () => {
+    if (!newAttrName.trim() || !selectedItem) return
+
+    if (isMockMode) {
+      setAttributes((prev) =>
+        prev.map((a) =>
+          a.id === selectedItem.id
+            ? { ...a, name: newAttrName.trim(), options: attrOptions }
+            : a,
+        ),
+      )
+      setShowEditAttribute(false)
+      triggerToast('تم تحديث الخاصية بنجاح')
+      return
+    }
+
+    try {
+      const data = await updateAdminAttribute(selectedItem.id, {
+        name: newAttrName.trim(),
+        options: attrOptions,
+        list_options: attrOptions,
+      })
+      const updated = mapAttribute(data?.data ?? data)
+      setAttributes((prev) =>
+        prev.map((a) => (a.id === selectedItem.id ? { ...a, ...updated, options: attrOptions } : a)),
+      )
+      setShowEditAttribute(false)
+      triggerToast('تم تحديث الخاصية بنجاح')
+    } catch {
+      triggerToast('تعذّر تحديث الخاصية. حاول مرة أخرى.')
+    }
+  }
+
+  const handleDeleteAttribute = async (id) => {
+    if (isMockMode) {
+      setAttributes((prev) => prev.filter((a) => a.id !== id))
+      triggerToast('تم حذف الخاصية بنجاح')
+      return
+    }
+
+    try {
+      await deleteAdminAttribute(id)
+      setAttributes((prev) => prev.filter((a) => a.id !== id))
+      triggerToast('تم حذف الخاصية بنجاح')
+    } catch {
+      triggerToast('تعذّر حذف الخاصية. حاول مرة أخرى.')
+    }
   }
 
   const openEditCategory = (cat) => {
@@ -104,9 +277,16 @@ export function CategoriesPage() {
     setShowEditCategory(true)
   }
 
-  const openAttrDetails = (attr) => {
+  const openAttrDetails = async (attr) => {
     setSelectedItem(attr)
     setShowAttrDetails(true)
+
+    try {
+      const data = await getAdminAttribute(attr.id)
+      setSelectedItem(mapAttribute(data?.data ?? data))
+    } catch {
+      // keep list item data if detail fetch fails
+    }
   }
 
   const openEditAttr = (attr) => {
@@ -197,6 +377,12 @@ export function CategoriesPage() {
         </div>
 
         <div className="p-5">
+          {loadError ? (
+            <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-6 text-center text-sm text-red-300">
+              {loadError}
+            </p>
+          ) : null}
+
           {activeTab === 'categories' ? (
             <div className="space-y-5">
               <div className="flex flex-wrap gap-4">
@@ -220,7 +406,14 @@ export function CategoriesPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {categories.filter(cat => cat.name.includes(searchQuery)).map((cat) => (
+                {loading ? (
+                  <p className="col-span-full py-12 text-center text-sm text-white/55">جاري تحميل التصنيفات...</p>
+                ) : categories.length === 0 ? (
+                  <p className="col-span-full py-12 text-center text-sm text-white/55">
+                    لا توجد تصنيفات. أضيفي تصنيفاً جديداً من الزر أعلاه.
+                  </p>
+                ) : (
+                categories.map((cat) => (
                   <div key={cat.id} className="group relative flex flex-col items-center rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium hover:border-brand-300 transition-all hover:shadow-premium text-center">
                     <CategoryImage
                       src={cat.image}
@@ -252,7 +445,8 @@ export function CategoriesPage() {
                       </button>
                     </div>
                   </div>
-                ))}
+                ))
+                )}
               </div>
             </div>
           ) : (
@@ -288,7 +482,20 @@ export function CategoriesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {attributes.filter(a => a.name.includes(searchQuery)).map((attr) => (
+                    {loading ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-12 text-center text-sm text-white/55">
+                          جاري تحميل الخصائص...
+                        </td>
+                      </tr>
+                    ) : attributes.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-12 text-center text-sm text-white/55">
+                          لا توجد خصائص. أضيفي خاصية جديدة من الزر أعلاه.
+                        </td>
+                      </tr>
+                    ) : (
+                    attributes.map((attr) => (
                       <tr key={attr.id} className="hover:bg-brand-300">
                         <td className="px-4 py-4 font-bold text-white text-lg">{attr.name}</td>
                         <td className="px-4 py-4">
@@ -332,7 +539,8 @@ export function CategoriesPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -351,7 +559,7 @@ export function CategoriesPage() {
                  <X className="size-6" />
                </button>
             </div>
-            <div className="p-8 space-y-8">
+            <div className="p-8">
               <div>
                 <label className="block text-sm font-bold text-white/80 mb-3 text-right">اسم التصنيف *</label>
                 <input 
@@ -361,10 +569,6 @@ export function CategoriesPage() {
                   placeholder="مثال: أزياء رجالية"
                   className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-white/80 mb-3 text-right">صورة التصنيف</label>
-                <CategoryImagePicker value={newCatImage} onChange={setNewCatImage} />
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">

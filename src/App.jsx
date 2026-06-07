@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { getCurrentUser } from './api/user.js'
 import { Sidebar } from './components/Sidebar.jsx'
+import { LoginPage } from './pages/LoginPage.jsx'
 import { MarketingPage } from './pages/MarketingPage.jsx'
 import { OverviewPage } from './pages/OverviewPage.jsx'
 import { PlansPage } from './pages/PlansPage.jsx'
@@ -33,6 +35,8 @@ function renderPage(activeNav) {
 export default function App() {
   const [activeNav, setActiveNav] = useState('overview')
   const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
 
   useEffect(() => {
     if (isDarkMode) {
@@ -41,6 +45,25 @@ export default function App() {
       document.documentElement.classList.add('light')
     }
   }, [isDarkMode])
+
+  useEffect(() => {
+    getCurrentUser()
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false))
+      .finally(() => setAuthChecking(false))
+  }, [])
+
+  if (authChecking) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-brand-50" dir="rtl">
+        <p className="text-sm text-white/55">جاري التحميل...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />
+  }
 
   return (
     <div className="flex min-h-dvh flex-row bg-brand-100" dir="ltr">

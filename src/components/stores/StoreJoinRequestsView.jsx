@@ -16,9 +16,14 @@ import { StatCard } from '../StatCard.jsx'
 import { JoinRequestDetailModal } from './JoinRequestDetailModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
 
-export function StoreJoinRequestsView({ requests, registeredStores = [], onAccept, onReject, onOpenList }) {
+export function StoreJoinRequestsView({ requests, registeredStores = [], loading = false, onAccept, onReject, onLoadRequest, onOpenList }) {
   const [modalRequestId, setModalRequestId] = useState(null)
   const modalRequest = requests.find((r) => r.id === modalRequestId) ?? null
+
+  const openDetails = (id) => {
+    setModalRequestId(id)
+    onLoadRequest?.(id)
+  }
 
   const handlePrint = () => {
     // Basic implementation for printing the page
@@ -119,7 +124,12 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], onAccep
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">
-          {requests.map((req) => (
+          {loading ? (
+            <p className="col-span-full py-8 text-center text-sm text-white/55">جاري تحميل الطلبات...</p>
+          ) : requests.length === 0 ? (
+            <p className="col-span-full py-8 text-center text-sm text-white/55">لا توجد طلبات انضمام معلقة.</p>
+          ) : (
+          requests.map((req) => (
               <article
                 key={req.id}
                 className="flex flex-col rounded-2xl bg-brand-200 p-5 shadow-premium ring-1 ring-slate-100/80"
@@ -154,7 +164,7 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], onAccep
                 <div className="mt-4 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setModalRequestId(req.id)}
+                    onClick={() => openDetails(req.id)}
                     className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-900 px-4 text-sm font-semibold text-white shadow-premium transition-colors hover:bg-brand-950"
                   >
                     <Eye className="size-4" aria-hidden />
@@ -162,7 +172,8 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], onAccep
                   </button>
                 </div>
               </article>
-            ))}
+            ))
+          )}
         </div>
       </section>
     </>

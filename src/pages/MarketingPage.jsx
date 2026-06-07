@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Plus, Eye, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X } from 'lucide-react'
+import { activateCampaign, deactivateCampaign } from '../api/adminCampaigns.js'
 import { StatCard } from '../components/StatCard.jsx'
 import { CampaignPerformanceChart } from '../components/marketing/CampaignPerformanceChart.jsx'
 import { CampaignCard } from '../components/marketing/CampaignCard.jsx'
@@ -38,28 +39,41 @@ export function MarketingPage() {
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  const handleToggleCampaign = (camp) => {
+  const handleToggleCampaign = async (camp) => {
+    const isActive = !camp.paused && camp.status !== 'stopped'
+
+    try {
+      if (isActive) {
+        await deactivateCampaign(camp.id)
+      } else {
+        await activateCampaign(camp.id)
+      }
+    } catch {
+      setToastMessage('تعذّر تحديث حالة الحملة. حاول مرة أخرى.')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+      return
+    }
+
     setList((prev) =>
       prev.map((x) => {
-        if (x.id === camp.id) {
-          const newPaused = !x.paused
-          const message = newPaused ? 'تم تعطيل حملة إعلانية' : 'تم تفعيل حملة إعلانية'
-          setToastMessage(message)
-          setShowToast(true)
-          setTimeout(() => setShowToast(false), 3000)
-          
-          // Update status based on pause state if needed
-          let newStatus = x.status
-          if (newPaused) {
-            newStatus = 'stopped'
-          } else if (x.status === 'stopped') {
-            newStatus = 'active'
-          }
-          
-          return { ...x, paused: newPaused, status: newStatus }
+        if (x.id !== camp.id) return x
+
+        const newPaused = isActive
+        const message = newPaused ? 'تم إيقاف الحملة الإعلانية' : 'تم تفعيل الحملة الإعلانية'
+        setToastMessage(message)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+
+        let newStatus = x.status
+        if (newPaused) {
+          newStatus = 'stopped'
+        } else if (x.status === 'stopped') {
+          newStatus = 'active'
         }
-        return x
-      })
+
+        return { ...x, paused: newPaused, status: newStatus }
+      }),
     )
   }
 
