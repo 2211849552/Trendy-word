@@ -16,6 +16,7 @@ import {
   Truck,
   Moon,
   Sun,
+  LogOut,
 } from 'lucide-react'
 
 const navItems = [
@@ -34,7 +35,7 @@ const navItems = [
   { id: 'drivers', label: 'إدارة السائقين', icon: Truck },
 ]
 
-export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, onToggleDarkMode }) {
+export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, onToggleDarkMode, onLogout }) {
   const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (id) => {
@@ -125,8 +126,16 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
         })}
       </nav>
 
-      {/* Dark Mode Toggle */}
-      <div className="mt-auto shrink-0 border-t border-white/10 px-6 py-4">
+      <div className="mt-auto shrink-0 space-y-3 border-t border-white/10 px-6 py-4">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-brand-200/10 hover:text-white"
+        >
+          <LogOut className="size-4 shrink-0" aria-hidden />
+          <span>تسجيل الخروج</span>
+        </button>
+
         <div className="flex items-center gap-3">
           <button
             type="button"

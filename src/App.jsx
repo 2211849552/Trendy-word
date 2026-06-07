@@ -47,11 +47,45 @@ export default function App() {
   }, [isDarkMode])
 
   useEffect(() => {
-    getCurrentUser()
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false))
-      .finally(() => setAuthChecking(false))
+    let cancelled = false
+
+    async function verifyAuth() {
+      const token = localStorage.getItem('auth_token')
+
+      if (!token) {
+        if (!cancelled) {
+          setIsAuthenticated(false)
+          setAuthChecking(false)
+        }
+        return
+      }
+
+      try {
+        await Promise.race([
+          getCurrentUser(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 8000),
+          ),
+        ])
+        if (!cancelled) setIsAuthenticated(true)
+      } catch {
+        localStorage.removeItem('auth_token')
+        if (!cancelled) setIsAuthenticated(false)
+      } finally {
+        if (!cancelled) setAuthChecking(false)
+      }
+    }
+
+    verifyAuth()
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token')
+    setIsAuthenticated(false)
+  }
 
   if (authChecking) {
     return (
@@ -73,11 +107,12 @@ export default function App() {
         </div>
       </main>
 
-      <Sidebar 
-        activeId={activeNav} 
-        onNavigate={setActiveNav} 
-        isDarkMode={isDarkMode} 
-        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} 
+      <Sidebar
+        activeId={activeNav}
+        onNavigate={setActiveNav}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        onLogout={handleLogout}
       />
     </div>
   )
