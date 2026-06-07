@@ -59,6 +59,8 @@ export function FinancePage() {
   const [searchQuery, setSearchQuery] = useState('')
   
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
+  const [cardModalOpen, setCardModalOpen] = useState(false)
+  const [cardNumber, setCardNumber] = useState('')
   const [selectedTx, setSelectedTx] = useState(null)
   const [platformEarnings, setPlatformEarnings] = useState(null)
   const [adProfits, setAdProfits] = useState(null)
@@ -135,10 +137,16 @@ export function FinancePage() {
           <h1 className="text-2xl font-bold text-white">الإدارة المالية</h1>
           <p className="text-sm text-white/60">إدارة العمليات المالية والمعاملات والتقارير</p>
         </div>
-        <button onClick={handleExport} className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-premium">
-          <Download className="size-4" />
-          تصدير التقارير
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={() => setCardModalOpen(true)} className="btn-primary shrink-0">
+            <CreditCard className="size-5" strokeWidth={2.25} aria-hidden />
+            بطاقة ائتمانية
+          </button>
+          <button type="button" onClick={handleExport} className="btn-primary shrink-0">
+            <Download className="size-5" strokeWidth={2.25} aria-hidden />
+            تصدير التقارير
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -352,6 +360,84 @@ export function FinancePage() {
           </p>
         </div>
       </div>
+
+      {/* Credit Card Modal */}
+      {cardModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setCardModalOpen(false)
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="card-modal-title"
+            className="w-full max-w-md rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            dir="rtl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/5 px-6 py-5">
+              <h2 id="card-modal-title" className="text-xl font-bold text-white">
+                إدخال بطاقة ائتمانية
+              </h2>
+              <button
+                type="button"
+                onClick={() => setCardModalOpen(false)}
+                className="rounded-lg p-1.5 text-white/50 transition-colors hover:bg-brand-300 hover:text-white/70"
+                aria-label="إغلاق"
+              >
+                <X className="size-6" />
+              </button>
+            </div>
+
+            <form
+              className="space-y-5 p-6"
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!cardNumber.trim()) return
+                setCardModalOpen(false)
+                setCardNumber('')
+              }}
+            >
+              <div>
+                <label htmlFor="card-number" className="mb-2 block text-sm font-medium text-white/80">
+                  رقم البطاقة <span className="text-brand-300">*</span>
+                </label>
+                <input
+                  id="card-number"
+                  type="text"
+                  inputMode="numeric"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                  placeholder="1234 5678 9012 3456"
+                  required
+                  dir="ltr"
+                  className="input-brand text-left tracking-widest"
+                />
+                <p className="mt-2 text-xs text-white/50">أدخل 16 رقماً بدون مسافات</p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-start gap-3 border-t border-white/5 pt-5">
+                <button type="submit" className="btn-primary">
+                  تأكيد
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCardModalOpen(false)
+                    setCardNumber('')
+                  }}
+                  className="rounded-xl border border-white/10 bg-brand-300 px-5 py-2.5 text-sm font-bold text-white/80 transition-colors hover:bg-brand-100"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Transaction Details Modal */}
       {detailsModalOpen && selectedTx && (
