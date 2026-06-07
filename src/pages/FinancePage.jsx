@@ -6,7 +6,17 @@ import {
   getSubscriptionProfits,
   getDeliveryProfits,
   getPlatformEarnings,
+  extractFinancePayload,
+  pickFinanceAmount,
 } from '../api/adminFinance.js'
+import {
+  getBankCards,
+  createBankCard,
+  deleteBankCard,
+  activateBankCard,
+  extractBankCardList,
+  mapBankCard,
+} from '../api/bankCards.js'
 
 const monthlyRevenueData = [
   { name: 'يناير', value: 45000 },
@@ -61,30 +71,124 @@ export function FinancePage() {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [cardModalOpen, setCardModalOpen] = useState(false)
   const [cardNumber, setCardNumber] = useState('')
+  const [cardholderName, setCardholderName] = useState('')
+  const [stripePaymentMethodId, setStripePaymentMethodId] = useState('')
+  const [bankCards, setBankCards] = useState([])
+  const [cardsLoading, setCardsLoading] = useState(false)
+  const [cardsSaving, setCardsSaving] = useState(false)
+  const [cardsError, setCardsError] = useState('')
+  const [cardsMessage, setCardsMessage] = useState('')
   const [selectedTx, setSelectedTx] = useState(null)
   const [platformEarnings, setPlatformEarnings] = useState(null)
   const [adProfits, setAdProfits] = useState(null)
   const [subscriptionProfits, setSubscriptionProfits] = useState(null)
   const [deliveryProfits, setDeliveryProfits] = useState(null)
+  const [financeLoading, setFinanceLoading] = useState(true)
+
+  const loadFinanceStats = async () => {
+    setFinanceLoading(true)
+    try {
+      const [platform, ads, subscriptions, delivery] = await Promise.all([
+        getPlatformEarnings(),
+        getAdProfits(),
+        getSubscriptionProfits(),
+        getDeliveryProfits(),
+      ])
+      setPlatformEarnings(extractFinancePayload(platform))
+      setAdProfits(extractFinancePayload(ads))
+      setSubscriptionProfits(extractFinancePayload(subscriptions))
+      setDeliveryProfits(extractFinancePayload(delivery))
+    } catch {
+      // keep fallback values in cards
+    } finally {
+      setFinanceLoading(false)
+    }
+  }
+
+  const loadBankCards = async () => {
+    setCardsLoading(true)
+    setCardsError('')
+    try {
+      const data = await getBankCards()
+      setBankCards(extractBankCardList(data).map(mapBankCard))
+    } catch (err) {
+      setBankCards([])
+      if (err?.status === 401) {
+        setCardsError('انتهت الجلسة. سجّلي الدخول من جديد.')
+      } else if (err?.status === 403) {
+        setCardsError('ليس لديك صلاحية إدارة البطاقات المصرفية.')
+      } else {
+        setCardsError(err?.message || 'تعذّر تحميل البطاقات.')
+      }
+    } finally {
+      setCardsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    getPlatformEarnings()
-      .then((data) => setPlatformEarnings(data?.data ?? data))
-      .catch(() => {})
-    getAdProfits()
-      .then((data) => setAdProfits(data?.data ?? data))
-      .catch(() => {})
-    getSubscriptionProfits()
-      .then((data) => setSubscriptionProfits(data?.data ?? data))
-      .catch(() => {})
-    getDeliveryProfits()
-      .then((data) => setDeliveryProfits(data?.data ?? data))
-      .catch(() => {})
+    loadFinanceStats()
   }, [])
+
+  useEffect(() => {
+    if (cardModalOpen) loadBankCards()
+  }, [cardModalOpen])
 
   const formatAmount = (value, fallback) => {
     if (value == null || value === '') return fallback
     return `${Number(value).toLocaleString('ar-LY')} د.ل`
+  }
+
+  const resetCardForm = () => {
+    setCardNumber('')
+    setCardholderName('')
+    setStripePaymentMethodId('')
+  }
+
+  const handleCreateBankCard = async (e) => {
+    e.preventDefault()
+    if (!cardNumber.trim() || !cardholderName.trim() || !stripePaymentMethodId.trim()) return
+
+    setCardsSaving(true)
+    setCardsError('')
+    setCardsMessage('')
+    try {
+      await createBankCard({
+        card_number: cardNumber.trim(),
+        cardholder_name: cardholderName.trim(),
+        stripe_payment_method_id: stripePaymentMethodId.trim(),
+      })
+      resetCardForm()
+      setCardsMessage('تمت إضافة البطاقة بنجاح.')
+      await loadBankCards()
+    } catch (err) {
+      setCardsError(err?.message || 'تعذّر إضافة البطاقة.')
+    } finally {
+      setCardsSaving(false)
+    }
+  }
+
+  const handleActivateBankCard = async (id) => {
+    setCardsError('')
+    setCardsMessage('')
+    try {
+      await activateBankCard(id)
+      setCardsMessage('تم تفعيل البطاقة بنجاح.')
+      await loadBankCards()
+    } catch (err) {
+      setCardsError(err?.message || 'تعذّر تفعيل البطاقة.')
+    }
+  }
+
+  const handleDeleteBankCard = async (id) => {
+    setCardsError('')
+    setCardsMessage('')
+    try {
+      await deleteBankCard(id)
+      setCardsMessage('تم حذف البطاقة.')
+      await loadBankCards()
+    } catch (err) {
+      setCardsError(err?.message || 'تعذّر حذف البطاقة.')
+    }
   }
 
   const openDetails = (tx) => {
@@ -159,7 +263,12 @@ export function FinancePage() {
           </div>
           <p className="text-sm font-medium text-white/60">إجمالي الإيرادات</p>
           <p className="mt-1 text-2xl font-bold text-white">
-            {formatAmount(platformEarnings?.total ?? platformEarnings?.amount, '226,000 د.ل')}
+            {financeLoading
+              ? '...'
+              : formatAmount(
+                  pickFinanceAmount(platformEarnings, 'total_platform_earnings', 'total', 'amount'),
+                  '0 د.ل',
+                )}
           </p>
         </div>
         
@@ -170,7 +279,12 @@ export function FinancePage() {
           </div>
           <p className="text-sm font-medium text-white/60">أرباح الاشتراكات</p>
           <p className="mt-1 text-2xl font-bold text-white">
-            {formatAmount(subscriptionProfits?.total ?? subscriptionProfits?.amount, '—')}
+            {financeLoading
+              ? '...'
+              : formatAmount(
+                  pickFinanceAmount(subscriptionProfits, 'subscription_profits', 'total', 'amount'),
+                  '0 د.ل',
+                )}
           </p>
         </div>
 
@@ -181,7 +295,12 @@ export function FinancePage() {
           </div>
           <p className="text-sm font-medium text-white/60">أرباح التوصيل</p>
           <p className="mt-1 text-2xl font-bold text-white">
-            {formatAmount(deliveryProfits?.total ?? deliveryProfits?.amount, '—')}
+            {financeLoading
+              ? '...'
+              : formatAmount(
+                  pickFinanceAmount(deliveryProfits, 'delivery_profits', 'total', 'amount'),
+                  '0 د.ل',
+                )}
           </p>
         </div>
 
@@ -192,7 +311,12 @@ export function FinancePage() {
           </div>
           <p className="text-sm font-medium text-white/60">أرباح الإعلانات</p>
           <p className="mt-1 text-2xl font-bold text-white">
-            {formatAmount(adProfits?.total ?? adProfits?.amount, '—')}
+            {financeLoading
+              ? '...'
+              : formatAmount(
+                  pickFinanceAmount(adProfits, 'ad_profits', 'total', 'amount'),
+                  '0 د.ل',
+                )}
           </p>
         </div>
       </div>
@@ -361,7 +485,7 @@ export function FinancePage() {
         </div>
       </div>
 
-      {/* Credit Card Modal */}
+      {/* Bank Cards Modal */}
       {cardModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in"
@@ -374,17 +498,22 @@ export function FinancePage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="card-modal-title"
-            className="w-full max-w-md rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            className="w-full max-w-lg rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
             dir="rtl"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/5 px-6 py-5">
               <h2 id="card-modal-title" className="text-xl font-bold text-white">
-                إدخال بطاقة ائتمانية
+                إدارة البطاقات المصرفية
               </h2>
               <button
                 type="button"
-                onClick={() => setCardModalOpen(false)}
+                onClick={() => {
+                  setCardModalOpen(false)
+                  resetCardForm()
+                  setCardsError('')
+                  setCardsMessage('')
+                }}
                 className="rounded-lg p-1.5 text-white/50 transition-colors hover:bg-brand-300 hover:text-white/70"
                 aria-label="إغلاق"
               >
@@ -392,49 +521,143 @@ export function FinancePage() {
               </button>
             </div>
 
-            <form
-              className="space-y-5 p-6"
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (!cardNumber.trim()) return
-                setCardModalOpen(false)
-                setCardNumber('')
-              }}
-            >
+            <div className="space-y-5 p-6">
+              {cardsError ? (
+                <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                  {cardsError}
+                </p>
+              ) : null}
+              {cardsMessage ? (
+                <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+                  {cardsMessage}
+                </p>
+              ) : null}
+
               <div>
-                <label htmlFor="card-number" className="mb-2 block text-sm font-medium text-white/80">
-                  رقم البطاقة <span className="text-brand-300">*</span>
-                </label>
-                <input
-                  id="card-number"
-                  type="text"
-                  inputMode="numeric"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
-                  placeholder="1234 5678 9012 3456"
-                  required
-                  dir="ltr"
-                  className="input-brand text-left tracking-widest"
-                />
-                <p className="mt-2 text-xs text-white/50">أدخل 16 رقماً بدون مسافات</p>
+                <h3 className="mb-3 text-sm font-bold text-white/80">البطاقات المسجّلة</h3>
+                {cardsLoading ? (
+                  <p className="py-6 text-center text-sm text-white/55">جاري تحميل البطاقات...</p>
+                ) : bankCards.length === 0 ? (
+                  <p className="rounded-xl border border-white/10 bg-brand-300/50 px-4 py-6 text-center text-sm text-white/55">
+                    لا توجد بطاقات مسجّلة بعد.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {bankCards.map((card) => (
+                      <div
+                        key={card.id}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3"
+                      >
+                        <div>
+                          <p className="font-bold text-white">{card.cardholderName}</p>
+                          <p className="text-sm text-white/60" dir="ltr">
+                            **** {card.lastFour}
+                            {card.expirationDate ? ` · ${card.expirationDate}` : ''}
+                          </p>
+                          <span
+                            className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                              card.isActive
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}
+                          >
+                            {card.isActive ? 'نشطة' : 'غير نشطة'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!card.isActive ? (
+                            <button
+                              type="button"
+                              onClick={() => handleActivateBankCard(card.id)}
+                              className="rounded-lg bg-brand-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-950"
+                            >
+                              تفعيل
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBankCard(card.id)}
+                            className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/25"
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-start gap-3 border-t border-white/5 pt-5">
-                <button type="submit" className="btn-primary">
-                  تأكيد
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCardModalOpen(false)
-                    setCardNumber('')
-                  }}
-                  className="rounded-xl border border-white/10 bg-brand-300 px-5 py-2.5 text-sm font-bold text-white/80 transition-colors hover:bg-brand-100"
-                >
-                  إلغاء
-                </button>
-              </div>
-            </form>
+              <form className="space-y-4 border-t border-white/5 pt-5" onSubmit={handleCreateBankCard}>
+                <h3 className="text-sm font-bold text-white/80">إضافة بطاقة جديدة</h3>
+
+                <div>
+                  <label htmlFor="cardholder-name" className="mb-2 block text-sm font-medium text-white/80">
+                    اسم حامل البطاقة <span className="text-brand-300">*</span>
+                  </label>
+                  <input
+                    id="cardholder-name"
+                    type="text"
+                    value={cardholderName}
+                    onChange={(e) => setCardholderName(e.target.value)}
+                    placeholder="مثال: أحمد محمد"
+                    required
+                    className="input-brand"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="card-number" className="mb-2 block text-sm font-medium text-white/80">
+                    رقم البطاقة <span className="text-brand-300">*</span>
+                  </label>
+                  <input
+                    id="card-number"
+                    type="text"
+                    inputMode="numeric"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                    placeholder="1234 5678 9012 3456"
+                    required
+                    dir="ltr"
+                    className="input-brand text-left tracking-widest"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="stripe-pm-id" className="mb-2 block text-sm font-medium text-white/80">
+                    معرف Stripe Payment Method <span className="text-brand-300">*</span>
+                  </label>
+                  <input
+                    id="stripe-pm-id"
+                    type="text"
+                    value={stripePaymentMethodId}
+                    onChange={(e) => setStripePaymentMethodId(e.target.value.trim())}
+                    placeholder="pm_xxxxxxxxxxxxx"
+                    required
+                    dir="ltr"
+                    className="input-brand text-left"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-start gap-3 pt-2">
+                  <button type="submit" disabled={cardsSaving} className="btn-primary disabled:opacity-60">
+                    {cardsSaving ? 'جاري الحفظ...' : 'إضافة البطاقة'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardModalOpen(false)
+                      resetCardForm()
+                      setCardsError('')
+                      setCardsMessage('')
+                    }}
+                    className="rounded-xl border border-white/10 bg-brand-300 px-5 py-2.5 text-sm font-bold text-white/80 transition-colors hover:bg-brand-100"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

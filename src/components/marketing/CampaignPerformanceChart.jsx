@@ -8,19 +8,29 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { campaignPerformanceSeries } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
-export function CampaignPerformanceChart() {
+export function CampaignPerformanceChart({ data = [] }) {
+  const maxViews = Math.max(...data.map((d) => d.views || 0), 1)
+  const maxCount = Math.max(...data.map((d) => Math.max(d.products || 0, d.stores || 0)), 1)
+  const viewsTicks = [0, maxViews * 0.25, maxViews * 0.5, maxViews * 0.75, maxViews].map(Math.round)
+  const countTicks = [0, maxCount * 0.25, maxCount * 0.5, maxCount * 0.75, maxCount].map(Math.round)
+
+  if (data.length === 0) {
+    return (
+      <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <h2 className="text-base font-semibold text-white">أداء الحملات الإعلانية</h2>
+        <p className="mt-4 text-sm text-white/60">لا توجد بيانات أداء بعد. أنشئي حملة لعرض المقاييس.</p>
+      </section>
+    )
+  }
+
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
       <h2 className="text-base font-semibold text-white">أداء الحملات الإعلانية</h2>
       <div className="mt-4 h-[300px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={campaignPerformanceSeries}
-            margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-          >
+          <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis
               dataKey="name"
@@ -33,8 +43,8 @@ export function CampaignPerformanceChart() {
             <YAxis
               yAxisId="views"
               orientation="left"
-              domain={[0, 26000]}
-              ticks={[0, 6500, 13000, 19500, 26000]}
+              domain={[0, maxViews]}
+              ticks={viewsTicks}
               tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
@@ -43,7 +53,8 @@ export function CampaignPerformanceChart() {
             <YAxis
               yAxisId="count"
               orientation="right"
-              domain={[0, 120]}
+              domain={[0, maxCount]}
+              ticks={countTicks}
               tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}

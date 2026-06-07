@@ -150,15 +150,15 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
                 <ul className="mt-3 space-y-2 text-sm text-white/70">
                   <li className="flex items-center gap-2">
                     <User className="size-4 shrink-0 text-white/50" aria-hidden />
-                    {req.owner}
+                    {req.owner || '—'}
                   </li>
                   <li className="flex items-center gap-2">
                     <Mail className="size-4 shrink-0 text-white/50" aria-hidden />
-                    {req.email}
+                    {req.email || '—'}
                   </li>
                   <li className="flex items-center gap-2">
                     <MapPin className="size-4 shrink-0 text-white/50" aria-hidden />
-                    {req.city}
+                    {req.phone || req.city || '—'}
                   </li>
                 </ul>
                 <div className="mt-4 flex items-center gap-2">

@@ -3,8 +3,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 export async function apiRequest(path, options = {}) {
   const headers = {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
     ...options.headers,
+  }
+
+  const hasBody = options.body != null && options.body !== ''
+  if (hasBody && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const token = localStorage.getItem('auth_token')
@@ -19,7 +23,18 @@ export async function apiRequest(path, options = {}) {
   })
 
   if (!response.ok) {
-    const error = new Error(`API error: ${response.status}`)
+    let message = `API error: ${response.status}`
+    try {
+      const body = await response.json()
+      message = body?.message ?? body?.error ?? message
+      if (body?.errors) {
+        const first = Object.values(body.errors).flat()[0]
+        if (first) message = first
+      }
+    } catch {
+      // ignore non-JSON error bodies
+    }
+    const error = new Error(message)
     error.status = response.status
     throw error
   }

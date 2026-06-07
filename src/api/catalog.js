@@ -42,13 +42,20 @@ export function mapCategory(item, defaultImage = '') {
   }
 }
 
+function extractAttributeValues(item) {
+  if (Array.isArray(item.values)) {
+    return item.values.map((v) => (typeof v === 'string' ? v : v?.value ?? '')).filter(Boolean)
+  }
+  return item.options ?? item.list_options ?? []
+}
+
 export function mapAttribute(item) {
   return {
     id: item.id,
     name: item.name ?? '',
-    type: item.type ?? 'قائمة',
+    type: item.type ?? 'list',
     isRequired: item.is_required ?? item.isRequired ?? true,
-    options: item.options ?? item.list_options ?? [],
+    options: extractAttributeValues(item),
     relatedCats: item.related_categories ?? item.relatedCats ?? [],
   }
 }

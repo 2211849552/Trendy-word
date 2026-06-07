@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import {
   CreditCard,
   DollarSign,
+  Eye,
+  Loader2,
   Pencil,
   Plus,
   Search,
@@ -14,40 +16,19 @@ import {
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { PlanFormModal } from '../components/plans/PlanFormModal.jsx'
 import { StatCard } from '../components/StatCard.jsx'
+import {
+  getAdminPlans,
+  getAdminPlan,
+  createAdminPlan,
+  updateAdminPlan,
+  deleteAdminPlan,
+  extractPlanList,
+  mapPlan,
+  mapPlanDetail,
+  toPlanPayload,
+} from '../api/adminPlans.js'
 
 import { CHART_BRAND_SCALE } from '../theme/chartColors.js'
-
-
-
-const initialPlans = [
-  {
-    id: 'basic',
-    name: 'الخطة الأساسية',
-    price: 50,
-    subscribers: 120,
-    duration: 'monthly',
-    status: 'active',
-    features: ['حتى 100 منتج', 'لوحة تحكم أساسية', 'دعم فني عبر البريد'],
-  },
-  {
-    id: 'advanced',
-    name: 'الخطة المتقدمة',
-    price: 120,
-    subscribers: 85,
-    duration: 'monthly',
-    status: 'active',
-    features: ['منتجات غير محدودة', 'تقارير متقدمة', 'دعم أولوية'],
-  },
-  {
-    id: 'pro',
-    name: 'الخطة الاحترافية',
-    price: 250,
-    subscribers: 40,
-    duration: 'monthly',
-    status: 'active',
-    features: ['كل ميزات المتقدمة', 'API مخصص', 'مدير حساب'],
-  },
-]
 
 function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) {
   const RAD = Math.PI / 180
@@ -73,8 +54,17 @@ function PlansDistributionChart({ plans }) {
   const chartData = plans.map((plan, index) => ({
     name: plan.name,
     value: plan.subscribers || 0,
-    color: CHART_BRAND_SCALE[index % CHART_BRAND_SCALE.length] || CHART_BRAND_SCALE[0]
+    color: CHART_BRAND_SCALE[index % CHART_BRAND_SCALE.length] || CHART_BRAND_SCALE[0],
   }))
+
+  if (chartData.every((d) => d.value === 0)) {
+    return (
+      <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <h2 className="text-base font-semibold text-white">توزيع المتاجر حسب الخطط</h2>
+        <p className="mt-4 text-sm text-white/60">لا توجد اشتراكات بعد.</p>
+      </section>
+    )
+  }
 
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
@@ -116,31 +106,35 @@ function SubscriptionSummaryCard({ plans }) {
   const summary = plans.map((plan, index) => ({
     label: plan.name,
     count: plan.subscribers || 0,
-    color: CHART_BRAND_SCALE[index % CHART_BRAND_SCALE.length] || CHART_BRAND_SCALE[0]
+    color: CHART_BRAND_SCALE[index % CHART_BRAND_SCALE.length] || CHART_BRAND_SCALE[0],
   }))
 
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium ring-1 ring-slate-100/80" dir="rtl">
       <h2 className="text-base font-semibold text-white">ملخص الاشتراكات</h2>
-      <ul className="mt-4 max-h-[280px] overflow-y-auto space-y-2 pe-2">
-        {summary.map((row) => (
-          <li
-            key={row.label}
-            className="flex items-center justify-between gap-3 rounded-xl bg-brand-300 px-4 py-3"
-          >
-            <span className="text-lg font-bold tabular-nums text-white">{row.count}</span>
-            <span className="flex items-center gap-2 text-sm font-medium text-white/80">
-              <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden />
-              {row.label}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {summary.length === 0 ? (
+        <p className="mt-4 text-sm text-white/60">لا توجد خطط بعد.</p>
+      ) : (
+        <ul className="mt-4 max-h-[280px] overflow-y-auto space-y-2 pe-2">
+          {summary.map((row) => (
+            <li
+              key={row.label}
+              className="flex items-center justify-between gap-3 rounded-xl bg-brand-300 px-4 py-3"
+            >
+              <span className="text-lg font-bold tabular-nums text-white">{row.count}</span>
+              <span className="flex items-center gap-2 text-sm font-medium text-white/80">
+                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden />
+                {row.label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }
 
-function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus = () => {} }) {
+function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () => {} }) {
   const active = plan.status !== 'paused'
   const periodLabel = plan.duration === 'yearly' ? 'سنوي' : 'شهري'
 
@@ -168,16 +162,22 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
 
       <p className="mt-3 flex items-center gap-2 text-sm text-white/60">
         <Users className="size-4 shrink-0 text-white/50" strokeWidth={2} aria-hidden />
-        <span>
-          {plan.subscribers} متجر مشترك
-        </span>
+        <span>{plan.subscribers} متجر مشترك</span>
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-2">
         <button
           type="button"
-          onClick={() => onEdit?.(plan)}
+          onClick={() => onView?.(plan)}
           className="btn-action-solid col-span-2 py-2.5"
+        >
+          <Eye className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          عرض
+        </button>
+        <button
+          type="button"
+          onClick={() => onEdit?.(plan)}
+          className="btn-action-solid py-2.5"
         >
           <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
           تعديل
@@ -185,7 +185,7 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
         <button
           type="button"
           onClick={() => onDelete?.(plan)}
-          className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
+          className="flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
         >
           <Trash2 className="size-4" strokeWidth={2} />
           حذف
@@ -195,107 +195,178 @@ function PlanCard({ plan, onEdit = () => {}, onDelete = () => {}, onToggleStatus
   )
 }
 
+function apiErrorMessage(err, fallback) {
+  if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
+  if (err?.status === 422) return err.message || fallback
+  if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
+  return err?.message || fallback
+}
+
 export function PlansPage() {
   const [query, setQuery] = useState('')
-  const [plans, setPlans] = useState(initialPlans)
+  const [plans, setPlans] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [modal, setModal] = useState({ open: false, mode: 'add', planId: null })
+  const [viewPlan, setViewPlan] = useState(null)
+  const [viewLoading, setViewLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [deletePlan, setDeletePlan] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const loadSeq = useRef(0)
+
+  const triggerToast = (msg) => {
+    setToastMessage(msg)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
+
+  const loadPlans = useCallback(async (searchQuery = query.trim()) => {
+    const seq = ++loadSeq.current
+    const params = { per_page: 100 }
+    if (searchQuery) params.name = searchQuery
+    const data = await getAdminPlans(params)
+    if (seq !== loadSeq.current) return
+    setPlans(extractPlanList(data).map(mapPlan))
+  }, [query])
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      setLoadError('')
+      try {
+        await loadPlans(query.trim())
+      } catch (err) {
+        setPlans([])
+        setLoadError(apiErrorMessage(err, 'تعذّر تحميل الخطط. تأكد من تسجيل الدخول وأن الخادم يعمل.'))
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [query, loadPlans])
 
   const editingPlan = useMemo(
     () => (modal.planId ? plans.find((p) => p.id === modal.planId) : null),
     [modal.planId, plans],
   )
 
+  const modalPlan = modal.mode === 'view' ? viewPlan : editingPlan
+
+  const stats = useMemo(() => {
+    const totalSubscribers = plans.reduce((sum, p) => sum + (p.subscribers || 0), 0)
+    const activePlans = plans.filter((p) => p.status !== 'paused')
+    const avgPrice =
+      activePlans.length > 0
+        ? Math.round(activePlans.reduce((sum, p) => sum + p.price, 0) / activePlans.length)
+        : 0
+    const estimatedRevenue = plans.reduce((sum, p) => sum + p.price * (p.subscribers || 0), 0)
+    return { totalSubscribers, avgPrice, estimatedRevenue }
+  }, [plans])
+
   function openAddModal() {
+    setViewPlan(null)
     setModal({ open: true, mode: 'add', planId: null })
   }
 
   function openEditModal(plan) {
+    setViewPlan(null)
     setModal({ open: true, mode: 'edit', planId: plan.id })
+  }
+
+  async function openViewModal(plan) {
+    setViewPlan(null)
+    setModal({ open: true, mode: 'view', planId: plan.id })
+    setViewLoading(true)
+    try {
+      const data = await getAdminPlan(plan.id)
+      setViewPlan(mapPlanDetail(data))
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الخطة.'))
+      setModal((m) => ({ ...m, open: false }))
+    } finally {
+      setViewLoading(false)
+    }
   }
 
   function closeModal() {
     setModal((m) => ({ ...m, open: false }))
+    setViewPlan(null)
   }
 
-  function handleSave(payload) {
-    if (payload.mode === 'add') {
-      setPlans((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          name: payload.name,
-          price: payload.price,
-          subscribers: 0,
-          duration: payload.duration,
-          status: payload.status,
-          features: payload.features,
-        },
-      ])
-      return
-    }
-    if (payload.mode === 'edit' && payload.id) {
-      setPlans((prev) =>
-        prev.map((p) =>
-          p.id === payload.id
-            ? {
-                ...p,
-                name: payload.name,
-                price: payload.price,
-                duration: payload.duration,
-                status: payload.status,
-                features: payload.features,
-              }
-            : p,
-        ),
-      )
+  async function handleSave(payload) {
+    setSaving(true)
+    try {
+      const body = toPlanPayload(payload)
+      if (payload.mode === 'add') {
+        await createAdminPlan(body)
+        triggerToast('تم إنشاء الخطة بنجاح')
+      } else if (payload.mode === 'edit' && payload.id) {
+        await updateAdminPlan(payload.id, body)
+        triggerToast('تم تحديث الخطة بنجاح')
+      }
+      await loadPlans(query.trim())
+      closeModal()
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر حفظ الخطة. حاول مرة أخرى.'))
+    } finally {
+      setSaving(false)
     }
   }
-
-  const [deletePlan, setDeletePlan] = useState(null)
-  const [showToast, setShowToast] = useState(false)
 
   function handleDeletePlan(plan) {
     setDeletePlan(plan)
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deletePlan) return
-    setPlans(prev => prev.filter(p => p.id !== deletePlan.id))
-    setDeletePlan(null)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
+    const idToDelete = Number(deletePlan.id)
+    if (!Number.isFinite(idToDelete)) {
+      triggerToast('معرّف الخطة غير صالح.')
+      return
+    }
 
-  function handleToggleStatus(id, newStatus) {
-    setPlans(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p))
+    setDeleting(true)
+    try {
+      const result = await deleteAdminPlan(idToDelete)
+      loadSeq.current += 1
+      setPlans((prev) => prev.filter((p) => Number(p.id) !== idToDelete))
+      setDeletePlan(null)
+      triggerToast(result?.message || 'تم حذف الخطة بنجاح')
+      await loadPlans(query.trim())
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر حذف الخطة. حاول مرة أخرى.'))
+    } finally {
+      setDeleting(false)
+    }
   }
-
-  const filteredPlans = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return plans
-    return plans.filter((p) => p.name.toLowerCase().includes(q))
-  }, [query, plans])
 
   return (
     <>
-      {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
           <div className="flex items-center gap-3 rounded-2xl bg-emerald-600 px-6 py-3.5 text-white shadow-2xl">
             <CheckCircle className="size-5" />
-            <span className="font-bold">تم حذف الخطة بنجاح</span>
+            <span className="font-bold">{toastMessage}</span>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deletePlan && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeletePlan(null)} />
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !deleting && setDeletePlan(null)} />
           <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200" dir="rtl">
             <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
               <h2 className="text-lg font-bold text-white">تأكيد حذف الخطة</h2>
-              <button onClick={() => setDeletePlan(null)} className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeletePlan(null)}
+                className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors disabled:opacity-50"
+              >
                 <X className="size-5" />
               </button>
             </div>
@@ -312,14 +383,17 @@ export function PlansPage() {
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium hover:bg-rose-700 transition-colors"
+                disabled={deleting}
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium hover:bg-rose-700 transition-colors disabled:opacity-60"
               >
+                {deleting ? <Loader2 className="size-4 animate-spin" /> : null}
                 تأكيد الحذف
               </button>
               <button
                 type="button"
+                disabled={deleting}
                 onClick={() => setDeletePlan(null)}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-4 text-sm font-bold text-white/80 shadow-premium hover:bg-brand-300 transition-colors"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-4 text-sm font-bold text-white/80 shadow-premium hover:bg-brand-300 transition-colors disabled:opacity-50"
               >
                 إلغاء
               </button>
@@ -329,24 +403,33 @@ export function PlansPage() {
       )}
 
       <PlanFormModal
-        open={modal.open}
+        open={modal.open && !(modal.mode === 'view' && viewLoading)}
         mode={modal.mode}
-        initialPlan={editingPlan}
+        initialPlan={modalPlan}
         onClose={closeModal}
         onSave={handleSave}
+        saving={saving}
       />
+
+      {modal.open && modal.mode === 'view' && viewLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]">
+          <div className="flex items-center gap-3 rounded-2xl bg-brand-200 px-6 py-4 text-white shadow-2xl">
+            <Loader2 className="size-5 animate-spin" />
+            <span className="text-sm font-bold">جاري تحميل تفاصيل الخطة...</span>
+          </div>
+        </div>
+      )}
 
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">
-            إدارة الخطط
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">إدارة الخطط</h1>
           <p className="mt-1 text-white/60">إدارة خطط الاشتراك وتسعير المنصة</p>
         </div>
         <button
           type="button"
           onClick={openAddModal}
-          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition-colors hover:bg-brand-950"
+          disabled={saving}
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition-colors hover:bg-brand-950 disabled:opacity-60"
         >
           <Plus className="size-5" strokeWidth={2.25} aria-hidden />
           إضافة خطة اشتراك
@@ -356,24 +439,24 @@ export function PlansPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
         <StatCard
           label="متوسط قيمة الاشتراك"
-          value="107"
+          value={String(stats.avgPrice)}
           change="—"
           trend="up"
           icon={TrendingUp}
           iconClassName="bg-violet-100 text-violet-600"
         />
         <StatCard
-          label="إيرادات الاشتراكات"
-          value="26200"
-          change="15%"
+          label="إيرادات تقديرية"
+          value={String(stats.estimatedRevenue)}
+          change="—"
           trend="up"
           icon={DollarSign}
           iconClassName="bg-violet-100 text-violet-600"
         />
         <StatCard
           label="المتاجر المشتركة"
-          value="245"
-          change="8%"
+          value={String(stats.totalSubscribers)}
+          change="—"
           trend="up"
           icon={Users}
           iconClassName="bg-emerald-100 text-emerald-600"
@@ -408,21 +491,36 @@ export function PlansPage() {
         />
       </div>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {filteredPlans.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            onEdit={openEditModal}
-            onDelete={handleDeletePlan}
-            onToggleStatus={handleToggleStatus}
-          />
-        ))}
-      </div>
-
-      {filteredPlans.length === 0 ? (
-        <p className="mt-6 text-center text-sm text-white/60">لا توجد خطط مطابقة للبحث.</p>
+      {loadError ? (
+        <p className="mt-6 text-center text-sm text-rose-400">{loadError}</p>
       ) : null}
+
+      {loading ? (
+        <div className="mt-12 flex items-center justify-center gap-3 text-white/70">
+          <Loader2 className="size-6 animate-spin" />
+          <span className="text-sm font-medium">جاري تحميل الخطط...</span>
+        </div>
+      ) : (
+        <>
+          <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {plans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                onView={openViewModal}
+                onEdit={openEditModal}
+                onDelete={handleDeletePlan}
+              />
+            ))}
+          </div>
+
+          {!loadError && plans.length === 0 ? (
+            <p className="mt-6 text-center text-sm text-white/60">
+              {query.trim() ? 'لا توجد خطط مطابقة للبحث.' : 'لا توجد خطط اشتراك بعد. أضيفي خطة جديدة.'}
+            </p>
+          ) : null}
+        </>
+      )}
     </>
   )
 }

@@ -20,13 +20,13 @@ function emptyForm() {
   }
 }
 
-export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
+export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving = false }) {
   const titleId = useId()
   const [form, setForm] = useState(emptyForm)
 
   useEffect(() => {
     if (!open) return
-    if (mode === 'edit' && initialPlan) {
+    if ((mode === 'edit' || mode === 'view') && initialPlan) {
       setForm({
         name: initialPlan.name,
         price: String(initialPlan.price),
@@ -59,18 +59,22 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
   if (!open) return null
 
   const isEdit = mode === 'edit'
+  const isView = mode === 'view'
+  const readOnly = isView
 
   function setField(key, value) {
+    if (readOnly) return
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    if (isView || saving) return
     const name = form.name.trim()
     const priceNum = Number(form.price)
     if (!name || Number.isNaN(priceNum) || priceNum < 0) return
 
-    onSave?.({
+    await onSave?.({
       mode,
       id: initialPlan?.id,
       name,
@@ -78,7 +82,6 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
       duration: form.duration,
       status: form.status,
     })
-    onClose?.()
   }
 
   return (
@@ -99,7 +102,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
       >
         <header className="flex items-center justify-between gap-3 border-b border-white/5 bg-brand-300/50 px-6 py-5">
           <h2 id={titleId} className="text-xl font-bold text-white">
-            {isEdit ? 'تعديل بيانات الخطة' : 'إنشاء خطة اشتراك جديدة'}
+            {isView ? 'تفاصيل خطة الاشتراك' : isEdit ? 'تعديل بيانات الخطة' : 'إنشاء خطة اشتراك جديدة'}
           </h2>
           <button
             type="button"
@@ -123,8 +126,9 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                 value={form.name}
                 onChange={(e) => setField('name', e.target.value)}
                 placeholder="مثال: الخطة السنوية المتقدمة"
-                required
-                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-medium text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
+                required={!readOnly}
+                readOnly={readOnly}
+                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-medium text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 read-only:opacity-90"
               />
             </div>
 
@@ -141,8 +145,9 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                     step={1}
                     value={form.price}
                     onChange={(e) => setField('price', e.target.value)}
-                    required
-                    className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
+                    required={!readOnly}
+                    readOnly={readOnly}
+                    className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 read-only:opacity-90"
                   />
                 </div>
               </div>
@@ -154,7 +159,8 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                   id="plan-duration"
                   value={form.duration}
                   onChange={(e) => setField('duration', e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
+                  disabled={readOnly}
+                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 disabled:opacity-90"
                 >
                   {DURATION_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -173,7 +179,8 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
                 id="plan-status"
                 value={form.status}
                 onChange={(e) => setField('status', e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
+                disabled={readOnly}
+                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 disabled:opacity-90"
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -190,14 +197,17 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave }) {
               onClick={() => onClose?.()}
               className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-8 text-sm font-bold text-white/80 shadow-premium transition-all hover:bg-brand-300 hover:border-white/20"
             >
-              إلغاء الإجراء
+              {isView ? 'إغلاق' : 'إلغاء الإجراء'}
             </button>
+            {!isView ? (
             <button
               type="submit"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-900 px-8 text-sm font-bold text-white shadow-premium transition-all hover:bg-brand-950 hover:shadow-lg focus:ring-4 focus:ring-brand-900/20 active:scale-95"
+              disabled={saving}
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-900 px-8 text-sm font-bold text-white shadow-premium transition-all hover:bg-brand-950 hover:shadow-lg focus:ring-4 focus:ring-brand-900/20 active:scale-95 disabled:opacity-60"
             >
-              {isEdit ? 'تأكيد الحفظ' : 'إنشاء الخطة'}
+              {saving ? 'جاري الحفظ...' : isEdit ? 'تأكيد الحفظ' : 'إنشاء الخطة'}
             </button>
+            ) : null}
           </footer>
         </form>
       </div>

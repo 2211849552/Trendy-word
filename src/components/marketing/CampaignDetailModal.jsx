@@ -68,11 +68,23 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
 
           <div className="border-t border-white/5 pt-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {campaign.link ? (
+                <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
+                  <p className="text-xs font-medium text-white/60">رابط الحملة</p>
+                  <p className="mt-1 truncate text-sm font-bold text-white" dir="ltr">
+                    {campaign.link}
+                  </p>
+                </div>
+              ) : null}
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
-                <p className="text-xs font-medium text-white/60">المتجر</p>
-                <p className="mt-1 text-sm font-bold text-white">{campaign.storeName}</p>
+                <p className="text-xs font-medium text-white/60">تاريخ البدء</p>
+                <p className="mt-1 text-sm font-bold text-white tabular-nums">{campaign.dateFrom}</p>
               </div>
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
+                <p className="text-xs font-medium text-white/60">تاريخ الانتهاء</p>
+                <p className="mt-1 text-sm font-bold text-white tabular-nums">{campaign.dateTo}</p>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
                 <p className="text-xs font-medium text-white/60">الحالة</p>
                 <p className="mt-2">
                   <span

@@ -30,8 +30,14 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
       <h3 className="mt-3 text-lg font-bold text-white">{campaign.title}</h3>
       <p className="mt-1 text-sm leading-relaxed text-white/70">{campaign.description}</p>
 
-      <p className="mt-3 text-sm font-medium text-white/60">المتجر</p>
-      <p className="text-sm font-semibold text-white/90">{campaign.storeName}</p>
+      {campaign.link ? (
+        <>
+          <p className="mt-3 text-sm font-medium text-white/60">رابط الحملة</p>
+          <p className="truncate text-sm font-semibold text-white/90" dir="ltr">
+            {campaign.link}
+          </p>
+        </>
+      ) : null}
 
       <ul className="mt-4 space-y-2 border-t border-white/5 pt-4 text-sm">
         <li className="flex justify-between gap-2">
