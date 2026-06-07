@@ -63,6 +63,8 @@ export function CategoriesPage() {
   const [newCatName, setNewCatName] = useState('')
   const [newCatImage, setNewCatImage] = useState(DEFAULT_CATEGORY_IMAGE)
   const [newAttrName, setNewAttrName] = useState('')
+  const [newAttrType, setNewAttrType] = useState('list')
+  const [newAttrRequired, setNewAttrRequired] = useState(true)
   const [attrOptions, setAttrOptions] = useState([])
 
   useEffect(() => {
@@ -125,6 +127,7 @@ export function CategoriesPage() {
     try {
       const data = await createAdminCategory({
         name: newCatName.trim(),
+        image_url: newCatImage,
       })
       const created = mapCategory(data?.data ?? data, DEFAULT_CATEGORY_IMAGE)
       setCategories((prev) => [created, ...prev])
@@ -192,8 +195,8 @@ export function CategoriesPage() {
       const created = {
         id: Date.now(),
         name: newAttrName.trim(),
-        type: 'قائمة',
-        isRequired: true,
+        type: newAttrType === 'list' ? 'قائمة' : newAttrType === 'text' ? 'نص' : newAttrType,
+        isRequired: newAttrRequired,
         options: ['S', 'M', 'L', 'XL', 'XXL'],
         relatedCats: [],
       }
@@ -207,8 +210,8 @@ export function CategoriesPage() {
     try {
       const data = await createAdminAttribute({
         name: newAttrName.trim(),
-        type: 'list',
-        is_required: true,
+        type: newAttrType,
+        is_required: newAttrRequired,
         options: ['S', 'M', 'L', 'XL', 'XXL'],
       })
       const created = mapAttribute(data?.data ?? data)
@@ -559,7 +562,7 @@ export function CategoriesPage() {
                  <X className="size-6" />
                </button>
             </div>
-            <div className="p-8">
+            <div className="p-8 space-y-6">
               <div>
                 <label className="block text-sm font-bold text-white/80 mb-3 text-right">اسم التصنيف *</label>
                 <input 
@@ -569,6 +572,10 @@ export function CategoriesPage() {
                   placeholder="مثال: أزياء رجالية"
                   className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-white/80 mb-3 text-right">صورة التصنيف</label>
+                <CategoryImagePicker value={newCatImage} onChange={setNewCatImage} />
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">
@@ -603,17 +610,20 @@ export function CategoriesPage() {
               <div>
                 <label className="block text-xs font-bold text-white/60 mb-2 text-right">نوع الخاصية *</label>
                 <div className="relative">
-                  <select className="w-full appearance-none rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-brand-200">
-                    <option>نص</option>
-                    <option>قائمة اختيارات</option>
-                    <option>رقم</option>
+                  <select
+                    value={newAttrType}
+                    onChange={(e) => setNewAttrType(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-brand-200">
+                    <option value="text">نص</option>
+                    <option value="list">قائمة اختيارات</option>
+                    <option value="number">رقم</option>
                   </select>
                   <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-white/50 pointer-events-none" />
                 </div>
               </div>
 
               <div className="flex items-center justify-start gap-3 py-4 border-y border-slate-50">
-                <input type="checkbox" id="req_add" defaultChecked className="size-5 rounded border-white/20 text-white" />
+                <input type="checkbox" id="req_add" checked={newAttrRequired} onChange={(e) => setNewAttrRequired(e.target.checked)} className="size-5 rounded border-white/20 text-white" />
                 <label htmlFor="req_add" className="text-sm font-bold text-white/80">خاصية مطلوبة</label>
               </div>
 

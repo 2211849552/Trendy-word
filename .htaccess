@@ -1,0 +1,18 @@
+RewriteEngine On
+
+# إعادة كتابة طلبات API
+RewriteRule ^api/v1/auth/admin/login$ api/v1/auth/admin/login.php [L,QSA]
+RewriteRule ^api/v1/user$ api/v1/user.php [L,QSA]
+RewriteRule ^api/v1/admin/categories/([0-9]+)$ api/v1/admin/categories.php?id=$1 [L,QSA]
+RewriteRule ^api/v1/admin/categories$ api/v1/admin/categories.php [L,QSA]
+RewriteRule ^api/v1/admin/attributes/([0-9]+)$ api/v1/admin/attributes.php?id=$1 [L,QSA]
+RewriteRule ^api/v1/admin/attributes$ api/v1/admin/attributes.php [L,QSA]
+RewriteRule ^api/v1/catalog/categories$ api/v1/catalog/categories.php [L,QSA]
+RewriteRule ^api/v1/catalog/attributes$ api/v1/catalog/attributes.php [L,QSA]
+RewriteRule ^api/v1/catalog/search/categories$ api/v1/catalog/search/categories.php [L,QSA]
+RewriteRule ^api/v1/catalog/search/attributes$ api/v1/catalog/search/attributes.php [L,QSA]
+
+# للـ SPA (React Router إذا استُخدم لاحقاً)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
