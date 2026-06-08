@@ -24,21 +24,6 @@ import {
 import { CategoryImage } from '../components/catalog/CategoryImage.jsx'
 import { CategoryImagePicker } from '../components/catalog/CategoryImagePicker.jsx'
 
-// Mock data for demo mode (fallback when backend is unavailable)
-const MOCK_CATEGORIES = [
-  { id: 1, name: 'أزياء رجالية', image: DEFAULT_CATEGORY_IMAGE, count: 24, isActive: true },
-  { id: 2, name: 'أزياء نسائية', image: DEFAULT_CATEGORY_IMAGE, count: 36, isActive: true },
-  { id: 3, name: 'إلكترونيات', image: DEFAULT_CATEGORY_IMAGE, count: 12, isActive: true },
-  { id: 4, name: 'أحذية', image: DEFAULT_CATEGORY_IMAGE, count: 18, isActive: true },
-  { id: 5, name: 'ساعات', image: DEFAULT_CATEGORY_IMAGE, count: 8, isActive: false },
-]
-
-const MOCK_ATTRIBUTES = [
-  { id: 1, name: 'المقاس', type: 'قائمة', isRequired: true, options: ['S', 'M', 'L', 'XL', 'XXL'], relatedCats: ['أزياء رجالية', 'أزياء نسائية'] },
-  { id: 2, name: 'اللون', type: 'قائمة', isRequired: true, options: ['أحمر', 'أزرق', 'أسود', 'أبيض'], relatedCats: ['أزياء رجالية', 'أزياء نسائية', 'أحذية'] },
-  { id: 3, name: 'المادة', type: 'نص', isRequired: false, options: [], relatedCats: ['ساعات'] },
-]
-
 export function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories')
   const [searchQuery, setSearchQuery] = useState('')
@@ -52,7 +37,6 @@ export function CategoriesPage() {
   const [attributes, setAttributes] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-  const [isMockMode, setIsMockMode] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -82,14 +66,14 @@ export function CategoriesPage() {
             : await getAdminAttributes()
           setAttributes(extractCatalogList(data).map(mapAttribute))
         }
-      } catch {
-        setIsMockMode(true)
-        if (activeTab === 'categories') {
-          setCategories(MOCK_CATEGORIES)
-        } else {
-          setAttributes(MOCK_ATTRIBUTES)
-        }
         setLoadError('')
+      } catch {
+        if (activeTab === 'categories') {
+          setCategories([])
+        } else {
+          setAttributes([])
+        }
+        setLoadError('تعذّر تحميل البيانات. تأكد من تسجيل الدخول وأن الخادم يعمل.')
       } finally {
         setLoading(false)
       }
@@ -106,21 +90,6 @@ export function CategoriesPage() {
 
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return
-
-    if (isMockMode) {
-      const created = {
-        id: Date.now(),
-        name: newCatName.trim(),
-        image: newCatImage,
-        count: 0,
-        isActive: true,
-      }
-      setCategories((prev) => [created, ...prev])
-      setNewCatName('')
-      setShowAddCategory(false)
-      triggerToast('تم إضافة التصنيف بنجاح')
-      return
-    }
 
     try {
       const data = await createAdminCategory({
@@ -139,24 +108,9 @@ export function CategoriesPage() {
   const handleEditCategory = async () => {
     if (!newCatName.trim() || !selectedItem) return
 
-    if (isMockMode) {
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.id === selectedItem.id
-            ? { ...c, name: newCatName.trim(), image: newCatImage }
-            : c,
-        ),
-      )
-      setShowEditCategory(false)
-      triggerToast('تم تحديث التصنيف بنجاح')
-      return
-    }
-
     try {
       const data = await updateAdminCategory(selectedItem.id, {
         name: newCatName.trim(),
-        image: newCatImage,
-        image_url: newCatImage,
       })
       const updated = mapCategory(data?.data ?? data, DEFAULT_CATEGORY_IMAGE)
       setCategories((prev) =>
@@ -170,12 +124,6 @@ export function CategoriesPage() {
   }
 
   const handleDeleteCategory = async (id) => {
-    if (isMockMode) {
-      setCategories((prev) => prev.filter((c) => c.id !== id))
-      triggerToast('تم حذف التصنيف بنجاح')
-      return
-    }
-
     try {
       await deleteAdminCategory(id)
       setCategories((prev) => prev.filter((c) => c.id !== id))
@@ -187,22 +135,6 @@ export function CategoriesPage() {
 
   const handleAddAttribute = async () => {
     if (!newAttrName.trim()) return
-
-    if (isMockMode) {
-      const created = {
-        id: Date.now(),
-        name: newAttrName.trim(),
-        type: 'قائمة',
-        isRequired: true,
-        options: ['S', 'M', 'L', 'XL', 'XXL'],
-        relatedCats: [],
-      }
-      setAttributes((prev) => [created, ...prev])
-      setNewAttrName('')
-      setShowAddAttribute(false)
-      triggerToast('تم إضافة الخاصية بنجاح')
-      return
-    }
 
     try {
       const data = await createAdminAttribute({
@@ -224,19 +156,6 @@ export function CategoriesPage() {
   const handleEditAttribute = async () => {
     if (!newAttrName.trim() || !selectedItem) return
 
-    if (isMockMode) {
-      setAttributes((prev) =>
-        prev.map((a) =>
-          a.id === selectedItem.id
-            ? { ...a, name: newAttrName.trim(), options: attrOptions }
-            : a,
-        ),
-      )
-      setShowEditAttribute(false)
-      triggerToast('تم تحديث الخاصية بنجاح')
-      return
-    }
-
     try {
       const data = await updateAdminAttribute(selectedItem.id, {
         name: newAttrName.trim(),
@@ -255,12 +174,6 @@ export function CategoriesPage() {
   }
 
   const handleDeleteAttribute = async (id) => {
-    if (isMockMode) {
-      setAttributes((prev) => prev.filter((a) => a.id !== id))
-      triggerToast('تم حذف الخاصية بنجاح')
-      return
-    }
-
     try {
       await deleteAdminAttribute(id)
       setAttributes((prev) => prev.filter((a) => a.id !== id))

@@ -1,29 +1,29 @@
 import { apiRequest } from './client.js'
 
 // [4.4] عرض قائمة التصنيفات المتاحة (للجميع)
-// GET /api/v1/catalog/categories
+// GET /api/catalog/categories
 export function getCatalogCategories() {
-  return apiRequest('/api/v1/catalog/categories')
+  return apiRequest('/api/catalog/categories')
 }
 
 // [4.8] عرض قائمة الخصائص المتاحة (للجميع)
-// GET /api/v1/catalog/attributes
+// GET /api/catalog/attributes
 export function getCatalogAttributes() {
-  return apiRequest('/api/v1/catalog/attributes')
+  return apiRequest('/api/catalog/attributes')
 }
 
 // [4.9] البحث في التصنيفات بالاسم
-// GET /api/v1/catalog/search/categories?query=
+// GET /api/catalog/search/categories?query=
 export function searchCatalogCategories(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/catalog/search/categories${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/catalog/search/categories${query ? `?${query}` : ''}`)
 }
 
 // [4.9] البحث في الخصائص بالاسم
-// GET /api/v1/catalog/search/attributes?query=
+// GET /api/catalog/search/attributes?query=
 export function searchCatalogAttributes(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/catalog/search/attributes${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/catalog/search/attributes${query ? `?${query}` : ''}`)
 }
 
 export function extractCatalogList(data) {

@@ -1,30 +1,30 @@
 import { apiRequest } from './client.js'
 
 // عرض جميع طلبات الانضمام المعلقة (status=pending) مع الفلترة
-// GET /api/v1/admin/stores/requests
+// GET /api/admin/stores/requests
 export function getStoreRequests(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/admin/stores/requests${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/admin/stores/requests${query ? `?${query}` : ''}`)
 }
 
 // عرض تفاصيل طلب انضمام محدد (بيانات الطلب + مقدم الطلب + الخطة)
-// GET /api/v1/admin/stores/requests/{storeJoinRequest}
+// GET /api/admin/stores/requests/{storeJoinRequest}
 export function getStoreRequest(storeJoinRequest) {
-  return apiRequest(`/api/v1/admin/stores/requests/${storeJoinRequest}`)
+  return apiRequest(`/api/admin/stores/requests/${storeJoinRequest}`)
 }
 
 // قبول طلب الانضمام: إنشاء المستخدم والمتجر (inactive)
-// POST /api/v1/admin/stores/requests/{storeJoinRequest}/accept
+// POST /api/admin/stores/requests/{storeJoinRequest}/accept
 export function acceptStoreRequest(storeJoinRequest) {
-  return apiRequest(`/api/v1/admin/stores/requests/${storeJoinRequest}/accept`, {
+  return apiRequest(`/api/admin/stores/requests/${storeJoinRequest}/accept`, {
     method: 'POST',
   })
 }
 
 // رفض طلب الانضمام مع ذكر السبب
-// POST /api/v1/admin/stores/requests/{storeJoinRequest}/reject
+// POST /api/admin/stores/requests/{storeJoinRequest}/reject
 export function rejectStoreRequest(storeJoinRequest, body) {
-  return apiRequest(`/api/v1/admin/stores/requests/${storeJoinRequest}/reject`, {
+  return apiRequest(`/api/admin/stores/requests/${storeJoinRequest}/reject`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
