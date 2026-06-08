@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
-export function EditCampaignModal({ campaign, open, onClose, onSave }) {
+export function EditCampaignModal({ campaign, open, onClose, onSave, saving = false }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [storeName, setStoreName] = useState('')
+  const [link, setLink] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [errors, setErrors] = useState({})
@@ -14,7 +14,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
     if (!open || !campaign) return
     setName(campaign.title)
     setDescription(campaign.description)
-    setStoreName(campaign.storeName)
+    setLink(campaign.link ?? '')
     setDateFrom(campaign.dateFrom)
     setDateTo(campaign.dateTo)
     setErrors({})
@@ -32,11 +32,11 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
+      if (e.key === 'Escape' && !saving) onClose?.()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open, onClose, saving])
 
   if (!open || !campaign) return null
 
@@ -47,25 +47,26 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
     const e = {}
     if (!name.trim()) e.name = 'مطلوب'
     if (!description.trim()) e.description = 'مطلوب'
-    if (!storeName.trim()) e.storeName = 'مطلوب'
     if (!dateFrom) e.dateFrom = 'مطلوب'
     if (!dateTo) e.dateTo = 'مطلوب'
+    if (dateFrom && dateTo && dateTo < dateFrom) {
+      e.dateTo = 'يجب أن يكون بعد تاريخ البدء'
+    }
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (ev) => {
+  const handleSubmit = async (ev) => {
     ev.preventDefault()
-    if (!validate()) return
-    onSave?.({
+    if (saving || !validate()) return
+    await onSave?.({
       id: campaign.id,
-      title: name.trim(),
+      name: name.trim(),
       description: description.trim(),
-      storeName: storeName.trim(),
+      link: link.trim(),
       dateFrom,
       dateTo,
     })
-    onClose?.()
   }
 
   const overlay = (
@@ -74,7 +75,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
         type="button"
         className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px]"
         aria-label="إغلاق"
-        onClick={onClose}
+        onClick={() => !saving && onClose?.()}
       />
       <div
         role="dialog"
@@ -89,9 +90,10 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
           </h2>
           <button
             type="button"
-            onClick={onClose}
-            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
+            onClick={() => !saving && onClose?.()}
+            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90 disabled:opacity-50"
             aria-label="إغلاق"
+            disabled={saving}
           >
             <X className="size-5" strokeWidth={2.25} />
           </button>
@@ -110,6 +112,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
                 if (errors.name) setErrors((x) => ({ ...x, name: '' }))
               }}
               className={fieldClass}
+              disabled={saving}
             />
             {errors.name ? <p className="mt-1 text-xs text-rose-600">{errors.name}</p> : null}
           </div>
@@ -127,6 +130,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
               }}
               rows={4}
               className={`${fieldClass} resize-y min-h-[100px]`}
+              disabled={saving}
             />
             {errors.description ? (
               <p className="mt-1 text-xs text-rose-600">{errors.description}</p>
@@ -134,21 +138,17 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
           </div>
 
           <div>
-            <label htmlFor="edit-store" className="mb-1.5 block text-sm font-semibold text-white/90">
-              اسم المتجر
+            <label htmlFor="edit-link" className="mb-1.5 block text-sm font-semibold text-white/90">
+              رابط الحملة
             </label>
             <input
-              id="edit-store"
-              value={storeName}
-              onChange={(e) => {
-                setStoreName(e.target.value)
-                if (errors.storeName) setErrors((x) => ({ ...x, storeName: '' }))
-              }}
+              id="edit-link"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
               className={fieldClass}
+              dir="ltr"
+              disabled={saving}
             />
-            {errors.storeName ? (
-              <p className="mt-1 text-xs text-rose-600">{errors.storeName}</p>
-            ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -165,6 +165,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
                   if (errors.dateFrom) setErrors((x) => ({ ...x, dateFrom: '' }))
                 }}
                 className={fieldClass}
+                disabled={saving}
               />
               {errors.dateFrom ? (
                 <p className="mt-1 text-xs text-rose-600">{errors.dateFrom}</p>
@@ -183,6 +184,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
                   if (errors.dateTo) setErrors((x) => ({ ...x, dateTo: '' }))
                 }}
                 className={fieldClass}
+                disabled={saving}
               />
               {errors.dateTo ? <p className="mt-1 text-xs text-rose-600">{errors.dateTo}</p> : null}
             </div>
@@ -191,16 +193,18 @@ export function EditCampaignModal({ campaign, open, onClose, onSave }) {
           <div className="flex gap-3 border-t border-white/5 pt-5" dir="rtl">
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
+              onClick={() => onClose?.()}
+              disabled={saving}
+              className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300 disabled:opacity-50"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-brand-950"
+              disabled={saving}
+              className="rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-brand-950 disabled:opacity-60"
             >
-              حفظ التعديلات
+              {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
             </button>
           </div>
         </form>

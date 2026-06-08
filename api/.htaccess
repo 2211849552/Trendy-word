@@ -1,0 +1,14 @@
+RewriteEngine On
+RewriteBase /api/
+
+# إعادة كتابة المسارات
+RewriteRule ^v1/auth/admin/login$ v1/auth/admin/login.php [L,QSA]
+RewriteRule ^v1/user$ v1/user.php [L,QSA]
+RewriteRule ^v1/admin/categories/([0-9]+)$ v1/admin/categories.php?id=$1 [L,QSA]
+RewriteRule ^v1/admin/categories$ v1/admin/categories.php [L,QSA]
+RewriteRule ^v1/admin/attributes/([0-9]+)$ v1/admin/attributes.php?id=$1 [L,QSA]
+RewriteRule ^v1/admin/attributes$ v1/admin/attributes.php [L,QSA]
+RewriteRule ^v1/catalog/categories$ v1/catalog/categories.php [L,QSA]
+RewriteRule ^v1/catalog/attributes$ v1/catalog/attributes.php [L,QSA]
+RewriteRule ^v1/catalog/search/categories$ v1/catalog/search/categories.php [L,QSA]
+RewriteRule ^v1/catalog/search/attributes$ v1/catalog/search/attributes.php [L,QSA]

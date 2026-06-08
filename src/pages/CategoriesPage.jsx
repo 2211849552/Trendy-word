@@ -47,33 +47,44 @@ export function CategoriesPage() {
   const [newCatName, setNewCatName] = useState('')
   const [newCatImage, setNewCatImage] = useState(DEFAULT_CATEGORY_IMAGE)
   const [newAttrName, setNewAttrName] = useState('')
+  const [newAttrType, setNewAttrType] = useState('list')
+  const [newAttrRequired, setNewAttrRequired] = useState(true)
   const [attrOptions, setAttrOptions] = useState([])
 
+  const loadCatalogData = async (tab = activeTab, query = searchQuery.trim()) => {
+    if (tab === 'categories') {
+      const data = query
+        ? await searchCatalogCategories({ query })
+        : await getAdminCategories()
+      setCategories(extractCatalogList(data).map((item) => mapCategory(item, DEFAULT_CATEGORY_IMAGE)))
+      return
+    }
+
+    const data = query
+      ? await searchCatalogAttributes({ query })
+      : await getAdminAttributes()
+    setAttributes(extractCatalogList(data).map(mapAttribute))
+  }
+
   useEffect(() => {
-    const q = searchQuery.trim()
     const timer = setTimeout(async () => {
       setLoading(true)
       setLoadError('')
       try {
-        if (activeTab === 'categories') {
-          const data = q
-            ? await searchCatalogCategories({ query: q })
-            : await getAdminCategories()
-          setCategories(extractCatalogList(data).map((item) => mapCategory(item, DEFAULT_CATEGORY_IMAGE)))
-        } else {
-          const data = q
-            ? await searchCatalogAttributes({ query: q })
-            : await getAdminAttributes()
-          setAttributes(extractCatalogList(data).map(mapAttribute))
-        }
+        await loadCatalogData(activeTab, searchQuery.trim())
         setLoadError('')
-      } catch {
+      } catch (err) {
         if (activeTab === 'categories') {
           setCategories([])
         } else {
           setAttributes([])
         }
-        setLoadError('تعذّر تحميل البيانات. تأكد من تسجيل الدخول وأن الخادم يعمل.')
+        const status = err?.status
+        if (status === 401) {
+          setLoadError('انتهت الجلسة. سجّلي الدخول من جديد.')
+        } else {
+          setLoadError('تعذّر تحميل البيانات. تأكد من تسجيل الدخول وأن الخادم يعمل.')
+        }
       } finally {
         setLoading(false)
       }
@@ -88,20 +99,24 @@ export function CategoriesPage() {
     setTimeout(() => setShowToast(false), 3000)
   }
 
+  const apiErrorMessage = (err, fallback) => {
+    if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
+    if (err?.status === 422) return err.message || fallback
+    if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
+    return err?.message || fallback
+  }
+
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return
 
     try {
-      const data = await createAdminCategory({
-        name: newCatName.trim(),
-      })
-      const created = mapCategory(data?.data ?? data, DEFAULT_CATEGORY_IMAGE)
-      setCategories((prev) => [created, ...prev])
+      await createAdminCategory({ name: newCatName.trim() })
+      await loadCatalogData('categories')
       setNewCatName('')
       setShowAddCategory(false)
       triggerToast('تم إضافة التصنيف بنجاح')
-    } catch {
-      triggerToast('تعذّر إضافة التصنيف. حاول مرة أخرى.')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر إضافة التصنيف. حاول مرة أخرى.'))
     }
   }
 
@@ -109,27 +124,22 @@ export function CategoriesPage() {
     if (!newCatName.trim() || !selectedItem) return
 
     try {
-      const data = await updateAdminCategory(selectedItem.id, {
-        name: newCatName.trim(),
-      })
-      const updated = mapCategory(data?.data ?? data, DEFAULT_CATEGORY_IMAGE)
-      setCategories((prev) =>
-        prev.map((c) => (c.id === selectedItem.id ? { ...c, ...updated } : c)),
-      )
+      await updateAdminCategory(selectedItem.id, { name: newCatName.trim() })
+      await loadCatalogData('categories')
       setShowEditCategory(false)
       triggerToast('تم تحديث التصنيف بنجاح')
-    } catch {
-      triggerToast('تعذّر تحديث التصنيف. حاول مرة أخرى.')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر تحديث التصنيف. حاول مرة أخرى.'))
     }
   }
 
   const handleDeleteCategory = async (id) => {
     try {
       await deleteAdminCategory(id)
-      setCategories((prev) => prev.filter((c) => c.id !== id))
+      await loadCatalogData('categories')
       triggerToast('تم حذف التصنيف بنجاح')
-    } catch {
-      triggerToast('تعذّر حذف التصنيف. حاول مرة أخرى.')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر حذف التصنيف. حاول مرة أخرى.'))
     }
   }
 
@@ -137,19 +147,18 @@ export function CategoriesPage() {
     if (!newAttrName.trim()) return
 
     try {
-      const data = await createAdminAttribute({
+      await createAdminAttribute({
         name: newAttrName.trim(),
-        type: 'list',
-        is_required: true,
-        options: ['S', 'M', 'L', 'XL', 'XXL'],
+        type: newAttrType,
+        is_required: newAttrRequired,
+        values: ['S', 'M', 'L', 'XL', 'XXL'],
       })
-      const created = mapAttribute(data?.data ?? data)
-      setAttributes((prev) => [created, ...prev])
+      await loadCatalogData('attributes')
       setNewAttrName('')
       setShowAddAttribute(false)
       triggerToast('تم إضافة الخاصية بنجاح')
-    } catch {
-      triggerToast('تعذّر إضافة الخاصية. حاول مرة أخرى.')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر إضافة الخاصية. حاول مرة أخرى.'))
     }
   }
 
@@ -157,29 +166,27 @@ export function CategoriesPage() {
     if (!newAttrName.trim() || !selectedItem) return
 
     try {
-      const data = await updateAdminAttribute(selectedItem.id, {
+      await updateAdminAttribute(selectedItem.id, {
         name: newAttrName.trim(),
-        options: attrOptions,
-        list_options: attrOptions,
+        type: newAttrType,
+        is_required: newAttrRequired,
+        values: attrOptions,
       })
-      const updated = mapAttribute(data?.data ?? data)
-      setAttributes((prev) =>
-        prev.map((a) => (a.id === selectedItem.id ? { ...a, ...updated, options: attrOptions } : a)),
-      )
+      await loadCatalogData('attributes')
       setShowEditAttribute(false)
       triggerToast('تم تحديث الخاصية بنجاح')
-    } catch {
-      triggerToast('تعذّر تحديث الخاصية. حاول مرة أخرى.')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر تحديث الخاصية. حاول مرة أخرى.'))
     }
   }
 
   const handleDeleteAttribute = async (id) => {
     try {
       await deleteAdminAttribute(id)
-      setAttributes((prev) => prev.filter((a) => a.id !== id))
+      await loadCatalogData('attributes')
       triggerToast('تم حذف الخاصية بنجاح')
-    } catch {
-      triggerToast('تعذّر حذف الخاصية. حاول مرة أخرى.')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر حذف الخاصية. حاول مرة أخرى.'))
     }
   }
 
@@ -536,17 +543,20 @@ export function CategoriesPage() {
               <div>
                 <label className="block text-xs font-bold text-white/60 mb-2 text-right">نوع الخاصية *</label>
                 <div className="relative">
-                  <select className="w-full appearance-none rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-brand-200">
-                    <option>نص</option>
-                    <option>قائمة اختيارات</option>
-                    <option>رقم</option>
+                  <select
+                    value={newAttrType}
+                    onChange={(e) => setNewAttrType(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-brand-200">
+                    <option value="text">نص</option>
+                    <option value="list">قائمة اختيارات</option>
+                    <option value="number">رقم</option>
                   </select>
                   <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-white/50 pointer-events-none" />
                 </div>
               </div>
 
               <div className="flex items-center justify-start gap-3 py-4 border-y border-slate-50">
-                <input type="checkbox" id="req_add" defaultChecked className="size-5 rounded border-white/20 text-white" />
+                <input type="checkbox" id="req_add" checked={newAttrRequired} onChange={(e) => setNewAttrRequired(e.target.checked)} className="size-5 rounded border-white/20 text-white" />
                 <label htmlFor="req_add" className="text-sm font-bold text-white/80">خاصية مطلوبة</label>
               </div>
 

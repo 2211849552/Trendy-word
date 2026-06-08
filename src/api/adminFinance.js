@@ -24,3 +24,14 @@ export function getPlatformEarnings(params = {}) {
   const query = new URLSearchParams(params).toString()
   return apiRequest(`/api/admin/finance/platform-earnings${query ? `?${query}` : ''}`)
 }
+
+export function extractFinancePayload(data) {
+  return data?.data ?? data ?? {}
+}
+
+export function pickFinanceAmount(payload, ...keys) {
+  for (const key of keys) {
+    if (payload?.[key] != null && payload[key] !== '') return payload[key]
+  }
+  return null
+}
