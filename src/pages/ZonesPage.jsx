@@ -1,0 +1,261 @@
+import { useState, useEffect, useCallback } from 'react'
+import {
+  MapPin,
+  Plus,
+  Trash2,
+  X,
+  Loader2,
+} from 'lucide-react'
+import {
+  fetchZonesList,
+  createZone,
+  deleteZone,
+  buildCreateZonePayload,
+  validateCreateZoneForm,
+} from '../api/zones.js'
+
+function apiErrorMessage(err, fallback) {
+  if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
+  if (err?.status === 403) return 'ليس لديك صلاحية إدارة المناطق.'
+  if (err?.status === 422) return err.message || fallback
+  if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
+  return err?.message || fallback
+}
+
+export function ZonesPage() {
+  const [addresses, setAddresses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [actionMessage, setActionMessage] = useState('')
+
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [newAddressName, setNewAddressName] = useState('')
+  const [addLoading, setAddLoading] = useState(false)
+  const [addError, setAddError] = useState('')
+
+  const [deleteLoadingId, setDeleteLoadingId] = useState('')
+
+  const loadAddresses = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      setAddresses(await fetchZonesList())
+    } catch (err) {
+      setAddresses([])
+      setLoadError(apiErrorMessage(err, 'تعذّر تحميل قائمة المناطق.'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadAddresses()
+  }, [loadAddresses])
+
+  useEffect(() => {
+    if (!actionMessage) return undefined
+    const timer = setTimeout(() => setActionMessage(''), 3000)
+    return () => clearTimeout(timer)
+  }, [actionMessage])
+
+  const closeAdd = () => {
+    setAddModalOpen(false)
+    setNewAddressName('')
+    setAddError('')
+  }
+
+  const openAdd = () => {
+    setNewAddressName('')
+    setAddError('')
+    setAddModalOpen(true)
+  }
+
+  const handleAddAddress = async (e) => {
+    e.preventDefault()
+    setAddError('')
+
+    const validationError = validateCreateZoneForm({ name: newAddressName })
+    if (validationError) {
+      setAddError(validationError)
+      return
+    }
+
+    setAddLoading(true)
+    try {
+      await createZone(buildCreateZonePayload({ name: newAddressName }))
+      closeAdd()
+      setActionMessage('تم إضافة المنطقة بنجاح.')
+      await loadAddresses()
+    } catch (err) {
+      setAddError(apiErrorMessage(err, 'تعذّر إضافة المنطقة.'))
+    } finally {
+      setAddLoading(false)
+    }
+  }
+
+  const handleDeleteAddress = async (address) => {
+    if (!window.confirm(`هل تريدين حذف منطقة "${address.name}"؟`)) return
+
+    setDeleteLoadingId(address.id)
+    try {
+      await deleteZone(address.id)
+      setActionMessage('تم حذف المنطقة بنجاح.')
+      await loadAddresses()
+    } catch (err) {
+      setActionMessage(apiErrorMessage(err, 'تعذّر حذف المنطقة.'))
+    } finally {
+      setDeleteLoadingId('')
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 pb-20 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+        <div className="flex flex-col items-start gap-1">
+          <h1 className="text-2xl font-bold text-white">إدارة المناطق</h1>
+          <p className="text-sm text-white/60">عرض وإضافة وحذف المناطق المدعومة عبر API</p>
+        </div>
+        <button
+          type="button"
+          onClick={openAdd}
+          className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-premium"
+        >
+          <Plus className="size-4" />
+          إضافة منطقة
+        </button>
+      </div>
+
+      {actionMessage ? (
+        <p className="rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+          {actionMessage}
+        </p>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
+            <MapPin className="size-6" />
+          </div>
+          <p className="text-sm font-medium text-white/60">إجمالي المناطق</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : addresses.length}</p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-sm">
+            <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
+              <tr>
+                <th className="px-3 py-3 font-medium">#</th>
+                <th className="px-3 py-3 font-medium">اسم المنطقة</th>
+                <th className="px-3 py-3 font-medium">المدينة</th>
+                <th className="px-3 py-3 font-medium">تاريخ الإضافة</th>
+                <th className="px-3 py-3 font-medium text-center">حذف</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-3 py-12 text-center text-white/60">
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-5 animate-spin" />
+                      جاري تحميل المناطق...
+                    </span>
+                  </td>
+                </tr>
+              ) : addresses.map((address) => (
+                <tr key={address.id} className="hover:bg-brand-300 transition-colors">
+                  <td className="px-3 py-3 font-mono text-xs text-white/60">{address.id}</td>
+                  <td className="px-3 py-3 font-bold text-white">{address.name}</td>
+                  <td className="px-3 py-3 text-white/70">{address.city || '—'}</td>
+                  <td className="px-3 py-3 text-white/60">{address.createdAt}</td>
+                  <td className="px-3 py-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAddress(address)}
+                      disabled={deleteLoadingId === address.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-bold text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+                      title="حذف المنطقة"
+                    >
+                      {deleteLoadingId === address.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                      حذف
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {!loading && addresses.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center text-white/60">
+                    {loadError || 'لا توجد مناطق مسجّلة.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-4 border-t border-white/10 bg-brand-300/50 text-left">
+          <p className="text-sm text-white/60">
+            عرض {addresses.length} {addresses.length === 1 ? 'منطقة' : 'مناطق'}
+          </p>
+        </div>
+      </div>
+
+      {addModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-white/5 p-6">
+              <h2 className="text-2xl font-bold text-white">إضافة منطقة جديدة</h2>
+              <button type="button" onClick={closeAdd} className="text-white/50 hover:text-white/70">
+                <X className="size-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAddress} className="p-6 space-y-5 text-right">
+              <div>
+                <label htmlFor="address-name" className="block text-sm font-medium text-white/80 mb-1.5">
+                  اسم المنطقة *
+                </label>
+                <input
+                  id="address-name"
+                  type="text"
+                  required
+                  placeholder="مثال: طرابلس"
+                  value={newAddressName}
+                  onChange={(e) => setNewAddressName(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-brand-200 px-3 py-2.5 text-sm outline-none transition-colors focus:border-brand-500"
+                />
+              </div>
+
+              {addError ? (
+                <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                  {addError}
+                </p>
+              ) : null}
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={addLoading}
+                  className="flex-1 rounded-lg bg-brand-900 px-6 py-3 text-sm font-bold text-white hover:bg-brand-950 transition-colors disabled:opacity-60"
+                >
+                  {addLoading ? 'جاري الإضافة...' : 'إضافة المنطقة'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeAdd}
+                  className="rounded-lg border border-white/10 bg-brand-200 px-8 py-3 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}

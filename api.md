@@ -874,6 +874,18 @@ Route::prefix('v1/auth')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\V1\DriverController::class, 'index']);
 
             // [18.1] إضافة سائق جديد
+            // POST /api/drivers
+            // ─────────────────────────────────────────────────────────────────
+            // Body (JSON):
+            //   name              string  مطلوب — اسم السائق
+            //   phone             string  مطلوب — رقم الهاتف
+            //   password          string  مطلوب — كلمة مرور الحساب (8+ أحرف)
+            //   license_number    string  مطلوب — رقم رخصة القيادة
+            //   vehicle_type      string  مطلوب — نوع المركبة: motorcycle | car | van
+            //   plate_number      string  مطلوب — رقم لوحة المركبة
+            //   current_zone_id   integer مطلوب — معرّف المنطقة (من GET /api/zones)
+            //   email             string  اختياري — البريد الإلكتروني
+            // ─────────────────────────────────────────────────────────────────
             Route::post('/', [\App\Http\Controllers\Api\V1\DriverController::class, 'store']);
 
             // [18.4] تعطيل حساب سائق

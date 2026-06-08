@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ShoppingCart,
   Truck,
+  MapPin,
   Moon,
   Sun,
   LogOut,
@@ -33,6 +34,7 @@ const navItems = [
   { id: 'notifications', label: 'الإشعارات', icon: Bell },
   { id: 'orders', label: 'إدارة الطلبات', icon: ShoppingCart },
   { id: 'drivers', label: 'إدارة السائقين', icon: Truck },
+  { id: 'zones', label: 'إدارة المناطق', icon: MapPin },
 ]
 
 export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, onToggleDarkMode, onLogout }) {

@@ -16,6 +16,7 @@ import { StaffPage } from './pages/StaffPage.jsx'
 import { NotificationsPage } from './pages/NotificationsPage.jsx'
 import { OrdersPage } from './pages/OrdersPage.jsx'
 import { DriversPage } from './pages/DriversPage.jsx'
+import { ZonesPage } from './pages/ZonesPage.jsx'
 
 function renderPage(activeNav) {
   if (activeNav === 'stores') return <StoreManagementPage />
@@ -30,6 +31,7 @@ function renderPage(activeNav) {
   if (activeNav === 'notifications') return <NotificationsPage />
   if (activeNav === 'orders') return <OrdersPage />
   if (activeNav === 'drivers') return <DriversPage />
+  if (activeNav === 'zones') return <ZonesPage />
   return <OverviewPage />
 }
 
