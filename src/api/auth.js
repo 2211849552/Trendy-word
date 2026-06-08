@@ -9,3 +9,8 @@ export function adminLogin(body) {
     body: JSON.stringify(body),
   })
 }
+
+// POST /api/v1/auth/logout
+export function adminLogout() {
+  return apiRequest('/api/v1/auth/logout', { method: 'POST' })
+}

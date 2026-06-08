@@ -318,48 +318,68 @@ export function CategoriesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {loading ? (
-                  <p className="col-span-full py-12 text-center text-sm text-white/55">جاري تحميل التصنيفات...</p>
-                ) : categories.length === 0 ? (
-                  <p className="col-span-full py-12 text-center text-sm text-white/55">
-                    لا توجد تصنيفات. أضيفي تصنيفاً جديداً من الزر أعلاه.
-                  </p>
-                ) : (
-                categories.map((cat) => (
-                  <div key={cat.id} className="group relative flex flex-col items-center rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium hover:border-brand-300 transition-all hover:shadow-premium text-center">
-                    <CategoryImage
-                      src={cat.image}
-                      name={cat.name}
-                      className="mb-4 aspect-square w-full max-w-[120px] rounded-xl shadow-premium ring-1 ring-slate-100 transition-transform group-hover:scale-[1.03]"
-                    />
-                    <h3 className="text-base font-bold text-white/90">{cat.name}</h3>
-                    {cat.isActive && (
-                      <span className="mt-2 inline-block rounded-full bg-emerald-100 px-3 py-0.5 text-[10px] font-bold text-emerald-700">
-                        نشط
-                      </span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-sm">
+                  <thead className="bg-brand-300 text-white/60">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">اسم التصنيف</th>
+                      <th className="px-4 py-3 font-medium">الحالة</th>
+                      <th className="px-4 py-3 font-medium">عدد المنتجات</th>
+                      <th className="px-4 py-3 font-medium text-center">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-12 text-center text-sm text-white/55">
+                          جاري تحميل التصنيفات...
+                        </td>
+                      </tr>
+                    ) : categories.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-12 text-center text-sm text-white/55">
+                          لا توجد تصنيفات. أضيفي تصنيفاً جديداً من الزر أعلاه.
+                        </td>
+                      </tr>
+                    ) : (
+                      categories.map((cat) => (
+                        <tr key={cat.id} className="hover:bg-brand-300">
+                          <td className="px-4 py-4 font-bold text-white">{cat.name}</td>
+                          <td className="px-4 py-4">
+                            {cat.isActive ? (
+                              <span className="inline-block rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-700">
+                                نشط
+                              </span>
+                            ) : (
+                              <span className="text-white/50">غير نشط</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-white">
+                            {cat.count} <span className="text-white/50">منتج</span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex justify-center gap-1.5">
+                              <button
+                                onClick={() => openEditCategory(cat)}
+                                className="icon-btn-edit"
+                                title="تعديل"
+                              >
+                                <Edit className="size-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                title="حذف"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                     )}
-                    <p className="mt-3 text-lg font-bold text-white">{cat.count} <span className="text-[10px] text-white/50 font-normal">منتج</span></p>
-                    
-                    <div className="mt-4 flex items-center justify-center gap-2 border-t border-slate-50 pt-4 w-full">
-                      <button 
-                        onClick={() => openEditCategory(cat)}
-                        className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-lg bg-brand-100 text-white hover:bg-brand-900 hover:text-white transition-all text-[10px] font-bold"
-                      >
-                        <Edit className="size-3" />
-                        تعديل
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteCategory(cat.id)}
-                        className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all text-[10px] font-bold"
-                      >
-                        <Trash2 className="size-3" />
-                        حذف
-                      </button>
-                    </div>
-                  </div>
-                ))
-                )}
+                  </tbody>
+                </table>
               </div>
             </div>
           ) : (

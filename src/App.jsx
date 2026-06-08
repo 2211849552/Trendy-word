@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { adminLogout } from './api/auth.js'
 import { getCurrentUser } from './api/user.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { LoginPage } from './pages/LoginPage.jsx'
@@ -82,7 +83,12 @@ export default function App() {
     }
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await adminLogout()
+    } catch {
+      // clear local session even if server logout fails
+    }
     localStorage.removeItem('auth_token')
     setIsAuthenticated(false)
   }

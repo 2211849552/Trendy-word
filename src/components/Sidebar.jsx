@@ -130,7 +130,7 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
         <button
           type="button"
           onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-brand-200/10 hover:text-white"
+          className="flex w-full items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
         >
           <LogOut className="size-4 shrink-0" aria-hidden />
           <span>تسجيل الخروج</span>
