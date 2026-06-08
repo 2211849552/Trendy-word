@@ -1,13 +1,26 @@
-import { useState, useEffect } from 'react'
-import { Download, Search, DollarSign, CheckCircle2, AlertCircle, BarChart2, Eye, X, CreditCard, Banknote } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Download, Search, DollarSign, CheckCircle2, AlertCircle, BarChart2, Eye, X, CreditCard, Banknote, Loader2 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import {
   getAdProfits,
   getSubscriptionProfits,
   getDeliveryProfits,
   getPlatformEarnings,
+  getRevenueOverview,
+  getFinanceTransactions,
+  getFinanceTransaction,
+  exportFinanceReport,
   extractFinancePayload,
   pickFinanceAmount,
+  extractTransactionList,
+  mapTransaction,
+  mapTransactionDetail,
+  buildFinanceQueryParams,
+  filterTransactionsClient,
+  fetchPaymentMethodsDistribution,
+  fetchMonthlyRevenueSeries,
+  paymentMethodsChartHasData,
+  transactionsToCsv,
 } from '../api/adminFinance.js'
 import {
   getBankCards,
@@ -18,49 +31,13 @@ import {
   mapBankCard,
 } from '../api/bankCards.js'
 
-const monthlyRevenueData = [
-  { name: 'يناير', value: 45000 },
-  { name: 'فبراير', value: 52000 },
-  { name: 'مارس', value: 48000 },
-  { name: 'أبريل', value: 61000 },
-  { name: 'مايو', value: 55000 },
-  { name: 'يونيو', value: 68000 },
-]
-
-const paymentMethodsData = [
-  { name: 'محفظة إلكترونية', value: 67, color: '#334155' },
-  { name: 'نقدي', value: 33, color: '#10b981' },
-]
-
-const dummyTransactions = [
-  {
-    id: 'ORD-001',
-    customer: 'علي حسن',
-    store: 'متجر الأزياء العصرية',
-    amount: 360,
-    type: 'محفظة إلكترونية',
-    date: '2026-05-02',
-    status: 'معلقة'
-  },
-  {
-    id: 'ORD-002',
-    customer: 'منى سالم',
-    store: 'متجر الإلكترونيات الذكية',
-    amount: 2500,
-    type: 'نقدي',
-    date: '2026-05-01',
-    status: 'معلقة'
-  },
-  {
-    id: 'ORD-003',
-    customer: 'يوسف أحمد',
-    store: 'متجر الأحذية الرياضية',
-    amount: 900,
-    type: 'محفظة إلكترونية',
-    date: '2026-04-30',
-    status: 'ناجحة'
-  }
-]
+function apiErrorMessage(err, fallback) {
+  if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
+  if (err?.status === 403) return 'ليس لديك صلاحية عرض البيانات المالية.'
+  if (err?.status === 422) return err.message || fallback
+  if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
+  return err?.message || fallback
+}
 
 export function FinancePage() {
   const [activeType, setActiveType] = useState('جميع الأنواع')
@@ -79,31 +56,83 @@ export function FinancePage() {
   const [cardsError, setCardsError] = useState('')
   const [cardsMessage, setCardsMessage] = useState('')
   const [selectedTx, setSelectedTx] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [transactions, setTransactions] = useState([])
+  const [txLoading, setTxLoading] = useState(true)
+  const [txError, setTxError] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState('')
+  const [monthlyRevenueData, setMonthlyRevenueData] = useState([])
+  const [paymentMethodsData, setPaymentMethodsData] = useState([
+    { name: 'محفظة إلكترونية', value: 0, color: '#334155' },
+    { name: 'نقدي', value: 0, color: '#10b981' },
+  ])
+  const [paymentMethodsHasData, setPaymentMethodsHasData] = useState(false)
+  const [chartsLoading, setChartsLoading] = useState(true)
+  const [revenueOverview, setRevenueOverview] = useState(null)
   const [platformEarnings, setPlatformEarnings] = useState(null)
   const [adProfits, setAdProfits] = useState(null)
   const [subscriptionProfits, setSubscriptionProfits] = useState(null)
   const [deliveryProfits, setDeliveryProfits] = useState(null)
   const [financeLoading, setFinanceLoading] = useState(true)
+  const loadSeq = useRef(0)
 
-  const loadFinanceStats = async () => {
+  const loadFinanceStats = async (period = activePeriod) => {
     setFinanceLoading(true)
+    const dateParams = buildFinanceQueryParams({ period })
     try {
-      const [platform, ads, subscriptions, delivery] = await Promise.all([
-        getPlatformEarnings(),
-        getAdProfits(),
-        getSubscriptionProfits(),
-        getDeliveryProfits(),
+      const [platform, ads, subscriptions, delivery, overview] = await Promise.all([
+        getPlatformEarnings(dateParams),
+        getAdProfits(dateParams),
+        getSubscriptionProfits(dateParams),
+        getDeliveryProfits(dateParams),
+        getRevenueOverview(dateParams),
       ])
       setPlatformEarnings(extractFinancePayload(platform))
       setAdProfits(extractFinancePayload(ads))
       setSubscriptionProfits(extractFinancePayload(subscriptions))
       setDeliveryProfits(extractFinancePayload(delivery))
+      setRevenueOverview(extractFinancePayload(overview))
     } catch {
       // keep fallback values in cards
     } finally {
       setFinanceLoading(false)
     }
   }
+
+  const loadCharts = async (period = activePeriod) => {
+    setChartsLoading(true)
+    try {
+      const [monthly, paymentMethods] = await Promise.all([
+        fetchMonthlyRevenueSeries(6),
+        fetchPaymentMethodsDistribution({ period }),
+      ])
+      setMonthlyRevenueData(monthly)
+      setPaymentMethodsData(paymentMethods.chart)
+      setPaymentMethodsHasData(paymentMethodsChartHasData(paymentMethods.chart))
+    } catch {
+      setMonthlyRevenueData([])
+      setPaymentMethodsData([
+        { name: 'محفظة إلكترونية', value: 0, color: '#334155' },
+        { name: 'نقدي', value: 0, color: '#10b981' },
+      ])
+      setPaymentMethodsHasData(false)
+    } finally {
+      setChartsLoading(false)
+    }
+  }
+
+  const loadTransactions = useCallback(async () => {
+    const seq = ++loadSeq.current
+    const params = buildFinanceQueryParams({
+      search: searchQuery,
+      status: activeStatus,
+      period: activePeriod,
+    })
+    const data = await getFinanceTransactions(params)
+    if (seq !== loadSeq.current) return
+    setTransactions(extractTransactionList(data).map(mapTransaction))
+  }, [searchQuery, activeStatus, activePeriod])
 
   const loadBankCards = async () => {
     setCardsLoading(true)
@@ -126,8 +155,25 @@ export function FinancePage() {
   }
 
   useEffect(() => {
-    loadFinanceStats()
-  }, [])
+    loadCharts(activePeriod)
+    loadFinanceStats(activePeriod)
+  }, [activePeriod])
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setTxLoading(true)
+      setTxError('')
+      try {
+        await loadTransactions()
+      } catch (err) {
+        setTransactions([])
+        setTxError(apiErrorMessage(err, 'تعذّر تحميل المعاملات المالية.'))
+      } finally {
+        setTxLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [loadTransactions])
 
   useEffect(() => {
     if (cardModalOpen) loadBankCards()
@@ -191,32 +237,64 @@ export function FinancePage() {
     }
   }
 
-  const openDetails = (tx) => {
+  const openDetails = async (tx) => {
     setSelectedTx(tx)
     setDetailsModalOpen(true)
+    setDetailLoading(true)
+    try {
+      const data = await getFinanceTransaction(tx.transactionId)
+      setSelectedTx(mapTransactionDetail(data))
+    } catch (err) {
+      setExportMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل المعاملة.'))
+      setTimeout(() => setExportMessage(''), 3000)
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
-  const handleExport = () => {
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-      + "رقم المعاملة,الزبون,المتجر,المبلغ,نوع العملية,التاريخ,الحالة\n"
-      + filteredTransactions.map(t => `${t.id},${t.customer},${t.store},${t.amount},${t.type},${t.date},${t.status}`).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "financial_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const handleExport = async () => {
+    setExporting(true)
+    setExportMessage('')
+    const params = buildFinanceQueryParams({
+      search: searchQuery,
+      status: activeStatus,
+      period: activePeriod,
+    })
+    try {
+      const result = await exportFinanceReport(params)
+      const message = result?.message || 'تم طلب تصدير التقرير بنجاح.'
+      setExportMessage(message)
+      if (result?.download_link && result.download_link !== '#') {
+        window.open(result.download_link, '_blank', 'noopener')
+      }
+    } catch (err) {
+      setExportMessage(apiErrorMessage(err, 'تعذّر تصدير التقرير من الخادم.'))
+    }
 
-  const filteredTransactions = dummyTransactions.filter(tx => {
-    const matchesSearch = tx.id.includes(searchQuery) || tx.customer.includes(searchQuery) || tx.store.includes(searchQuery)
-    const matchesStatus = activeStatus === 'جميع الحالات' || tx.status === activeStatus
-    const matchesType = activeType === 'جميع الأنواع' || tx.type === activeType
-    // For Period, we keep it simple since it's dummy data
-    return matchesSearch && matchesStatus && matchesType
-  })
+    const csv = transactionsToCsv(filteredTransactions)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'financial_report.csv'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    setExporting(false)
+    setTimeout(() => setExportMessage(''), 5000)
+  }
+
+  const filteredTransactions = useMemo(
+    () => filterTransactionsClient(transactions, { type: activeType, status: activeStatus }),
+    [transactions, activeType, activeStatus],
+  )
+
+  const totalRevenue = useMemo(
+    () => filteredTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0),
+    [filteredTransactions],
+  )
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -246,12 +324,18 @@ export function FinancePage() {
             <CreditCard className="size-5" strokeWidth={2.25} aria-hidden />
             بطاقة ائتمانية
           </button>
-          <button type="button" onClick={handleExport} className="btn-primary shrink-0">
-            <Download className="size-5" strokeWidth={2.25} aria-hidden />
+          <button type="button" onClick={handleExport} disabled={exporting} className="btn-primary shrink-0 disabled:opacity-60">
+            {exporting ? <Loader2 className="size-5 animate-spin" /> : <Download className="size-5" strokeWidth={2.25} aria-hidden />}
             تصدير التقارير
           </button>
         </div>
       </div>
+
+      {exportMessage ? (
+        <p className="rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+          {exportMessage}
+        </p>
+      ) : null}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -266,7 +350,8 @@ export function FinancePage() {
             {financeLoading
               ? '...'
               : formatAmount(
-                  pickFinanceAmount(platformEarnings, 'total_platform_earnings', 'total', 'amount'),
+                  pickFinanceAmount(revenueOverview, 'total_platform_revenue')
+                    ?? pickFinanceAmount(platformEarnings, 'total_platform_earnings', 'total', 'amount'),
                   '0 د.ل',
                 )}
           </p>
@@ -326,6 +411,12 @@ export function FinancePage() {
         {/* Line Chart */}
         <div className="rounded-xl border border-white/10 bg-brand-200 p-6 shadow-premium">
           <h2 className="text-lg font-bold text-white mb-6 text-center">الإيرادات الشهرية</h2>
+          {chartsLoading ? (
+            <div className="flex h-[250px] items-center justify-center gap-2 text-white/60">
+              <Loader2 className="size-5 animate-spin" />
+              <span className="text-sm">جاري تحميل الإيرادات الشهرية...</span>
+            </div>
+          ) : (
           <div className="h-[250px] w-full" dir="ltr">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={monthlyRevenueData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -338,11 +429,23 @@ export function FinancePage() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+          )}
         </div>
 
         {/* Pie Chart */}
         <div className="rounded-xl border border-white/10 bg-brand-200 p-6 shadow-premium">
           <h2 className="text-lg font-bold text-white mb-6 text-center">توزيع طرق الدفع</h2>
+          {chartsLoading ? (
+            <div className="flex h-[250px] items-center justify-center gap-2 text-white/60">
+              <Loader2 className="size-5 animate-spin" />
+              <span className="text-sm">جاري تحميل توزيع طرق الدفع...</span>
+            </div>
+          ) : !paymentMethodsHasData ? (
+            <div className="flex h-[250px] flex-col items-center justify-center gap-2 text-white/55">
+              <p className="text-sm">لا توجد طلبات مكتملة في الفترة المحددة</p>
+              <p className="text-xs text-white/40">يتم حساب النسب من الطلبات المسلّمة عبر المحفظة أو الدفع نقداً</p>
+            </div>
+          ) : (
           <div className="h-[250px] w-full" dir="ltr">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -360,10 +463,16 @@ export function FinancePage() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value}%`]} />
+                <Tooltip formatter={(value) => [`${value}%`, 'النسبة']} />
+                <Legend
+                  iconType="circle"
+                  wrapperStyle={{ paddingTop: '12px' }}
+                  formatter={(value) => <span className="text-sm text-white/80">{value}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
+          )}
         </div>
       </div>
 
@@ -434,7 +543,16 @@ export function FinancePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredTransactions.map(tx => (
+              {txLoading ? (
+                <tr>
+                  <td colSpan="8" className="px-3 py-12 text-center text-white/60">
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-5 animate-spin" />
+                      جاري تحميل المعاملات...
+                    </span>
+                  </td>
+                </tr>
+              ) : filteredTransactions.map(tx => (
                 <tr key={tx.id} className="hover:bg-brand-300 transition-colors">
                   <td className="px-3 py-3 font-mono text-white/80">{tx.id}</td>
                   <td className="px-3 py-3 font-medium text-white">{tx.customer}</td>
@@ -465,10 +583,10 @@ export function FinancePage() {
                   </td>
                 </tr>
               ))}
-              {filteredTransactions.length === 0 && (
+              {!txLoading && filteredTransactions.length === 0 && (
                 <tr>
                   <td colSpan="8" className="px-3 py-12 text-center text-white/60">
-                    لا توجد معاملات مطابقة للبحث أو الفلتر.
+                    {txError || 'لا توجد معاملات مطابقة للبحث أو الفلتر.'}
                   </td>
                 </tr>
               )}
@@ -477,10 +595,10 @@ export function FinancePage() {
         </div>
         <div className="flex justify-between items-center p-4 border-t border-white/10 bg-brand-300/50">
           <p className="text-sm font-bold text-white/80">
-            إجمالي الإيرادات: <span className="text-emerald-600">3760.00 د.ل</span>
+            إجمالي الإيرادات: <span className="text-emerald-600">{totalRevenue.toLocaleString('ar-LY')} د.ل</span>
           </p>
           <p className="text-sm text-white/60">
-            عرض {filteredTransactions.length} من 3 معاملة
+            عرض {filteredTransactions.length} من {transactions.length} معاملة
           </p>
         </div>
       </div>
@@ -675,6 +793,13 @@ export function FinancePage() {
             </div>
 
             <div className="p-6 space-y-4">
+              {detailLoading ? (
+                <div className="flex items-center justify-center gap-2 py-16 text-white/60">
+                  <Loader2 className="size-6 animate-spin" />
+                  <span>جاري تحميل التفاصيل...</span>
+                </div>
+              ) : (
+              <>
               <div className="flex justify-between items-center text-right border-b border-white/5 pb-4 mb-2">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
                   selectedTx.status === 'معلقة' ? 'bg-yellow-100 text-yellow-700' : 
@@ -719,6 +844,14 @@ export function FinancePage() {
                 </div>
               </div>
 
+              {selectedTx.description ? (
+                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right">
+                  <p className="text-sm text-white/60 mb-1">الوصف</p>
+                  <p className="font-medium text-white">{selectedTx.description}</p>
+                </div>
+              ) : null}
+              </>
+              )}
             </div>
           </div>
         </div>

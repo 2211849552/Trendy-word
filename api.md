@@ -569,6 +569,10 @@ Route::prefix('v1/auth')->group(function () {
         // 7. تصدير التقارير المالية
         // GET /api/v1/finance/export
         Route::get('/export', [\App\Http\Controllers\Api\V1\FinanceController::class, 'export']);
+
+        // 8. إحصائيات ونسب طرق الدفع (محفظة إلكترونية / نقدي)
+        // GET /api/finance/payment-method-percentages?start_date=&end_date=
+        Route::get('/payment-method-percentages', [\App\Http\Controllers\Api\V1\FinanceController::class, 'paymentMethodStats']);
     });
 
     // =========================================================================

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Plus, Search, Trash2, Edit, Eye, Archive, Tag, Package, CheckCircle, X, Check, ChevronDown } from 'lucide-react'
-import { DEFAULT_CATEGORY_IMAGE } from '../data/catalogData.js'
 import {
   searchCatalogCategories,
   searchCatalogAttributes,
@@ -21,9 +20,6 @@ import {
   updateAdminAttribute,
   deleteAdminAttribute,
 } from '../api/adminAttributes.js'
-import { CategoryImage } from '../components/catalog/CategoryImage.jsx'
-import { CategoryImagePicker } from '../components/catalog/CategoryImagePicker.jsx'
-
 export function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories')
   const [searchQuery, setSearchQuery] = useState('')
@@ -45,7 +41,6 @@ export function CategoriesPage() {
 
   // Form states for adding/editing
   const [newCatName, setNewCatName] = useState('')
-  const [newCatImage, setNewCatImage] = useState(DEFAULT_CATEGORY_IMAGE)
   const [newAttrName, setNewAttrName] = useState('')
   const [newAttrType, setNewAttrType] = useState('list')
   const [newAttrRequired, setNewAttrRequired] = useState(true)
@@ -56,7 +51,7 @@ export function CategoriesPage() {
       const data = query
         ? await searchCatalogCategories({ query })
         : await getAdminCategories()
-      setCategories(extractCatalogList(data).map((item) => mapCategory(item, DEFAULT_CATEGORY_IMAGE)))
+      setCategories(extractCatalogList(data).map((item) => mapCategory(item)))
       return
     }
 
@@ -193,7 +188,6 @@ export function CategoriesPage() {
   const openEditCategory = (cat) => {
     setSelectedItem(cat)
     setNewCatName(cat.name)
-    setNewCatImage(cat.image || DEFAULT_CATEGORY_IMAGE)
     setShowEditCategory(true)
   }
 
@@ -565,14 +559,7 @@ export function CategoriesPage() {
                 <div className="rounded-2xl border border-white/5 bg-brand-300/50 p-4 space-y-3">
                   {categories.map(cat => (
                     <div key={cat.id} className="flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                          <CategoryImage
-                            src={cat.image}
-                            name={cat.name}
-                            className="size-8 shrink-0 rounded-lg"
-                          />
-                          <span className="text-sm font-bold text-white/90">{cat.name}</span>
-                       </div>
+                       <span className="text-sm font-bold text-white/90">{cat.name}</span>
                        <input type="checkbox" className="size-5 rounded border-white/20 text-white" />
                     </div>
                   ))}
@@ -607,10 +594,6 @@ export function CategoriesPage() {
                   onChange={(e) => setNewCatName(e.target.value)}
                   className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-white/80 mb-3 text-right">صورة التصنيف</label>
-                <CategoryImagePicker value={newCatImage} onChange={setNewCatImage} />
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">
@@ -758,15 +741,8 @@ export function CategoriesPage() {
                 <div className="rounded-2xl border border-white/5 bg-brand-300/50 p-4 space-y-3">
                   {categories.map(cat => (
                     <div key={cat.id} className="flex items-center justify-between">
+                       <span className="text-sm font-bold text-white/90">{cat.name}</span>
                        <input type="checkbox" defaultChecked={cat.name.includes('أزياء')} className="size-5 rounded border-white/20 text-white" />
-                       <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-white/90">{cat.name}</span>
-                          <CategoryImage
-                            src={cat.image}
-                            name={cat.name}
-                            className="size-8 shrink-0 rounded-lg"
-                          />
-                       </div>
                     </div>
                   ))}
                 </div>
