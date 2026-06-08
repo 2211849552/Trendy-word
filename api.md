@@ -915,7 +915,31 @@ Route::prefix('v1/auth')->group(function () {
     });
 
     // =========================================================================
-    // [20] إدارة توكنات Firebase (FCM)
+    // [20] إدارة الإشعارات (Notifications Management)
+    // ─────────────────────────────────────────────────────────────────────────
+    // تشمل: عرض القائمة، التفاصيل، تحديد كمقروء، وتحديد الكل كمقروء.
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+
+        // 1. عرض قائمة الإشعارات
+        // GET /api/notifications
+        Route::get('/', [\App\Http\Controllers\Api\V1\NotificationController::class, 'index']);
+
+        // 2. تحديد الكل كمقروء
+        // POST /api/notifications/read-all
+        Route::post('/read-all', [\App\Http\Controllers\Api\V1\NotificationController::class, 'markAllAsRead']);
+
+        // 3. عرض تفاصيل إشعار
+        // GET /api/notifications/{id}
+        Route::get('/{id}', [\App\Http\Controllers\Api\V1\NotificationController::class, 'show']);
+
+        // 4. تحديد إشعار كمقروء
+        // PATCH /api/notifications/{id}/read
+        Route::patch('/{id}/read', [\App\Http\Controllers\Api\V1\NotificationController::class, 'markAsRead']);
+    });
+
+    // =========================================================================
+    // [21] إدارة توكنات Firebase (FCM)
     // ─────────────────────────────────────────────────────────────────────────
     // هذه المسارات مسؤولة عن تسجيل وإلغاء تسجيل توكنات أجهزة المستخدمين
     // لإرسال الإشعارات (Push Notifications) عبر Firebase Cloud Messaging.

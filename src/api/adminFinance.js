@@ -211,19 +211,41 @@ export function buildFinanceQueryParams({ search, status, period, perPage = 100 
 }
 
 function mapPaymentType(item) {
-  const key = String(item.transaction_type ?? item.type ?? '').toLowerCase()
-  if (key.includes('cash') || key.includes('cod')) return PAYMENT_TYPE_LABELS.cash
-  if (key.includes('wallet') || key.includes('card') || key.includes('electronic')) {
+  const txType = String(item.transaction_type ?? '').toLowerCase()
+  const ledgerType = String(item.type ?? '').toLowerCase()
+
+  if (txType.includes('cash') || txType.includes('cod')) {
+    return PAYMENT_TYPE_LABELS.cash
+  }
+
+  const walletTxTypes = [
+    'wallet', 'card', 'electronic', 'deposit', 'withdrawal', 'transfer',
+    'top_up', 'topup', 'stripe', 'subscription', 'charge', 'refund', 'payment',
+  ]
+  if (walletTxTypes.some((token) => txType.includes(token))) {
     return PAYMENT_TYPE_LABELS.wallet
   }
-  if (item.type === 'credit') return PAYMENT_TYPE_LABELS.wallet
+
+  // معاملات المحفظة في النظام تُسجَّل كـ credit/debit وليست نقداً
+  if (ledgerType === 'credit' || ledgerType === 'debit') {
+    return PAYMENT_TYPE_LABELS.wallet
+  }
+
+  if (item.wallet != null) return PAYMENT_TYPE_LABELS.wallet
+
   return PAYMENT_TYPE_LABELS.cash
 }
 
 function mapTransactionStatus(item) {
-  const type = String(item.type ?? '').toLowerCase()
-  if (type === 'credit') return 'ناجحة'
-  if (type === 'debit') return 'معلقة'
+  const status = String(item.status ?? '').toLowerCase()
+  if (status.includes('pending') || status.includes('fail')) {
+    return status.includes('fail') ? 'فاشلة' : 'معلقة'
+  }
+
+  // credit/debit في سجل المحفظة يعني إيداع/سحب مكتمل وليس حالة معلّقة
+  const ledgerType = String(item.type ?? '').toLowerCase()
+  if (ledgerType === 'credit' || ledgerType === 'debit') return 'ناجحة'
+
   return 'ناجحة'
 }
 

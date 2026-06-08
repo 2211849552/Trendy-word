@@ -1,118 +1,227 @@
-import { useState } from 'react'
-import { Users, UserCheck, UserX, ShoppingCart, Search, Eye, X, MapPin, Phone, Ban, Download } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  Users,
+  UserCheck,
+  UserX,
+  ShoppingCart,
+  Search,
+  Eye,
+  X,
+  Ban,
+  Download,
+  Loader2,
+} from 'lucide-react'
+import {
+  getCustomers,
+  getCustomer,
+  deactivateCustomer,
+  reactivateCustomer,
+  extractCustomerList,
+  extractPaginationMeta,
+  mapCustomer,
+  mapCustomerDetail,
+  buildCustomerQueryParams,
+  buildCustomerStats,
+  customersToCsv,
+} from '../api/adminCustomers.js'
+import { openCustomersPrintWindow } from '../utils/printCustomers.js'
 
-const initialCustomers = [
-  {
-    id: 1,
-    name: 'علي حسن',
-    email: 'ali@example.com',
-    phone: '0917777777',
-    location: 'طرابلس',
-    orders: 15,
-    totalSpent: 3450,
-    joinDate: '2025-01-10',
-    status: 'نشط'
-  },
-  {
-    id: 2,
-    name: 'منى سالم',
-    email: 'mona@example.com',
-    phone: '0918888888',
-    location: 'بنغازي',
-    orders: 8,
-    totalSpent: 1890,
-    joinDate: '2025-02-15',
-    status: 'نشط'
-  },
-  {
-    id: 3,
-    name: 'يوسف أحمد',
-    email: 'yousef@example.com',
-    phone: '0919999999',
-    location: 'مصراتة',
-    orders: 23,
-    totalSpent: 5670,
-    joinDate: '2025-03-20',
-    status: 'نشط'
-  }
-];
+function apiErrorMessage(err, fallback) {
+  if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
+  if (err?.status === 403) return 'ليس لديك صلاحية إدارة الزبائن.'
+  if (err?.status === 422) return err.message || fallback
+  if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
+  return err?.message || fallback
+}
 
 export function CustomersPage() {
-  const [customers, setCustomers] = useState(initialCustomers)
+  const [customers, setCustomers] = useState([])
+  const [paginationMeta, setPaginationMeta] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeStatus, setActiveStatus] = useState('جميع الحالات')
-  
+
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
 
-  const openDetails = (c) => {
-    setSelectedCustomer(c)
+  const [deactivateReason, setDeactivateReason] = useState('')
+  const [showDeactivateForm, setShowDeactivateForm] = useState(false)
+  const [toggleLoading, setToggleLoading] = useState(false)
+  const [toggleError, setToggleError] = useState('')
+
+  const [exporting, setExporting] = useState(false)
+  const [actionMessage, setActionMessage] = useState('')
+
+  const loadSeq = useRef(0)
+
+  const loadCustomers = useCallback(async () => {
+    const seq = ++loadSeq.current
+    const params = buildCustomerQueryParams({
+      search: searchQuery,
+      status: activeStatus,
+    })
+    const data = await getCustomers(params)
+    if (seq !== loadSeq.current) return
+    setCustomers(extractCustomerList(data).map(mapCustomer))
+    setPaginationMeta(extractPaginationMeta(data))
+  }, [searchQuery, activeStatus])
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      setLoadError('')
+      try {
+        await loadCustomers()
+      } catch (err) {
+        setCustomers([])
+        setPaginationMeta({})
+        setLoadError(apiErrorMessage(err, 'تعذّر تحميل قائمة الزبائن.'))
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [loadCustomers])
+
+  const stats = buildCustomerStats(customers, paginationMeta)
+
+  const closeDetails = () => {
+    setDetailsModalOpen(false)
+    setSelectedCustomer(null)
+    setDeactivateReason('')
+    setShowDeactivateForm(false)
+    setToggleError('')
+  }
+
+  const openDetails = async (customer) => {
+    setSelectedCustomer(customer)
     setDetailsModalOpen(true)
+    setDetailLoading(true)
+    setDeactivateReason('')
+    setShowDeactivateForm(false)
+    setToggleError('')
+    try {
+      const data = await getCustomer(customer.id)
+      setSelectedCustomer(mapCustomerDetail(data))
+    } catch (err) {
+      setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الزبون.'))
+      setTimeout(() => setActionMessage(''), 3000)
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
-  const toggleStatus = (id) => {
-    setCustomers(customers.map(c => 
-      c.id === id ? { ...c, status: c.status === 'نشط' ? 'معطل' : 'نشط' } : c
-    ))
+  const handleToggleStatus = async (e) => {
+    e.preventDefault()
+    if (!selectedCustomer) return
+
+    if (selectedCustomer.rawStatus === 'active' && !deactivateReason.trim()) {
+      setToggleError('سبب التعطيل مطلوب.')
+      return
+    }
+
+    setToggleLoading(true)
+    setToggleError('')
+    try {
+      if (selectedCustomer.rawStatus === 'active') {
+        await deactivateCustomer(selectedCustomer.id, deactivateReason.trim())
+        setActionMessage('تم تعطيل حساب الزبون.')
+      } else {
+        await reactivateCustomer(selectedCustomer.id)
+        setActionMessage('تم إعادة تفعيل حساب الزبون.')
+      }
+
+      const data = await getCustomer(selectedCustomer.id)
+      setSelectedCustomer(mapCustomerDetail(data))
+      setDeactivateReason('')
+      setShowDeactivateForm(false)
+      await loadCustomers()
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setToggleError(apiErrorMessage(err, 'تعذّر تحديث حالة الزبون.'))
+    } finally {
+      setToggleLoading(false)
+    }
   }
 
-  const handlePrint = () => {
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-      + "الاسم,البريد الإلكتروني,الهاتف,الموقع,الطلبات,الإنفاق الكلي,تاريخ الانضمام,الحالة\n"
-      + filteredCustomers.map(c => `${c.name},${c.email},${c.phone},${c.location},${c.orders},${c.totalSpent},${c.joinDate},${c.status}`).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "customers_list.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handlePrint = async () => {
+    setExporting(true)
+    setActionMessage('')
+    const params = buildCustomerQueryParams({
+      search: searchQuery,
+      status: activeStatus,
+      perPage: 500,
+    })
+
+    try {
+      const data = await getCustomers(params)
+      const list = extractCustomerList(data).map(mapCustomer)
+      const opened = openCustomersPrintWindow(list)
+
+      if (!opened) {
+        const blob = new Blob([customersToCsv(list)], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'customers_list.csv'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        setActionMessage('تعذّر فتح نافذة الطباعة. تم تحميل الملف بدلاً من ذلك.')
+      } else {
+        setActionMessage('تم فتح قائمة الزبائن للطباعة.')
+      }
+    } catch (err) {
+      setActionMessage(apiErrorMessage(err, 'تعذّر طباعة قائمة الزبائن.'))
+    } finally {
+      setExporting(false)
+      setTimeout(() => setActionMessage(''), 5000)
+    }
   }
-
-  const filteredCustomers = customers.filter(c => {
-    const matchesSearch = c.name.includes(searchQuery) || c.email.includes(searchQuery) || c.phone.includes(searchQuery)
-    const matchesStatus = activeStatus === 'جميع الحالات' || c.status === activeStatus
-    return matchesSearch && matchesStatus
-  })
-
-  const totalCustomersCount = customers.length
-  const activeCustomersCount = customers.filter(c => c.status === 'نشط').length
-  const disabledCustomersCount = customers.filter(c => c.status === 'معطل').length
-  const totalOrdersCount = customers.reduce((acc, curr) => acc + curr.orders, 0)
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20 animate-in fade-in duration-500">
-      
-      {/* Header */}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div className="flex flex-col items-start gap-1">
           <h1 className="text-2xl font-bold text-white">إدارة الزبائن</h1>
           <p className="text-sm text-white/60">إدارة حسابات الزبائن وبياناتهم</p>
         </div>
-        <button onClick={handlePrint} className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-premium">
-          <Download className="size-4" />
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={exporting}
+          className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-premium disabled:opacity-60"
+        >
+          {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
           طباعة قائمة الزبائن
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {actionMessage ? (
+        <p className="rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+          {actionMessage}
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
-          <div className="absolute top-4 left-4 text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md">8% ↑</div>
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <Users className="size-6" />
           </div>
           <p className="text-sm font-medium text-white/60">إجمالي الزبائن</p>
-          <p className="mt-1 text-2xl font-bold text-white">{totalCustomersCount}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.total}</p>
         </div>
-        
+
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
             <UserCheck className="size-6" />
           </div>
           <p className="text-sm font-medium text-white/60">الزبائن النشطون</p>
-          <p className="mt-1 text-2xl font-bold text-white">{activeCustomersCount}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.active}</p>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
@@ -120,7 +229,7 @@ export function CustomersPage() {
             <UserX className="size-6" />
           </div>
           <p className="text-sm font-medium text-white/60">حسابات معطلة</p>
-          <p className="mt-1 text-2xl font-bold text-white">{disabledCustomersCount}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.disabled}</p>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
@@ -128,27 +237,26 @@ export function CustomersPage() {
             <ShoppingCart className="size-6" />
           </div>
           <p className="text-sm font-medium text-white/60">إجمالي الطلبات</p>
-          <p className="mt-1 text-2xl font-bold text-white">{totalOrdersCount}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.orders}</p>
         </div>
       </div>
 
-      {/* Filters & Search */}
       <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-xl border border-white/10 bg-brand-200 p-4 shadow-premium">
-        <select 
+        <select
           value={activeStatus}
-          onChange={e => setActiveStatus(e.target.value)}
+          onChange={(e) => setActiveStatus(e.target.value)}
           className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
         >
           <option>جميع الحالات</option>
           <option>نشط</option>
           <option>معطل</option>
         </select>
-        
+
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
           <input
             type="text"
-            placeholder="البحث عن زبون..."
+            placeholder="البحث بالاسم أو البريد أو الهاتف..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-white/10 bg-brand-300 py-2 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-brand-200 focus:border-brand-500"
@@ -156,7 +264,6 @@ export function CustomersPage() {
         </div>
       </div>
 
-      {/* Customers Table */}
       <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm ">
@@ -166,22 +273,27 @@ export function CustomersPage() {
                 <th className="px-3 py-3 font-medium">البريد الإلكتروني</th>
                 <th className="px-3 py-3 font-medium">الهاتف</th>
                 <th className="px-3 py-3 font-medium">الموقع</th>
-                <th className="px-3 py-3 font-medium">الطلبات</th>
-                <th className="px-3 py-3 font-medium">الإنفاق الكلي</th>
                 <th className="px-3 py-3 font-medium">تاريخ الانضمام</th>
                 <th className="px-3 py-3 font-medium">الحالة</th>
                 <th className="px-3 py-3 font-medium">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredCustomers.map(c => (
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="px-3 py-12 text-center text-white/60">
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-5 animate-spin" />
+                      جاري تحميل الزبائن...
+                    </span>
+                  </td>
+                </tr>
+              ) : customers.map((c) => (
                 <tr key={c.id} className="hover:bg-brand-300 transition-colors">
                   <td className="px-3 py-3 font-bold text-white">{c.name}</td>
                   <td className="px-3 py-3 text-white/70 font-mono text-xs">{c.email}</td>
                   <td className="px-3 py-3 text-white/70 font-mono text-xs">{c.phone}</td>
                   <td className="px-3 py-3 text-white/70">{c.location}</td>
-                  <td className="px-3 py-3 font-medium text-white">{c.orders}</td>
-                  <td className="px-3 py-3 font-bold text-emerald-600" dir="ltr">{c.totalSpent} د.ل</td>
                   <td className="px-3 py-3 text-white/60">{c.joinDate}</td>
                   <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
@@ -191,31 +303,21 @@ export function CustomersPage() {
                     </span>
                   </td>
                   <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => toggleStatus(c.id)}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          c.status === 'نشط' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'
-                        }`}
-                        title={c.status === 'نشط' ? "تعطيل الحساب" : "تنشيط الحساب"}
-                      >
-                        <Ban className="size-4" />
-                      </button>
-                      <button 
-                        onClick={() => openDetails(c)}
-                        className="icon-btn-view"
-                        title="عرض التفاصيل"
-                      >
-                        <Eye className="size-4" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openDetails(c)}
+                      className="icon-btn-view"
+                      title="عرض التفاصيل"
+                    >
+                      <Eye className="size-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
-              {filteredCustomers.length === 0 && (
+              {!loading && customers.length === 0 && (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center text-white/60">
-                    لا يوجد زبائن مطابقين للبحث.
+                  <td colSpan="7" className="px-6 py-12 text-center text-white/60">
+                    {loadError || 'لا يوجد زبائن مطابقين للبحث أو الفلتر.'}
                   </td>
                 </tr>
               )}
@@ -224,24 +326,30 @@ export function CustomersPage() {
         </div>
         <div className="p-4 border-t border-white/10 bg-brand-300/50 text-left">
           <p className="text-sm text-white/60">
-            عرض {filteredCustomers.length} من {totalCustomersCount} زبون
+            عرض {customers.length} من {stats.total} زبون
           </p>
         </div>
       </div>
 
-      {/* Customer Details Modal */}
-      {detailsModalOpen && selectedCustomer && (
+      {detailsModalOpen && selectedCustomer ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-2xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            
+
             <div className="flex items-center justify-between border-b border-white/5 p-6">
               <h2 className="text-2xl font-bold text-white">تفاصيل الزبون</h2>
-              <button onClick={() => setDetailsModalOpen(false)} className="text-white/50 hover:text-white/70">
+              <button type="button" onClick={closeDetails} className="text-white/50 hover:text-white/70">
                 <X className="size-6" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
+              {detailLoading ? (
+                <div className="flex items-center justify-center gap-2 py-16 text-white/60">
+                  <Loader2 className="size-6 animate-spin" />
+                  <span>جاري تحميل التفاصيل...</span>
+                </div>
+              ) : (
+              <>
               <div className="flex justify-between items-center text-right border-b border-white/5 pb-4 mb-2">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
                   selectedCustomer.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
@@ -257,9 +365,7 @@ export function CustomersPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right flex flex-col items-start justify-center">
                   <p className="text-sm text-white/60 mb-1">الموقع</p>
-                  <p className="font-bold text-white text-lg flex items-center gap-2">
-                    {selectedCustomer.location}
-                  </p>
+                  <p className="font-bold text-white text-lg">{selectedCustomer.location}</p>
                 </div>
                 <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right flex flex-col items-start justify-center">
                   <p className="text-sm text-white/60 mb-1">رقم الهاتف</p>
@@ -273,8 +379,10 @@ export function CustomersPage() {
                     <p className="text-sm text-white/70">تاريخ الانضمام</p>
                  </div>
                  <div className="rounded-xl bg-emerald-50/50 border border-emerald-100 p-5 text-center flex flex-col items-center justify-center">
-                    <p className="font-bold text-emerald-600 text-3xl mb-1" dir="ltr">{selectedCustomer.totalSpent}</p>
-                    <p className="text-sm text-white/70 mt-1">د.ل</p>
+                    <p className="font-bold text-emerald-600 text-3xl mb-1" dir="ltr">
+                      {Number(selectedCustomer.totalSpent).toLocaleString('ar-LY')}
+                    </p>
+                    <p className="text-sm text-white/70 mt-1">د.ل إنفاق كلي</p>
                  </div>
                  <div className="rounded-xl bg-brand-100/50 border border-brand-100 p-5 text-center flex flex-col items-center justify-center">
                     <p className="font-bold text-white text-3xl mb-1">{selectedCustomer.orders}</p>
@@ -282,10 +390,94 @@ export function CustomersPage() {
                  </div>
               </div>
 
+              {selectedCustomer.totalComplaints != null ? (
+                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right">
+                  <p className="text-sm text-white/60 mb-1">عدد الشكاوى</p>
+                  <p className="font-bold text-white text-lg">{selectedCustomer.totalComplaints}</p>
+                </div>
+              ) : null}
+
+              <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
+                <h3 className="text-sm font-bold text-white/80">إدارة الحساب</h3>
+
+                {selectedCustomer.rawStatus === 'active' && !showDeactivateForm ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeactivateForm(true)
+                      setToggleError('')
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-300 transition-colors hover:bg-amber-500/20"
+                  >
+                    <Ban className="size-4" />
+                    تعطيل الحساب
+                  </button>
+                ) : null}
+
+                {selectedCustomer.rawStatus === 'active' && showDeactivateForm ? (
+                  <form className="space-y-4" onSubmit={handleToggleStatus}>
+                    <div>
+                      <label htmlFor="deactivate-reason" className="mb-2 block text-sm font-medium text-white/80">
+                        سبب التعطيل <span className="text-brand-300">*</span>
+                      </label>
+                      <textarea
+                        id="deactivate-reason"
+                        value={deactivateReason}
+                        onChange={(e) => setDeactivateReason(e.target.value)}
+                        placeholder="اكتبي سبب تعطيل الحساب..."
+                        rows={3}
+                        className="input-brand resize-none"
+                      />
+                    </div>
+                    {toggleError ? (
+                      <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                        {toggleError}
+                      </p>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button type="submit" disabled={toggleLoading} className="btn-primary disabled:opacity-60">
+                        {toggleLoading ? 'جاري الحفظ...' : 'تأكيد التعطيل'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDeactivateForm(false)
+                          setDeactivateReason('')
+                          setToggleError('')
+                        }}
+                        className="rounded-xl border border-white/10 bg-brand-300 px-5 py-2.5 text-sm font-bold text-white/80 transition-colors hover:bg-brand-100"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {selectedCustomer.rawStatus !== 'active' ? (
+                  <form className="space-y-4" onSubmit={handleToggleStatus}>
+                    <p className="text-sm text-white/70">هذا الحساب معطّل حالياً. يمكنك إعادة تفعيله.</p>
+                    {toggleError ? (
+                      <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                        {toggleError}
+                      </p>
+                    ) : null}
+                    <button
+                      type="submit"
+                      disabled={toggleLoading}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {toggleLoading ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
+                      إعادة تفعيل الحساب
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+              </>
+              )}
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
