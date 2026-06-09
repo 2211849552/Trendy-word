@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { PrimaryButton } from '../components/PrimaryButton.jsx'
 import {
   Users,
   UserCheck,
@@ -232,14 +233,10 @@ export function StaffPage() {
           <h1 className="text-2xl font-bold text-white">إدارة الموظفين</h1>
           <p className="text-sm text-white/60">إدارة حسابات الموظفين والصلاحيات</p>
         </div>
-        <button
-          type="button"
-          onClick={() => openEdit(null)}
-          className="btn-primary"
-        >
-          <Plus className="size-4" />
+        <PrimaryButton onClick={() => openEdit(null)} className="shrink-0">
+          <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           إضافة موظف
-        </button>
+        </PrimaryButton>
       </div>
 
       {actionMessage ? (
@@ -588,9 +585,9 @@ export function StaffPage() {
               ) : null}
 
               <div className="flex items-center gap-3 pt-4 border-t border-white/5">
-                <button type="submit" disabled={saveLoading} className="btn-primary disabled:opacity-60">
+                <PrimaryButton type="submit" disabled={saveLoading}>
                   {saveLoading ? 'جاري الحفظ...' : editingId ? 'حفظ التعديلات' : 'إضافة الموظف'}
-                </button>
+                </PrimaryButton>
                 <button
                   type="button"
                   onClick={closeEdit}

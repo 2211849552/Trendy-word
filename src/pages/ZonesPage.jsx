@@ -14,6 +14,7 @@ import {
   validateCreateZoneForm,
 } from '../api/zones.js'
 import { ConfirmDeleteModal } from '../components/catalog/ConfirmDeleteModal.jsx'
+import { PrimaryButton } from '../components/PrimaryButton.jsx'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -122,14 +123,10 @@ export function ZonesPage() {
           <h1 className="text-2xl font-bold text-white">إدارة المناطق</h1>
           <p className="text-sm text-white/60">عرض وإضافة وحذف المناطق المدعومة عبر API</p>
         </div>
-        <button
-          type="button"
-          onClick={openAdd}
-          className="btn-primary"
-        >
-          <Plus className="size-4" />
+        <PrimaryButton onClick={openAdd} className="shrink-0">
+          <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           إضافة منطقة
-        </button>
+        </PrimaryButton>
       </div>
 
       {actionMessage ? (
@@ -261,13 +258,13 @@ export function ZonesPage() {
               ) : null}
 
               <div className="flex items-center gap-3 pt-2">
-                <button
+                <PrimaryButton
                   type="submit"
                   disabled={addLoading}
-                  className="flex-1 rounded-lg bg-brand-900 px-6 py-3 text-sm font-bold text-white hover:bg-brand-950 transition-colors disabled:opacity-60"
+                  className="flex-1"
                 >
                   {addLoading ? 'جاري الإضافة...' : 'إضافة المنطقة'}
-                </button>
+                </PrimaryButton>
                 <button
                   type="button"
                   onClick={closeAdd}

@@ -17,6 +17,7 @@ import {
   filterCampaignsByUiStatus,
 } from '../api/adminCampaigns.js'
 import { StatCard } from '../components/StatCard.jsx'
+import { PrimaryButton } from '../components/PrimaryButton.jsx'
 import { CampaignPerformanceChart } from '../components/marketing/CampaignPerformanceChart.jsx'
 import { CampaignCard } from '../components/marketing/CampaignCard.jsx'
 import { CreateCampaignModal } from '../components/marketing/CreateCampaignModal.jsx'
@@ -215,15 +216,14 @@ export function MarketingPage() {
           </h1>
           <p className="mt-1 text-white/60">إدارة الحملات الإعلانية والمحتوى الترويجي</p>
         </header>
-        <button
-          type="button"
+        <PrimaryButton
           onClick={() => setCreateOpen(true)}
           disabled={saving}
-          className="btn-primary shrink-0 disabled:opacity-60"
+          className="shrink-0"
         >
           <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           إنشاء حملة إعلانية
-        </button>
+        </PrimaryButton>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">

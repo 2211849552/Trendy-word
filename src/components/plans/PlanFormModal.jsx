@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { Plus, X } from 'lucide-react'
+import { PrimaryButton } from '../PrimaryButton.jsx'
 
 const DURATION_OPTIONS = [
   { value: 'monthly', label: 'شهري' },
@@ -200,13 +201,13 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
               {isView ? 'إغلاق' : 'إلغاء الإجراء'}
             </button>
             {!isView ? (
-            <button
+            <PrimaryButton
               type="submit"
               disabled={saving}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-900 px-8 text-sm font-bold text-white shadow-premium transition-all hover:bg-brand-950 hover:shadow-lg focus:ring-4 focus:ring-brand-900/20 active:scale-95 disabled:opacity-60"
+              size="lg"
             >
               {saving ? 'جاري الحفظ...' : isEdit ? 'تأكيد الحفظ' : 'إنشاء الخطة'}
-            </button>
+            </PrimaryButton>
             ) : null}
           </footer>
         </form>
