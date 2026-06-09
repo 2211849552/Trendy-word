@@ -12,7 +12,8 @@ import {
   Package,
   Loader2,
 } from 'lucide-react'
-import { fetchStoreProductsList } from '../../api/products.js'
+import { fetchStoreProductsForDetail } from '../../api/products.js'
+import { StoreImage } from './StoreImage.jsx'
 
 const STATUS_LABELS = {
   active: 'نشط',
@@ -23,6 +24,28 @@ const STATUS_LABELS = {
 const PRODUCT_STATUS_LABELS = {
   active: 'نشط',
   archived: 'مؤرشف',
+}
+
+function ProductThumbnail({ src, name }) {
+  const [failed, setFailed] = useState(false)
+
+  if (!src || failed) {
+    return (
+      <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-brand-300">
+        <Package className="size-5 text-white/50" />
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="size-14 shrink-0 rounded-xl border border-white/10 object-cover bg-brand-300"
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  )
 }
 
 function apiErrorMessage(err, fallback) {
@@ -42,7 +65,7 @@ export function StoreDetailModal({ store, open, loading = false, onClose }) {
     setProductsLoading(true)
     setProductsError('')
     try {
-      setProducts(await fetchStoreProductsList(storeId))
+      setProducts(await fetchStoreProductsForDetail(storeId))
     } catch (err) {
       setProducts([])
       setProductsError(apiErrorMessage(err, 'تعذّر تحميل منتجات المتجر.'))
@@ -82,13 +105,11 @@ export function StoreDetailModal({ store, open, loading = false, onClose }) {
           ) : (
             <>
               <div className="text-center">
-                <div className="mx-auto flex size-20 items-center justify-center rounded-2xl bg-brand-100 shadow-premium mb-4 overflow-hidden">
-                  {store.image ? (
-                    <img src={store.image} alt={store.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <ShoppingBag className="size-10 text-white" />
-                  )}
-                </div>
+                <StoreImage
+                  src={store.image}
+                  name={store.name}
+                  className="mx-auto mb-4 size-28 rounded-2xl shadow-premium ring-2 ring-white/10"
+                />
                 <h3 className="text-2xl font-bold text-white">{store.name}</h3>
                 <p className="mt-2 text-sm text-white/60 max-w-md mx-auto">
                   {store.description || 'لا يوجد وصف للمتجر.'}
@@ -164,7 +185,7 @@ export function StoreDetailModal({ store, open, loading = false, onClose }) {
               <div className="border-t border-white/5 pt-6 space-y-4">
                 <div>
                   <h4 className="text-lg font-bold text-white">منتجات المتجر</h4>
-                  <p className="text-sm text-white/60">عرض المنتجات النشطة عبر API</p>
+                  <p className="text-sm text-white/60">صورة كل منتج من قائمة منتجات المتجر</p>
                 </div>
 
                 {productsError ? (
@@ -199,13 +220,7 @@ export function StoreDetailModal({ store, open, loading = false, onClose }) {
                           <tr key={product.id} className="hover:bg-brand-300/50 transition-colors">
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-300">
-                                  {product.image ? (
-                                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                                  ) : (
-                                    <Package className="size-4 text-white/50" />
-                                  )}
-                                </div>
+                                <ProductThumbnail src={product.image} name={product.name} />
                                 <span className="font-bold text-white">{product.name}</span>
                               </div>
                             </td>

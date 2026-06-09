@@ -22,7 +22,7 @@
 
 @layer base {
   body {
-    @apply m-0 min-h-dvh bg-brand-50 font-sans text-white antialiased;
+    @apply m-0 min-h-dvh overflow-x-hidden bg-brand-50 font-sans text-white antialiased;
   }
 
   html.light {

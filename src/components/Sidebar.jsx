@@ -47,7 +47,7 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
   return (
     <aside
       dir="rtl"
-      className="flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-xl"
+      className="sticky top-0 flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-xl"
     >
       <div className="shrink-0 border-b border-white/10 px-6 py-7">
         <h1 className="text-xl font-bold tracking-tight text-white">Trendy</h1>

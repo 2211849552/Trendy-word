@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Trash2, Edit, Eye, Archive, Tag, Package, CheckCircle, X, Check, ChevronDown } from 'lucide-react'
+import { Plus, Search, Trash2, Edit, Eye, Archive, Tag, Package, CheckCircle, X, Check } from 'lucide-react'
 import {
   searchCatalogCategories,
   searchCatalogAttributes,
@@ -42,8 +42,6 @@ export function CategoriesPage() {
   // Form states for adding/editing
   const [newCatName, setNewCatName] = useState('')
   const [newAttrName, setNewAttrName] = useState('')
-  const [newAttrType, setNewAttrType] = useState('list')
-  const [newAttrRequired, setNewAttrRequired] = useState(true)
   const [attrOptions, setAttrOptions] = useState([])
 
   const loadCatalogData = async (tab = activeTab, query = searchQuery.trim()) => {
@@ -138,18 +136,35 @@ export function CategoriesPage() {
     }
   }
 
+  const openAddAttributeModal = () => {
+    setNewAttrName('')
+    setAttrOptions([''])
+    setShowAddAttribute(true)
+  }
+
   const handleAddAttribute = async () => {
-    if (!newAttrName.trim()) return
+    const trimmedName = newAttrName.trim()
+    const values = attrOptions.map((value) => value.trim()).filter(Boolean)
+
+    if (!trimmedName) {
+      triggerToast('يرجى إدخال اسم الخاصية.')
+      return
+    }
+    if (values.length === 0) {
+      triggerToast('يرجى إدخال قيمة واحدة على الأقل.')
+      return
+    }
 
     try {
       await createAdminAttribute({
-        name: newAttrName.trim(),
-        type: newAttrType,
-        is_required: newAttrRequired,
-        values: ['S', 'M', 'L', 'XL', 'XXL'],
+        name: trimmedName,
+        type: 'list',
+        is_required: true,
+        values,
       })
       await loadCatalogData('attributes')
       setNewAttrName('')
+      setAttrOptions([])
       setShowAddAttribute(false)
       triggerToast('تم إضافة الخاصية بنجاح')
     } catch (err) {
@@ -158,14 +173,24 @@ export function CategoriesPage() {
   }
 
   const handleEditAttribute = async () => {
-    if (!newAttrName.trim() || !selectedItem) return
+    const trimmedName = newAttrName.trim()
+    const values = attrOptions.map((value) => value.trim()).filter(Boolean)
+
+    if (!trimmedName || !selectedItem) {
+      triggerToast('يرجى إدخال اسم الخاصية.')
+      return
+    }
+    if (values.length === 0) {
+      triggerToast('يرجى إدخال قيمة واحدة على الأقل.')
+      return
+    }
 
     try {
       await updateAdminAttribute(selectedItem.id, {
-        name: newAttrName.trim(),
-        type: newAttrType,
-        is_required: newAttrRequired,
-        values: attrOptions,
+        name: trimmedName,
+        type: selectedItem.type || 'list',
+        is_required: selectedItem.isRequired ?? true,
+        values,
       })
       await loadCatalogData('attributes')
       setShowEditAttribute(false)
@@ -206,7 +231,7 @@ export function CategoriesPage() {
   const openEditAttr = (attr) => {
     setSelectedItem(attr)
     setNewAttrName(attr.name)
-    setAttrOptions(attr.options || ['S', 'M', 'L', 'XL', 'XXL'])
+    setAttrOptions(attr.options?.length ? [...attr.options] : [''])
     setShowEditAttribute(true)
   }
 
@@ -387,7 +412,7 @@ export function CategoriesPage() {
             <div className="space-y-5">
               <div className="flex flex-wrap gap-4">
                 <button
-                  onClick={() => setShowAddAttribute(true)}
+                  onClick={openAddAttributeModal}
                   className="flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-950 transition-colors"
                 >
                   <Plus className="size-4" />
@@ -410,7 +435,7 @@ export function CategoriesPage() {
                   <thead className="bg-brand-300 text-white/60">
                     <tr>
                       <th className="px-4 py-3 font-medium">اسم الخاصية</th>
-                      <th className="px-4 py-3 font-medium">النوع</th>
+                      <th className="px-4 py-3 font-medium">قيم الخاصية</th>
                       <th className="px-4 py-3 font-medium">مطلوبة</th>
                       <th className="px-4 py-3 font-medium text-center">الإجراءات</th>
                     </tr>
@@ -433,9 +458,20 @@ export function CategoriesPage() {
                       <tr key={attr.id} className="hover:bg-brand-300">
                         <td className="px-4 py-4 font-bold text-white text-lg">{attr.name}</td>
                         <td className="px-4 py-4">
-                          <span className="rounded-full bg-brand-300 px-3 py-1 text-xs font-bold text-brand-700">
-                            {attr.type}
-                          </span>
+                          {attr.options?.length ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {attr.options.map((opt) => (
+                                <span
+                                  key={opt}
+                                  className="rounded-lg border border-white/10 bg-brand-300 px-2.5 py-1 text-xs font-bold text-white/80"
+                                >
+                                  {opt}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-white/50">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-4">
                           {attr.isRequired ? (
@@ -526,45 +562,50 @@ export function CategoriesPage() {
             <div className="p-8 space-y-6">
               <div>
                 <label className="block text-xs font-bold text-white/60 mb-2 text-right">اسم الخاصية *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newAttrName}
                   onChange={(e) => setNewAttrName(e.target.value)}
                   placeholder="مثال: المقاس"
-                  className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
+                  className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-white/60 mb-2 text-right">نوع الخاصية *</label>
-                <div className="relative">
-                  <select
-                    value={newAttrType}
-                    onChange={(e) => setNewAttrType(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-brand-200">
-                    <option value="text">نص</option>
-                    <option value="list">قائمة اختيارات</option>
-                    <option value="number">رقم</option>
-                  </select>
-                  <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-white/50 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-start gap-3 py-4 border-y border-slate-50">
-                <input type="checkbox" id="req_add" checked={newAttrRequired} onChange={(e) => setNewAttrRequired(e.target.checked)} className="size-5 rounded border-white/20 text-white" />
-                <label htmlFor="req_add" className="text-sm font-bold text-white/80">خاصية مطلوبة</label>
-              </div>
 
               <div>
-                <p className="text-xs font-bold text-white/60 mb-4 text-right">التصنيفات المرتبطة *</p>
-                <div className="rounded-2xl border border-white/5 bg-brand-300/50 p-4 space-y-3">
-                  {categories.map(cat => (
-                    <div key={cat.id} className="flex items-center justify-between">
-                       <span className="text-sm font-bold text-white/90">{cat.name}</span>
-                       <input type="checkbox" className="size-5 rounded border-white/20 text-white" />
+                <label className="block text-xs font-bold text-white/60 mb-3 text-right">قيم الخاصية *</label>
+                <div className="space-y-2">
+                  {attrOptions.map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-right-1 duration-200">
+                      <button
+                        type="button"
+                        onClick={() => setAttrOptions(attrOptions.filter((_, i) => i !== idx))}
+                        disabled={attrOptions.length === 1}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <X className="size-4" />
+                      </button>
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => {
+                          const newOpts = [...attrOptions]
+                          newOpts[idx] = e.target.value
+                          setAttrOptions(newOpts)
+                        }}
+                        placeholder={`القيمة ${idx + 1}`}
+                        className="flex-1 rounded-xl border border-white/10 px-5 py-2.5 text-right outline-none focus:border-brand-500 transition-all text-sm font-medium"
+                      />
                     </div>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setAttrOptions([...attrOptions, ''])}
+                    className="flex items-center gap-1 text-white font-bold text-sm hover:underline mt-2 mr-auto"
+                  >
+                    <Plus className="size-4" />
+                    إضافة قيمة
+                  </button>
                 </div>
-                <p className="mt-2 text-[10px] text-white/50 text-left">تم تحديد 0 تصنيف</p>
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">
@@ -678,73 +719,49 @@ export function CategoriesPage() {
             </div>
             <div className="p-8 space-y-6">
               <div>
-                <label className="block text-xs font-bold text-white/60 mb-2 text-left">اسم الخاصية</label>
-                <input 
-                  type="text" 
+                <label className="block text-xs font-bold text-white/60 mb-2 text-right">اسم الخاصية *</label>
+                <input
+                  type="text"
                   value={newAttrName}
                   onChange={(e) => setNewAttrName(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium" 
+                  className="w-full rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium"
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-white/60 mb-2 text-left">نوع الخاصية</label>
-                <div className="relative">
-                  <select className="w-full appearance-none rounded-xl border border-white/10 px-5 py-3 text-right outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium bg-brand-200">
-                    <option>قائمة اختيارات</option>
-                    <option>نص حر</option>
-                    <option>رقم</option>
-                  </select>
-                  <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-white/50 pointer-events-none" />
-                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-white/60 mb-3 text-left">الخيارات</label>
+                <label className="block text-xs font-bold text-white/60 mb-3 text-right">قيم الخاصية *</label>
                 <div className="space-y-2">
                   {attrOptions.map((opt, idx) => (
                     <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-right-1 duration-200">
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => setAttrOptions(attrOptions.filter((_, i) => i !== idx))}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        disabled={attrOptions.length === 1}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <X className="size-4" />
                       </button>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={opt}
                         onChange={(e) => {
                           const newOpts = [...attrOptions]
                           newOpts[idx] = e.target.value
                           setAttrOptions(newOpts)
                         }}
-                        className="flex-1 rounded-xl border border-white/10 px-5 py-2.5 text-right outline-none focus:border-brand-500 transition-all text-sm font-medium" 
+                        placeholder={`القيمة ${idx + 1}`}
+                        className="flex-1 rounded-xl border border-white/10 px-5 py-2.5 text-right outline-none focus:border-brand-500 transition-all text-sm font-medium"
                       />
                     </div>
                   ))}
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setAttrOptions([...attrOptions, ''])}
                     className="flex items-center gap-1 text-white font-bold text-sm hover:underline mt-2 mr-auto"
                   >
                     <Plus className="size-4" />
-                    إضافة خيار
+                    إضافة قيمة
                   </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 py-4 border-y border-slate-50">
-                <label htmlFor="req_edit" className="text-sm font-bold text-white/80">خاصية مطلوبة</label>
-                <input type="checkbox" id="req_edit" defaultChecked className="size-5 rounded border-white/20 text-white" />
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-white/60 mb-4 text-left">التصنيفات المرتبطة</p>
-                <div className="rounded-2xl border border-white/5 bg-brand-300/50 p-4 space-y-3">
-                  {categories.map(cat => (
-                    <div key={cat.id} className="flex items-center justify-between">
-                       <span className="text-sm font-bold text-white/90">{cat.name}</span>
-                       <input type="checkbox" defaultChecked={cat.name.includes('أزياء')} className="size-5 rounded border-white/20 text-white" />
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

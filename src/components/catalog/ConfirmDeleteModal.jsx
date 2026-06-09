@@ -1,17 +1,29 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { Loader2, Trash2, X } from 'lucide-react'
 
 /**
  * @param {{
  *   open: boolean;
  *   title?: string;
- *   message: string;
+ *   itemName?: string;
+ *   message?: import('react').ReactNode;
  *   onCancel: () => void;
  *   onConfirm: () => void;
+ *   loading?: boolean;
+ *   confirmLabel?: string;
  * }} props
  */
-export function ConfirmDeleteModal({ open, title = 'تأكيد الحذف', message, onCancel, onConfirm }) {
+export function ConfirmDeleteModal({
+  open,
+  title = 'تأكيد الحذف',
+  itemName,
+  message,
+  onCancel,
+  onConfirm,
+  loading = false,
+  confirmLabel = 'تأكيد الحذف',
+}) {
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -24,60 +36,84 @@ export function ConfirmDeleteModal({ open, title = 'تأكيد الحذف', mess
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
-      if (e.key === 'Escape') onCancel?.()
+      if (e.key === 'Escape' && !loading) onCancel?.()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onCancel])
+  }, [open, onCancel, loading])
 
   if (!open) return null
 
+  const description = message ?? (
+    itemName ? (
+      <>
+        أنت على وشك حذف <span className="font-bold text-white">«{itemName}»</span> نهائياً.
+        لا يمكن التراجع عن هذا الإجراء.
+      </>
+    ) : (
+      'لا يمكن التراجع عن هذا الإجراء بعد التأكيد.'
+    )
+  )
+
   const overlay = (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         aria-label="إغلاق"
-        onClick={onCancel}
+        disabled={loading}
+        onClick={() => !loading && onCancel?.()}
       />
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-delete-title"
         aria-describedby="confirm-delete-desc"
-        className="relative w-full max-w-md rounded-2xl bg-brand-200 p-6 shadow-2xl ring-1 ring-slate-200/80"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200"
         dir="rtl"
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
           <h2 id="confirm-delete-title" className="text-lg font-bold text-white">
             {title}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg p-2 text-white/60 hover:bg-brand-300 hover:text-white/90"
+            disabled={loading}
+            className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors disabled:opacity-50"
             aria-label="إغلاق"
           >
-            <X className="size-5" strokeWidth={2.25} />
+            <X className="size-5" />
           </button>
         </div>
-        <p id="confirm-delete-desc" className="mt-4 text-sm leading-relaxed text-white/70">
-          {message}
-        </p>
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-xl border border-white/10 bg-brand-200 px-5 py-2.5 text-sm font-semibold text-white/80 shadow-premium hover:bg-brand-300"
-          >
-            إلغاء
-          </button>
+
+        <div className="p-6 text-center">
+          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+            <Trash2 className="size-8" />
+          </div>
+          <h3 className="text-xl font-bold text-white">هل أنت متأكد؟</h3>
+          <p id="confirm-delete-desc" className="mt-2 text-sm leading-relaxed text-white/60">
+            {description}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-white/5 bg-brand-300 p-5 sm:flex-row-reverse sm:gap-3">
           <button
             type="button"
             onClick={() => onConfirm?.()}
-            className="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-rose-700"
+            disabled={loading}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium transition-colors hover:bg-rose-700 disabled:opacity-60"
           >
-            حذف نهائياً
+            {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+            {confirmLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-4 text-sm font-bold text-white/80 shadow-premium transition-colors hover:bg-brand-300 disabled:opacity-50"
+          >
+            إلغاء
           </button>
         </div>
       </div>

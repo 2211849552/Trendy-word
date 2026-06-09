@@ -1,4 +1,5 @@
 import { apiRequest } from './client.js'
+import { extractMediaUrls, resolveMediaUrl } from '../utils/mediaUrl.js'
 
 // [2.2] عرض قائمة المتاجر — للإدارة
 // GET /api/admin/stores?name=&status=&type=&per_page=
@@ -65,7 +66,22 @@ export function mapAdminStore(item) {
     phone: item.phone ?? owner.phone ?? '—',
     products: item.products_count ?? item.products ?? 0,
     orders: item.orders_count ?? item.orders ?? 0,
-    image: item.logo ?? item.image ?? null,
+    image: resolveMediaUrl(
+      item.logo_url ??
+      item.logo ??
+      item.image_url ??
+      item.image ??
+      item.cover_image,
+    ),
+    images: extractMediaUrls(
+      item.logo_url,
+      item.logo,
+      item.image_url,
+      item.image,
+      item.cover_image,
+      item.banner_image,
+      item.images,
+    ),
     description: item.description ?? '',
     type: item.type ?? '',
     status: normalizeStoreStatus(item.status),

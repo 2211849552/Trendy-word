@@ -13,6 +13,7 @@ import {
   buildCreateZonePayload,
   validateCreateZoneForm,
 } from '../api/zones.js'
+import { ConfirmDeleteModal } from '../components/catalog/ConfirmDeleteModal.jsx'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -33,7 +34,8 @@ export function ZonesPage() {
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState('')
 
-  const [deleteLoadingId, setDeleteLoadingId] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const loadAddresses = useCallback(async () => {
     setLoading(true)
@@ -93,18 +95,23 @@ export function ZonesPage() {
     }
   }
 
-  const handleDeleteAddress = async (address) => {
-    if (!window.confirm(`هل تريدين حذف منطقة "${address.name}"؟`)) return
+  const handleDeleteAddress = (address) => {
+    setDeleteTarget(address)
+  }
 
-    setDeleteLoadingId(address.id)
+  const confirmDeleteAddress = async () => {
+    if (!deleteTarget) return
+
+    setDeleteLoading(true)
     try {
-      await deleteZone(address.id)
+      await deleteZone(deleteTarget.id)
+      setDeleteTarget(null)
       setActionMessage('تم حذف المنطقة بنجاح.')
       await loadAddresses()
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر حذف المنطقة.'))
     } finally {
-      setDeleteLoadingId('')
+      setDeleteLoading(false)
     }
   }
 
@@ -173,11 +180,11 @@ export function ZonesPage() {
                     <button
                       type="button"
                       onClick={() => handleDeleteAddress(address)}
-                      disabled={deleteLoadingId === address.id}
+                      disabled={deleteLoading && deleteTarget?.id === address.id}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-bold text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-60"
                       title="حذف المنطقة"
                     >
-                      {deleteLoadingId === address.id ? (
+                      {deleteLoading && deleteTarget?.id === address.id ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : (
                         <Trash2 className="size-4" />
@@ -203,6 +210,23 @@ export function ZonesPage() {
           </p>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        open={Boolean(deleteTarget)}
+        title="تأكيد حذف المنطقة"
+        message={
+          deleteTarget ? (
+            <>
+              أنت على وشك حذف منطقة{' '}
+              <span className="font-bold text-white">«{deleteTarget.name}»</span> نهائياً.
+              لا يمكن التراجع عن هذا الإجراء.
+            </>
+          ) : null
+        }
+        onCancel={() => !deleteLoading && setDeleteTarget(null)}
+        onConfirm={confirmDeleteAddress}
+        loading={deleteLoading}
+      />
 
       {addModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
