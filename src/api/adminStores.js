@@ -55,17 +55,17 @@ export function normalizeStoreStatus(status) {
 }
 
 export function mapAdminStore(item) {
-  const owner = item.owner ?? {}
+  const owner = item.owner ?? item.user ?? item.merchant ?? item.manager ?? {}
   return {
     id: item.id,
     name: item.name ?? '',
     slug: item.slug ?? '',
     city: item.zone_name ?? item.city ?? '—',
-    merchant: owner.name ?? item.merchant_name ?? '—',
-    email: owner.email ?? item.email ?? '—',
-    phone: item.phone ?? owner.phone ?? '—',
-    products: item.products_count ?? item.products ?? 0,
-    orders: item.orders_count ?? item.orders ?? 0,
+    merchant: owner.name ?? item.merchant_name ?? item.owner_name ?? item.manager_name ?? item.store_owner ?? '—',
+    email: owner.email ?? item.email ?? item.contact_email ?? item.business_email ?? '—',
+    phone: item.phone ?? owner.phone ?? item.contact_phone ?? item.mobile ?? item.business_phone ?? '—',
+    products: item.products_count ?? item.products ?? null,
+    orders: item.orders_count ?? item.orders ?? null,
     image: resolveMediaUrl(
       item.logo_url ??
       item.logo ??

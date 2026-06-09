@@ -264,7 +264,7 @@ export function CategoriesPage() {
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-white/90">
             <Archive className="size-6" />
           </div>
-          <p className="text-sm font-medium text-white/60">التصنيفات الفرعية</p>
+          <p className="text-sm font-medium text-white/60">تصنيفات المنتجات</p>
           <p className="mt-1 text-2xl font-bold text-white">{totalCategories}</p>
         </div>
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center">
@@ -281,13 +281,7 @@ export function CategoriesPage() {
           <p className="text-sm font-medium text-white/60">إجمالي المنتجات</p>
           <p className="mt-1 text-2xl font-bold text-white">{totalProducts}</p>
         </div>
-        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-white">
-            <CheckCircle className="size-6" />
-          </div>
-          <p className="text-sm font-medium text-white/60">التصنيفات النشطة</p>
-          <p className="mt-1 text-2xl font-bold text-white">{activeCategories}</p>
-        </div>
+
       </div>
 
       {/* Tabs Area */}
@@ -327,7 +321,7 @@ export function CategoriesPage() {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => setShowAddCategory(true)}
-                  className="flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-950 transition-colors"
+                  className="btn-primary"
                 >
                   <Plus className="size-4" />
                   إضافة تصنيف
@@ -349,7 +343,6 @@ export function CategoriesPage() {
                   <thead className="bg-brand-300 text-white/60">
                     <tr>
                       <th className="px-4 py-3 font-medium">اسم التصنيف</th>
-                      <th className="px-4 py-3 font-medium">الحالة</th>
                       <th className="px-4 py-3 font-medium">عدد المنتجات</th>
                       <th className="px-4 py-3 font-medium text-center">الإجراءات</th>
                     </tr>
@@ -357,13 +350,13 @@ export function CategoriesPage() {
                   <tbody className="divide-y divide-white/5">
                     {loading ? (
                       <tr>
-                        <td colSpan={4} className="px-4 py-12 text-center text-sm text-white/55">
+                        <td colSpan={3} className="px-4 py-12 text-center text-sm text-white/55">
                           جاري تحميل التصنيفات...
                         </td>
                       </tr>
                     ) : categories.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-4 py-12 text-center text-sm text-white/55">
+                        <td colSpan={3} className="px-4 py-12 text-center text-sm text-white/55">
                           لا توجد تصنيفات. أضيفي تصنيفاً جديداً من الزر أعلاه.
                         </td>
                       </tr>
@@ -371,15 +364,6 @@ export function CategoriesPage() {
                       categories.map((cat) => (
                         <tr key={cat.id} className="hover:bg-brand-300">
                           <td className="px-4 py-4 font-bold text-white">{cat.name}</td>
-                          <td className="px-4 py-4">
-                            {cat.isActive ? (
-                              <span className="inline-block rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-700">
-                                نشط
-                              </span>
-                            ) : (
-                              <span className="text-white/50">غير نشط</span>
-                            )}
-                          </td>
                           <td className="px-4 py-4 text-white">
                             {cat.count} <span className="text-white/50">منتج</span>
                           </td>
@@ -413,7 +397,7 @@ export function CategoriesPage() {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={openAddAttributeModal}
-                  className="flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-950 transition-colors"
+                  className="btn-primary"
                 >
                   <Plus className="size-4" />
                   إضافة خاصية

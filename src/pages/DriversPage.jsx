@@ -345,7 +345,7 @@ export function DriversPage() {
         <button
           type="button"
           onClick={openAdd}
-          className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-premium"
+          className="btn-primary"
         >
           <Plus className="size-4" />
           إضافة سائق

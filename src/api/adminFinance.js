@@ -255,8 +255,20 @@ export function mapTransaction(item) {
   return {
     id: orderNumber ? String(orderNumber) : `TX-${txId}`,
     transactionId: Number(txId),
-    customer: item.reference_details?.customer_name ?? '—',
-    store: item.wallet?.store?.name ?? item.store_name ?? '—',
+    customer:
+      item.reference_details?.customer_name ??
+      item.customer_name ??
+      item.user?.name ??
+      item.customer?.name ??
+      item.buyer_name ??
+      '—',
+    store:
+      item.wallet?.store?.name ??
+      item.store_name ??
+      item.store?.name ??
+      item.reference_details?.store_name ??
+      item.seller_name ??
+      '—',
     amount: Number(item.net_amount ?? item.amount ?? 0),
     grossAmount: Number(item.amount ?? 0),
     fee: Number(item.fee ?? item.fee_amount ?? 0),

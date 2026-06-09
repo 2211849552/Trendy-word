@@ -413,11 +413,11 @@ export function StoreListView({
                     </td>
                     <td className="px-3 py-3">
                       <span className="inline-flex items-center gap-1.5 font-medium text-white/90 tabular-nums">
-                        {row.products || '—'}
+                        {row.products ?? '—'}
                       </span>
                     </td>
                     <td className="px-3 py-3 font-medium tabular-nums text-white">
-                      {row.orders || '—'}
+                      {row.orders ?? '—'}
                     </td>
                     <td className="px-3 py-3 print:hidden">
                       <div className="flex items-center justify-end gap-1">

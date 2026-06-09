@@ -19,11 +19,94 @@ import {
   mapAdminStoreDetail,
   toApiStoreStatus,
 } from '../api/adminStores.js'
+import { getStoreProducts, extractProductList } from '../api/products.js'
 
 function extractList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data
   return []
+}
+
+function readTotalFromPagination(data) {
+  const meta = data?.meta ?? data?.pagination ?? {}
+  const total = meta.total ?? data?.total
+  if (total != null && total !== '') return Number(total)
+  return null
+}
+
+async function enrichMissingProductCounts(stores, setStores) {
+  if (!stores?.length || typeof setStores !== 'function') return
+  const needsCount = stores.filter((s) => s.products == null && s.id != null && String(s.id) !== '')
+  if (!needsCount.length) return
+
+  const updates = await Promise.all(
+    needsCount.map(async (store) => {
+      try {
+        const data = await getStoreProducts(store.id, { per_page: 1 })
+        const total = readTotalFromPagination(data)
+        const count = total != null ? total : extractProductList(data).length
+        return { id: store.id, products: count }
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  setStores((prev) => {
+    const map = new Map()
+    updates.forEach((u) => {
+      if (u) map.set(String(u.id), u.products)
+    })
+    if (map.size === 0) return prev
+    return prev.map((s) => {
+      const count = map.get(String(s.id))
+      return count == null ? s : { ...s, products: count }
+    })
+  })
+}
+
+async function enrichMissingMerchantData(stores, setStores) {
+  if (!stores?.length || typeof setStores !== 'function') return
+  const needsDetail = stores.filter(
+    (s) =>
+      (s.merchant === '—' || s.email === '—') && s.id != null && String(s.id) !== '',
+  )
+  if (!needsDetail.length) return
+
+  const updates = await Promise.all(
+    needsDetail.map(async (store) => {
+      try {
+        const data = await getAdminStore(store.id)
+        const detail = mapAdminStoreDetail(data)
+        return {
+          id: store.id,
+          merchant: detail.merchant !== '—' ? detail.merchant : null,
+          email: detail.email !== '—' ? detail.email : null,
+          phone: detail.phone !== '—' ? detail.phone : null,
+        }
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  setStores((prev) => {
+    const map = new Map()
+    updates.forEach((u) => {
+      if (u) map.set(String(u.id), u)
+    })
+    if (map.size === 0) return prev
+    return prev.map((s) => {
+      const u = map.get(String(s.id))
+      if (!u) return s
+      return {
+        ...s,
+        merchant: u.merchant ?? s.merchant,
+        email: u.email ?? s.email,
+        phone: u.phone ?? s.phone,
+      }
+    })
+  })
 }
 
 export function StoreManagementPage() {
@@ -59,7 +142,10 @@ export function StoreManagementPage() {
       if (apiStatus) params.status = apiStatus
 
       const data = await getAdminStores(params)
-      setRegisteredStores(extractStoreList(data).map(mapAdminStore))
+      const mappedStores = extractStoreList(data).map(mapAdminStore)
+      setRegisteredStores(mappedStores)
+      enrichMissingProductCounts(mappedStores, setRegisteredStores)
+      enrichMissingMerchantData(mappedStores, setRegisteredStores)
     } catch (err) {
       setRegisteredStores([])
       if (err?.status === 401) {
@@ -77,7 +163,12 @@ export function StoreManagementPage() {
   useEffect(() => {
     loadRequests()
     getAdminStores({ per_page: 100 })
-      .then((data) => setRegisteredStores(extractStoreList(data).map(mapAdminStore)))
+      .then((data) => {
+        const mappedStores = extractStoreList(data).map(mapAdminStore)
+        setRegisteredStores(mappedStores)
+        enrichMissingProductCounts(mappedStores, setRegisteredStores)
+        enrichMissingMerchantData(mappedStores, setRegisteredStores)
+      })
       .catch(() => {})
   }, [loadRequests])
 

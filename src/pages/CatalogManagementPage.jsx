@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   Plus,
   Search,
-  Tag,
   Package,
   Tags,
   LayoutGrid,
@@ -203,15 +202,7 @@ export function CatalogManagementPage() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
-        <StatCard
-          label="التصنيفات النشطة"
-          value={String(stats.activeCategories)}
-          change="—"
-          trend="up"
-          icon={Tag}
-          iconClassName="bg-brand-300 text-[#0056D2]"
-          omitChange
-        />
+
         <StatCard
           label="إجمالي المنتجات"
           value={formatNum(stats.totalProducts)}
@@ -231,7 +222,7 @@ export function CatalogManagementPage() {
           omitChange
         />
         <StatCard
-          label="التصنيفات الفرعية"
+          label="تصنيفات المنتجات"
           value={formatNum(stats.subcategories)}
           change="—"
           trend="up"
@@ -291,7 +282,7 @@ export function CatalogManagementPage() {
                   setCategoryModalKey((k) => k + 1)
                   setAddCategoryOpen(true)
                 }}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0056D2] px-4 py-2.5 text-sm font-bold text-white shadow-premium transition-colors hover:bg-[#0046b0]"
+                className="btn-primary shrink-0"
               >
                 <Plus className="size-5" strokeWidth={2.5} aria-hidden />
                 إضافة تصنيف
@@ -369,7 +360,7 @@ export function CatalogManagementPage() {
                   setPropertyModalKey((k) => k + 1)
                   setAddPropertyOpen(true)
                 }}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0056D2] px-4 py-2.5 text-sm font-bold text-white shadow-premium transition-colors hover:bg-[#0046b0]"
+                className="btn-primary shrink-0"
               >
                 <Plus className="size-5" strokeWidth={2.5} aria-hidden />
                 إضافة خاصية

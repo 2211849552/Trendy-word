@@ -1,8 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { CAMPAIGN_METRICS, CHART_DISTRIBUTION_COLORS } from '../theme/chartColors.js'
 
-import { registeredStores, joinRequests } from '../data/stores.js'
-
 const COLORS = CHART_DISTRIBUTION_COLORS
 
 const legendColors = {
@@ -11,18 +9,7 @@ const legendColors = {
   موقوفة: CAMPAIGN_METRICS.products.stroke,
 }
 
-// Compute dynamic pie data from the actual store lists
-const activeCount = registeredStores.filter(s => s.status === 'active').length;
-const pendingCount = registeredStores.filter(s => s.status === 'pending').length + joinRequests.length;
-const disabledCount = registeredStores.filter(s => s.status === 'disabled').length;
-
-const pieData = [
-  { name: 'نشطة', value: activeCount },
-  { name: 'قيد المراجعة', value: pendingCount },
-  { name: 'موقوفة', value: disabledCount },
-].filter(d => d.value > 0);
-
-function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) {
+function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }) {
   const RAD = Math.PI / 180
   const radius = innerRadius + (outerRadius - innerRadius) * 0.55
   const x = cx + radius * Math.cos(-midAngle * RAD)
@@ -58,49 +45,67 @@ function CustomLegend({ payload }) {
   )
 }
 
-export function PieChartCard() {
+export function PieChartCard({ stores = [] }) {
+  const activeCount = stores.filter((s) => s.status === 'active').length
+  const pendingCount = stores.filter((s) => s.status === 'pending').length
+  const disabledCount = stores.filter((s) => s.status === 'disabled').length
+
+  const pieData = [
+    { name: 'نشطة', value: activeCount },
+    { name: 'قيد المراجعة', value: pendingCount },
+    { name: 'موقوفة', value: disabledCount },
+  ].filter((d) => d.value > 0)
+
+  const hasData = pieData.length > 0
+
   return (
     <section className="rounded-2xl bg-brand-200 p-6 shadow-premium border border-brand-100/50" dir="rtl">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-white">توزيع المتاجر</h2>
       </div>
-      
+
       <div className="h-[280px] w-full" dir="ltr">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderLabel}
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={4}
-              dataKey="value"
-              stroke="none"
-            >
-              {pieData.map((_, i) => (
-                <Cell key={pieData[i].name} fill={COLORS[i % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(v) => [`${v}%`, 'النسبة']}
-              contentStyle={{
-                borderRadius: 16,
-                border: 'none',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                fontFamily: 'Cairo, sans-serif',
-                padding: '12px'
-              }}
-            />
-            <Legend
-              verticalAlign="bottom"
-              align="center"
-              content={<CustomLegend />}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        {hasData ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderLabel}
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={4}
+                dataKey="value"
+                stroke="none"
+              >
+                {pieData.map((_, i) => (
+                  <Cell key={pieData[i].name} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(v) => [`${v}%`, 'النسبة']}
+                contentStyle={{
+                  borderRadius: 16,
+                  border: 'none',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                  fontFamily: 'Cairo, sans-serif',
+                  padding: '12px',
+                }}
+              />
+              <Legend
+                verticalAlign="bottom"
+                align="center"
+                content={<CustomLegend />}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-white/50">
+            لا توجد بيانات كافية
+          </div>
+        )}
       </div>
     </section>
   )
