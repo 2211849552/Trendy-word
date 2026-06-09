@@ -291,7 +291,7 @@ export function CatalogManagementPage() {
                   setCategoryModalKey((k) => k + 1)
                   setAddCategoryOpen(true)
                 }}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0056D2] px-4 py-2.5 text-sm font-bold text-white shadow-premium transition-colors hover:bg-[#0046b0]"
+                className="btn-primary shrink-0"
               >
                 <Plus className="size-5" strokeWidth={2.5} aria-hidden />
                 إضافة تصنيف
@@ -369,7 +369,7 @@ export function CatalogManagementPage() {
                   setPropertyModalKey((k) => k + 1)
                   setAddPropertyOpen(true)
                 }}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0056D2] px-4 py-2.5 text-sm font-bold text-white shadow-premium transition-colors hover:bg-[#0046b0]"
+                className="btn-primary shrink-0"
               >
                 <Plus className="size-5" strokeWidth={2.5} aria-hidden />
                 إضافة خاصية

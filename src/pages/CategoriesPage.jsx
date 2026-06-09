@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Search, Trash2, Edit, Eye, Archive, Tag, Package, CheckCircle, X, Check } from 'lucide-react'
+import { PrimaryButton } from '../components/PrimaryButton.jsx'
 import {
   searchCatalogCategories,
   searchCatalogAttributes,
@@ -325,13 +326,10 @@ export function CategoriesPage() {
           {activeTab === 'categories' ? (
             <div className="space-y-5">
               <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={() => setShowAddCategory(true)}
-                  className="flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-950 transition-colors"
-                >
-                  <Plus className="size-4" />
+                <PrimaryButton onClick={() => setShowAddCategory(true)} className="shrink-0">
+                  <Plus className="size-5" strokeWidth={2.5} aria-hidden />
                   إضافة تصنيف
-                </button>
+                </PrimaryButton>
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
                   <input
@@ -411,13 +409,10 @@ export function CategoriesPage() {
           ) : (
             <div className="space-y-5">
               <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={openAddAttributeModal}
-                  className="flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-950 transition-colors"
-                >
-                  <Plus className="size-4" />
+                <PrimaryButton onClick={openAddAttributeModal} className="shrink-0">
+                  <Plus className="size-5" strokeWidth={2.5} aria-hidden />
                   إضافة خاصية
-                </button>
+                </PrimaryButton>
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
                   <input
@@ -542,7 +537,7 @@ export function CategoriesPage() {
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">
-                <button onClick={handleAddCategory} className="rounded-xl bg-brand-900 px-8 py-3 text-sm font-bold text-white hover:bg-brand-950 shadow-premium shadow-brand-900/15 transition-all active:scale-95">إضافة التصنيف</button>
+                <PrimaryButton onClick={handleAddCategory} className="px-8 py-3">إضافة التصنيف</PrimaryButton>
                 <button onClick={() => setShowAddCategory(false)} className="rounded-xl border border-white/10 bg-brand-200 px-8 py-3 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors">إلغاء</button>
             </div>
           </div>
@@ -609,7 +604,7 @@ export function CategoriesPage() {
               </div>
             </div>
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">
-                <button onClick={handleAddAttribute} className="rounded-xl bg-brand-900 px-8 py-3 text-sm font-bold text-white hover:bg-brand-950 shadow-premium shadow-brand-900/15 transition-all active:scale-95">إضافة الخاصية</button>
+                <PrimaryButton onClick={handleAddAttribute} className="px-8 py-3">إضافة الخاصية</PrimaryButton>
                 <button onClick={() => setShowAddAttribute(false)} className="rounded-xl border border-white/10 bg-brand-200 px-8 py-3 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors">إلغاء</button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { PrimaryButton } from '../components/PrimaryButton.jsx'
 import {
   Truck,
   UserCheck,
@@ -342,14 +343,10 @@ export function DriversPage() {
           <h1 className="text-2xl font-bold text-white">إدارة السائقين</h1>
           <p className="text-sm text-white/60">إدارة السائقين وعمليات التوصيل</p>
         </div>
-        <button
-          type="button"
-          onClick={openAdd}
-          className="flex items-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-950 transition-colors shadow-premium"
-        >
-          <Plus className="size-4" />
+        <PrimaryButton onClick={openAdd} className="shrink-0">
+          <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           إضافة سائق
-        </button>
+        </PrimaryButton>
       </div>
 
       {actionMessage ? (
@@ -695,13 +692,13 @@ export function DriversPage() {
               </div>
 
               <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-brand-200 p-6">
-                <button
+                <PrimaryButton
                   type="submit"
                   disabled={addLoading}
-                  className="flex-1 rounded-lg bg-brand-900 px-6 py-3 text-sm font-bold text-white hover:bg-brand-950 transition-colors disabled:opacity-60"
+                  className="flex-1"
                 >
                   {addLoading ? 'جاري الإضافة...' : 'إضافة السائق'}
-                </button>
+                </PrimaryButton>
                 <button
                   type="button"
                   onClick={closeAdd}

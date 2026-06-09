@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { PlanFormModal } from '../components/plans/PlanFormModal.jsx'
+import { PrimaryButton } from '../components/PrimaryButton.jsx'
 import { StatCard } from '../components/StatCard.jsx'
 import {
   getAdminPlans,
@@ -425,15 +426,14 @@ export function PlansPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">إدارة الخطط</h1>
           <p className="mt-1 text-white/60">إدارة خطط الاشتراك وتسعير المنصة</p>
         </div>
-        <button
-          type="button"
+        <PrimaryButton
           onClick={openAddModal}
           disabled={saving}
-          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition-colors hover:bg-brand-950 disabled:opacity-60"
+          className="shrink-0 self-start"
         >
           <Plus className="size-5" strokeWidth={2.25} aria-hidden />
           إضافة خطة اشتراك
-        </button>
+        </PrimaryButton>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
