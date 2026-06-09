@@ -3,18 +3,50 @@ import {
   ShoppingCart,
   Users,
   Store,
-  Package,
-  TrendingUp,
-  AlertCircle,
-  BadgeCheck,
   UserPlus,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard.jsx'
 import { PieChartCard } from '../components/PieChartCard.jsx'
 import { LineChartCard } from '../components/LineChartCard.jsx'
 import { OrderStatusBarCard } from '../components/OrderStatusBarCard.jsx'
-import { KpiMiniCard } from '../components/KpiMiniCard.jsx'
 import { fetchOverviewStats, formatDashboardNumber } from '../api/adminDashboard.js'
+import { getAdminStores, extractStoreList, mapAdminStore } from '../api/adminStores.js'
+import { getOrders, extractOrderList, mapOrder, buildOrderStats } from '../api/adminOrders.js'
+
+function buildMonthlyStats(orders) {
+  const months = [
+    'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+  ]
+  const now = new Date()
+  const result = []
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthName = months[d.getMonth()]
+    const year = d.getFullYear()
+
+    const monthOrders = orders.filter((o) => {
+      const rawDate = o.raw?.created_at ?? o.date
+      if (!rawDate) return false
+      const od = new Date(rawDate)
+      return od.getFullYear() === year && od.getMonth() === d.getMonth()
+    })
+
+    const revenue = monthOrders.reduce(
+      (sum, o) => sum + Number(o.raw?.total_amount ?? o.total ?? 0),
+      0,
+    )
+
+    result.push({
+      month: monthName,
+      revenue: Math.round(revenue),
+      orders: monthOrders.length,
+    })
+  }
+
+  return result
+}
 
 export function OverviewPage() {
   const [loading, setLoading] = useState(true)
@@ -25,6 +57,10 @@ export function OverviewPage() {
     totalNewOrders: null,
   })
   const [loadError, setLoadError] = useState('')
+
+  const [stores, setStores] = useState([])
+  const [orderStats, setOrderStats] = useState(null)
+  const [monthlyData, setMonthlyData] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -60,7 +96,29 @@ export function OverviewPage() {
       }
     }
 
+    async function loadCharts() {
+      try {
+        const [storesData, ordersData] = await Promise.all([
+          getAdminStores({ per_page: 1000 }),
+          getOrders({ per_page: 1000 }),
+        ])
+
+        if (cancelled) return
+
+        const mappedStores = extractStoreList(storesData).map(mapAdminStore)
+        setStores(mappedStores)
+
+        const mappedOrders = extractOrderList(ordersData).map(mapOrder)
+        setOrderStats(buildOrderStats(mappedOrders, extractOrderList(ordersData)))
+        setMonthlyData(buildMonthlyStats(mappedOrders))
+      } catch {
+        // silently ignore chart errors so main stats still show
+      }
+    }
+
     load()
+    loadCharts()
+
     return () => {
       cancelled = true
     }
@@ -117,39 +175,12 @@ export function OverviewPage() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <LineChartCard />
-        <PieChartCard />
+        <LineChartCard monthlyData={monthlyData} />
+        <PieChartCard stores={stores} />
       </div>
 
-      <div className="mt-8 space-y-6">
-        <OrderStatusBarCard />
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiMiniCard
-            label="المنتجات النشطة"
-            value="8,456"
-            icon={Package}
-            iconWrapClassName="bg-brand-300 text-white"
-          />
-          <KpiMiniCard
-            label="الحملات النشطة"
-            value="23"
-            icon={TrendingUp}
-            iconWrapClassName="bg-brand-300 text-white/90"
-          />
-          <KpiMiniCard
-            label="الشكاوى المفتوحة"
-            value="15"
-            icon={AlertCircle}
-            iconWrapClassName="bg-rose-100 text-rose-600"
-          />
-          <KpiMiniCard
-            label="العروض النشطة"
-            value="34"
-            icon={BadgeCheck}
-            iconWrapClassName="bg-violet-100 text-violet-600"
-          />
-        </div>
+      <div className="mt-8">
+        <OrderStatusBarCard stats={orderStats} />
       </div>
     </>
   )

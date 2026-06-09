@@ -1,14 +1,12 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import {
   CreditCard,
-  DollarSign,
   Eye,
   Loader2,
   Pencil,
   Plus,
   Search,
   Trash2,
-  TrendingUp,
   Users,
   CheckCircle,
   X,
@@ -429,30 +427,14 @@ export function PlansPage() {
         <PrimaryButton
           onClick={openAddModal}
           disabled={saving}
-          className="shrink-0 self-start"
+          className="shrink-0 self-start disabled:opacity-60"
         >
           <Plus className="size-5" strokeWidth={2.25} aria-hidden />
           إضافة خطة اشتراك
         </PrimaryButton>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
-        <StatCard
-          label="متوسط قيمة الاشتراك"
-          value={String(stats.avgPrice)}
-          change="—"
-          trend="up"
-          icon={TrendingUp}
-          iconClassName="bg-violet-100 text-violet-600"
-        />
-        <StatCard
-          label="إيرادات تقديرية"
-          value={String(stats.estimatedRevenue)}
-          change="—"
-          trend="up"
-          icon={DollarSign}
-          iconClassName="bg-violet-100 text-violet-600"
-        />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="rtl">
         <StatCard
           label="المتاجر المشتركة"
           value={String(stats.totalSubscribers)}

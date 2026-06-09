@@ -243,7 +243,19 @@ export function FinancePage() {
     setDetailLoading(true)
     try {
       const data = await getFinanceTransaction(tx.transactionId)
-      setSelectedTx(mapTransactionDetail(data))
+      const detail = mapTransactionDetail(data)
+      setSelectedTx(detail)
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.transactionId === detail.transactionId
+            ? {
+                ...t,
+                customer: detail.customer !== '—' ? detail.customer : t.customer,
+                store: detail.store !== '—' ? detail.store : t.store,
+              }
+            : t,
+        ),
+      )
     } catch (err) {
       setExportMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل المعاملة.'))
       setTimeout(() => setExportMessage(''), 3000)

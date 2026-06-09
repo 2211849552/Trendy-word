@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   Plus,
   Search,
-  Tag,
   Package,
   Tags,
   LayoutGrid,
@@ -203,15 +202,7 @@ export function CatalogManagementPage() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
-        <StatCard
-          label="التصنيفات النشطة"
-          value={String(stats.activeCategories)}
-          change="—"
-          trend="up"
-          icon={Tag}
-          iconClassName="bg-brand-300 text-[#0056D2]"
-          omitChange
-        />
+
         <StatCard
           label="إجمالي المنتجات"
           value={formatNum(stats.totalProducts)}
@@ -231,7 +222,7 @@ export function CatalogManagementPage() {
           omitChange
         />
         <StatCard
-          label="التصنيفات الفرعية"
+          label="تصنيفات المنتجات"
           value={formatNum(stats.subcategories)}
           change="—"
           trend="up"
