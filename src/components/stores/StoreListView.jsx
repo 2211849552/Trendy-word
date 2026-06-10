@@ -123,6 +123,9 @@ export function StoreListView({
   onStatusChange,
   onToggleStoreStatus,
   onLoadStoreDetails,
+  onUpdateStore,
+  onUpdateDeliveryPrices,
+  onSettleCustody,
   onPrintStores,
   onBackToJoin,
 }) {
@@ -464,6 +467,10 @@ export function StoreListView({
           setDetailModalOpen(false)
           setSelectedStore(null)
         }}
+        onUpdateStore={onUpdateStore}
+        onUpdateDeliveryPrices={onUpdateDeliveryPrices}
+        onSettleCustody={onSettleCustody}
+        onStoreUpdated={(updated) => setSelectedStore(updated)}
       />
     </>
   )

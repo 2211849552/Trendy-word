@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   adminLogin,
   authErrorMessage,
+  beginPasswordResetSession,
+  endPasswordResetSession,
   forgotPassword,
   resetPassword,
   verifyResetOtp,
@@ -119,6 +121,14 @@ function PasswordResetFlow({ onBack }) {
   const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [otpVerified, setOtpVerified] = useState(false)
+
+  useEffect(() => {
+    beginPasswordResetSession().catch(() => {
+      setError('تعذّر تهيئة جلسة الاستعادة. تأكد أن Laravel Backend يعمل.')
+    })
+    return () => endPasswordResetSession()
+  }, [])
 
   const handleForgot = async (e) => {
     e.preventDefault()
@@ -155,7 +165,8 @@ function PasswordResetFlow({ onBack }) {
     setLoading(true)
     try {
       await verifyResetOtp({ email: email.trim(), otp: otp.trim() })
-      setInfo('تم التحقق من الرمز. أدخلي كلمة المرور الجديدة.')
+      setOtpVerified(true)
+      setInfo('تم التحقق من الرمز. أدخلي كلمة المرور الجديدة الآن.')
       setStep('reset')
     } catch (err) {
       setError(authErrorMessage(err, 'رمز التحقق غير صحيح أو منتهي الصلاحية.'))
@@ -179,10 +190,14 @@ function PasswordResetFlow({ onBack }) {
     }
 
     setLoading(true)
+    if (!otpVerified) {
+      setError('يرجى التحقق من رمز OTP أولاً.')
+      setStep('otp')
+      return
+    }
+
     try {
       await resetPassword({
-        email: email.trim(),
-        otp: otp.trim(),
         password,
         password_confirmation: confirmPassword,
       })
@@ -290,6 +305,7 @@ function PasswordResetFlow({ onBack }) {
             onClick={() => {
               setStep('forgot')
               setOtp('')
+              setOtpVerified(false)
               setError('')
               setInfo('')
             }}
@@ -342,10 +358,13 @@ function PasswordResetFlow({ onBack }) {
 
       <button
         type="button"
-        onClick={onBack}
+        onClick={() => {
+          endPasswordResetSession()
+          onBack()
+        }}
         className="mt-6 w-full text-center text-sm text-white/55 transition hover:text-white"
       >
-        {done ? 'العودة لتسجيل الدخول' : 'العودة لتسجيل الدخول'}
+        العودة لتسجيل الدخول
       </button>
     </>
   )

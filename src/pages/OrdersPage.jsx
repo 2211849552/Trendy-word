@@ -17,6 +17,9 @@ import {
 import {
   getOrders,
   getOrder,
+  updateOrderStatus,
+  cancelOrder,
+  reassignOrder,
   extractOrderList,
   extractOrderMeta,
   mapOrder,
@@ -24,7 +27,9 @@ import {
   buildOrderQueryParams,
   filterOrdersClient,
   buildOrderStats,
+  ORDER_STATUS_OPTIONS,
 } from '../api/adminOrders.js'
+import { getDrivers, extractDriverList, mapDriver } from '../api/adminDrivers.js'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -54,6 +59,15 @@ export function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [actionMessage, setActionMessage] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [statusForm, setStatusForm] = useState({ status: '', comment: '' })
+  const [cancelReason, setCancelReason] = useState('')
+  const [showCancelForm, setShowCancelForm] = useState(false)
+  const [reassignDriverId, setReassignDriverId] = useState('')
+  const [drivers, setDrivers] = useState([])
+  const [driversLoading, setDriversLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
 
   const loadSeq = useRef(0)
 
@@ -90,18 +104,120 @@ export function OrdersPage() {
 
   const stats = buildOrderStats(orders, paginationMeta)
 
+  const loadDriversForReassign = useCallback(async () => {
+    setDriversLoading(true)
+    try {
+      const data = await getDrivers({ per_page: 100, status: 'active' })
+      setDrivers(extractDriverList(data).map(mapDriver))
+    } catch {
+      setDrivers([])
+    } finally {
+      setDriversLoading(false)
+    }
+  }, [])
+
+  const closeDetails = () => {
+    setDetailsModalOpen(false)
+    setSelectedOrder(null)
+    setActionMessage('')
+    setActionError('')
+    setStatusForm({ status: '', comment: '' })
+    setCancelReason('')
+    setShowCancelForm(false)
+    setReassignDriverId('')
+  }
+
+  const refreshSelectedOrder = async (orderId) => {
+    const data = await getOrder(orderId)
+    const mapped = mapOrderDetail(data)
+    setSelectedOrder(mapped)
+    setStatusForm({ status: mapped.rawStatus, comment: '' })
+    await loadOrders()
+    return mapped
+  }
+
   const openDetails = async (order) => {
     setSelectedOrder(order)
     setDetailsModalOpen(true)
     setDetailLoading(true)
+    setActionMessage('')
+    setActionError('')
+    setShowCancelForm(false)
+    setCancelReason('')
+    setReassignDriverId('')
     try {
       const data = await getOrder(order.orderId)
-      setSelectedOrder(mapOrderDetail(data))
+      const mapped = mapOrderDetail(data)
+      setSelectedOrder(mapped)
+      setStatusForm({ status: mapped.rawStatus, comment: '' })
+      await loadDriversForReassign()
     } catch (err) {
       setLoadError(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الطلب.'))
       setTimeout(() => setLoadError(''), 3000)
     } finally {
       setDetailLoading(false)
+    }
+  }
+
+  const handleUpdateStatus = async (e) => {
+    e.preventDefault()
+    if (!selectedOrder || !statusForm.status) return
+    setActionLoading(true)
+    setActionError('')
+    try {
+      await updateOrderStatus(selectedOrder.orderId, {
+        status: statusForm.status,
+        comment: statusForm.comment?.trim() || undefined,
+      })
+      await refreshSelectedOrder(selectedOrder.orderId)
+      setActionMessage('تم تحديث حالة الطلب.')
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setActionError(apiErrorMessage(err, 'تعذّر تحديث حالة الطلب.'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCancelOrder = async (e) => {
+    e.preventDefault()
+    if (!selectedOrder) return
+    if (cancelReason.trim().length < 5) {
+      setActionError('سبب الإلغاء مطلوب (5 أحرف على الأقل).')
+      return
+    }
+    setActionLoading(true)
+    setActionError('')
+    try {
+      await cancelOrder(selectedOrder.orderId, cancelReason.trim())
+      await refreshSelectedOrder(selectedOrder.orderId)
+      setShowCancelForm(false)
+      setCancelReason('')
+      setActionMessage('تم إلغاء الطلب.')
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setActionError(apiErrorMessage(err, 'تعذّر إلغاء الطلب.'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleReassign = async (withDriver = true) => {
+    if (!selectedOrder) return
+    setActionLoading(true)
+    setActionError('')
+    try {
+      await reassignOrder(
+        selectedOrder.orderId,
+        withDriver && reassignDriverId ? reassignDriverId : null,
+      )
+      await refreshSelectedOrder(selectedOrder.orderId)
+      setActionMessage(withDriver && reassignDriverId ? 'تم تعيين السائق للطلب.' : 'تم إعادة توجيه الطلب.')
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setActionError(apiErrorMessage(err, 'تعذّر إعادة تعيين السائق.'))
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -256,7 +372,7 @@ export function OrdersPage() {
 
             <div className="flex items-center justify-between border-b border-white/5 p-6">
               <h2 className="text-2xl font-bold text-white">تفاصيل الطلب</h2>
-              <button type="button" onClick={() => setDetailsModalOpen(false)} className="text-white/50 hover:text-white/70 transition-colors">
+              <button type="button" onClick={closeDetails} className="text-white/50 hover:text-white/70 transition-colors">
                 <XCircle className="size-6" />
               </button>
             </div>
@@ -358,10 +474,124 @@ export function OrdersPage() {
                 </div>
               ) : null}
 
+              {actionMessage ? (
+                <p className="rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+                  {actionMessage}
+                </p>
+              ) : null}
+              {actionError ? (
+                <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {actionError}
+                </p>
+              ) : null}
+
+              {selectedOrder.rawStatus !== 'cancelled' && selectedOrder.rawStatus !== 'returned' ? (
+                <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-5">
+                  <h3 className="text-sm font-bold text-white/80">إجراءات الطلب</h3>
+
+                  <form className="space-y-3" onSubmit={handleUpdateStatus}>
+                    <p className="text-xs text-white/60">تحديث حالة الطلب</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <select
+                        value={statusForm.status}
+                        onChange={(e) => setStatusForm((prev) => ({ ...prev, status: e.target.value }))}
+                        className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+                      >
+                        {ORDER_STATUS_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={statusForm.comment}
+                        onChange={(e) => setStatusForm((prev) => ({ ...prev, comment: e.target.value }))}
+                        placeholder="تعليق اختياري..."
+                        className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={actionLoading}
+                      className="rounded-xl bg-brand-900 px-4 py-2 text-sm font-bold text-white hover:bg-brand-950 disabled:opacity-60"
+                    >
+                      {actionLoading ? 'جاري الحفظ...' : 'تحديث الحالة'}
+                    </button>
+                  </form>
+
+                  <div className="border-t border-white/10 pt-4 space-y-3">
+                    <p className="text-xs text-white/60">إعادة تعيين سائق التوصيل</p>
+                    <select
+                      value={reassignDriverId}
+                      onChange={(e) => setReassignDriverId(e.target.value)}
+                      disabled={driversLoading}
+                      className="w-full rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+                    >
+                      <option value="">تعيين تلقائي (FIFO)</option>
+                      {drivers.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name} — {d.phone}</option>
+                      ))}
+                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleReassign(true)}
+                        disabled={actionLoading}
+                        className="rounded-xl bg-brand-900 px-4 py-2 text-sm font-bold text-white hover:bg-brand-950 disabled:opacity-60"
+                      >
+                        {reassignDriverId ? 'تعيين السائق المحدد' : 'إعادة توجيه تلقائي'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {!showCancelForm ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCancelForm(true)
+                        setActionError('')
+                      }}
+                      className="w-full rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-bold text-red-300 hover:bg-red-500/20"
+                    >
+                      إلغاء الطلب
+                    </button>
+                  ) : (
+                    <form className="space-y-3" onSubmit={handleCancelOrder}>
+                      <p className="text-xs text-white/60">إلغاء الطلب مع ذكر السبب</p>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        rows={3}
+                        placeholder="سبب الإلغاء (5 أحرف على الأقل)..."
+                        className="w-full rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-500 resize-none"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="submit"
+                          disabled={actionLoading}
+                          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                        >
+                          تأكيد الإلغاء
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCancelForm(false)
+                            setCancelReason('')
+                          }}
+                          className="rounded-xl border border-white/10 bg-brand-300 px-4 py-2 text-sm font-bold text-white/80"
+                        >
+                          تراجع
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              ) : null}
+
               <div className="pt-4 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setDetailsModalOpen(false)}
+                  onClick={closeDetails}
                   className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors"
                 >
                   إغلاق النافذة

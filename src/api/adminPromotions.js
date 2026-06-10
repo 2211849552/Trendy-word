@@ -12,6 +12,36 @@ export function getPromotion(id) {
   return apiRequest(`/api/promotions/${encodeURIComponent(String(id))}`)
 }
 
+// POST /api/promotions — إنشاء عرض
+export function createPromotion(body) {
+  return apiRequest('/api/promotions', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+// PATCH /api/promotions/{id} — تعديل عرض
+export function updatePromotion(id, body) {
+  return apiRequest(`/api/promotions/${encodeURIComponent(String(id))}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
+}
+
+// DELETE /api/promotions/{id} — حذف عرض
+export function deletePromotion(id) {
+  return apiRequest(`/api/promotions/${encodeURIComponent(String(id))}`, {
+    method: 'DELETE',
+  })
+}
+
+// POST /api/promotions/{id}/toggle — تفعيل/تعطيل
+export function togglePromotion(id) {
+  return apiRequest(`/api/promotions/${encodeURIComponent(String(id))}/toggle`, {
+    method: 'POST',
+  })
+}
+
 export function extractPromotionList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data

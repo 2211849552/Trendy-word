@@ -23,6 +23,9 @@ import {
 } from '../api/adminNotifications.js'
 
 function apiErrorMessage(err, fallback) {
+  if (err?.status === 404) {
+    return 'خدمة الإشعارات غير مفعّلة على الخادم حالياً. (مستثناة حسب إعداد المشروع)'
+  }
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
   if (err?.status === 403) return 'ليس لديك صلاحية عرض الإشعارات.'
   if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'

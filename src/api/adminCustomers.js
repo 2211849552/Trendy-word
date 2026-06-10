@@ -128,6 +128,13 @@ export function buildCustomerStats(customers, meta = {}) {
   }
 }
 
+export function extractExportCustomerList(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.customers)) return data.customers
+  return []
+}
+
 export function customersToCsv(customers) {
   const header = 'الاسم,البريد الإلكتروني,الهاتف,الموقع,الطلبات,الإنفاق الكلي,تاريخ الانضمام,الحالة'
   const rows = customers.map(

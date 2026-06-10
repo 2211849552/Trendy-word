@@ -14,9 +14,11 @@ import {
 import {
   getCustomers,
   getCustomer,
+  exportCustomers,
   deactivateCustomer,
   reactivateCustomer,
   extractCustomerList,
+  extractExportCustomerList,
   extractPaginationMeta,
   mapCustomer,
   mapCustomerDetail,
@@ -156,8 +158,18 @@ export function CustomersPage() {
     })
 
     try {
-      const data = await getCustomers(params)
-      const list = extractCustomerList(data).map(mapCustomer)
+      let list = []
+      try {
+        const exportData = await exportCustomers(params)
+        const exported = extractExportCustomerList(exportData).map(mapCustomer)
+        if (exported.length) list = exported
+      } catch {
+        // fallback below
+      }
+      if (!list.length) {
+        const data = await getCustomers(params)
+        list = extractCustomerList(data).map(mapCustomer)
+      }
       const opened = openCustomersPrintWindow(list)
 
       if (!opened) {

@@ -12,6 +12,40 @@ export function getOrder(id) {
   return apiRequest(`/api/orders/${encodeURIComponent(String(id))}`)
 }
 
+// PATCH /api/orders/{id}/status
+export function updateOrderStatus(id, body) {
+  return apiRequest(`/api/orders/${encodeURIComponent(String(id))}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
+}
+
+// POST /api/orders/{id}/cancel
+export function cancelOrder(id, reason) {
+  return apiRequest(`/api/orders/${encodeURIComponent(String(id))}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
+}
+
+// POST /api/admin/orders/{id}/reassign
+export function reassignOrder(id, driverId) {
+  const body = driverId != null && driverId !== '' ? { driver_id: Number(driverId) } : {}
+  return apiRequest(`/api/admin/orders/${encodeURIComponent(String(id))}/reassign`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export const ORDER_STATUS_OPTIONS = [
+  { value: 'pending', label: 'قيد الانتظار' },
+  { value: 'processing', label: 'قيد التجهيز' },
+  { value: 'shipped', label: 'تم الشحن' },
+  { value: 'out_for_delivery', label: 'قيد التوصيل' },
+  { value: 'delivered', label: 'تم التسليم' },
+  { value: 'cancelled', label: 'ملغي' },
+]
+
 export function extractOrderList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data
