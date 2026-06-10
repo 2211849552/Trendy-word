@@ -14,6 +14,9 @@ import {
   printAdminStores,
   deactivateAdminStore,
   reactivateAdminStore,
+  updateAdminStore,
+  updateStoreDeliveryPrices,
+  settleStoreCustody,
   extractStoreList,
   mapAdminStore,
   mapAdminStoreDetail,
@@ -232,6 +235,29 @@ export function StoreManagementPage() {
     await loadStores()
   }
 
+  const handleUpdateStore = async (storeId, payload) => {
+    const data = await updateAdminStore(storeId, payload)
+    const updated = mapAdminStoreDetail(data)
+    setRegisteredStores((prev) =>
+      prev.map((s) => (String(s.id) === String(storeId) ? { ...s, ...updated } : s)),
+    )
+    return updated
+  }
+
+  const handleUpdateDeliveryPrices = async (storeId, deliveryPrices) => {
+    const data = await updateStoreDeliveryPrices(storeId, deliveryPrices)
+    const updated = mapAdminStoreDetail(data)
+    setRegisteredStores((prev) =>
+      prev.map((s) => (String(s.id) === String(storeId) ? { ...s, ...updated } : s)),
+    )
+    return updated
+  }
+
+  const handleSettleCustody = async (storeId) => {
+    await settleStoreCustody(storeId)
+    await loadStores()
+  }
+
   const handlePrintStores = async () => {
     const params = {}
     const trimmed = storeQuery.trim()
@@ -255,6 +281,9 @@ export function StoreManagementPage() {
         onStatusChange={setStoreStatus}
         onToggleStoreStatus={handleToggleStoreStatus}
         onLoadStoreDetails={handleLoadStoreDetails}
+        onUpdateStore={handleUpdateStore}
+        onUpdateDeliveryPrices={handleUpdateDeliveryPrices}
+        onSettleCustody={handleSettleCustody}
         onPrintStores={handlePrintStores}
         onBackToJoin={() => setView('join')}
       />

@@ -1,13 +1,19 @@
 @echo off
-title Trendy Word - API Server (PHP)
+title Trendy Word - API Warning
 cd /d "%~dp0"
 echo.
-echo  Trendy Word - PHP API Server
-echo  ============================
-echo  Address: http://localhost:8000
-echo  API    : http://localhost:8000/api/v1
+echo  ============================================
+echo   تحذير: لا تستخدم هذا الملف للتطوير
+echo  ============================================
 echo.
-echo  Press Ctrl+C to stop
+echo  المشروع يعتمد على Laravel Backend (TRENDY_Backend)
+echo  وليس على PHP API المحلي في مجلد api/
 echo.
-php -S localhost:8000 api/router.php
+echo  شغّل الخادم الحقيقي:
+echo    cd path\to\TRENDY_Backend
+echo    php artisan serve
+echo.
+echo  ثم شغّل الواجهة:
+echo    start-dev.bat
+echo.
 pause

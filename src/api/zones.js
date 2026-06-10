@@ -34,14 +34,17 @@ export function extractZoneList(data) {
   if (Array.isArray(data?.zones)) return data.zones
   if (Array.isArray(data?.data?.zones)) return data.data.zones
   if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data?.data?.items)) return data.data.items
   return []
 }
 
 export function mapZone(item) {
-  const id = item.id ?? item.zone_id ?? item.current_zone_id
+  const id = item?.id ?? item?.zone_id ?? item?.current_zone_id
+  const name = item?.name ?? item?.zone_name ?? item?.title ?? item?.label
+  if (id == null || id === '' || !name) return null
   return {
-    id: id != null ? String(id) : '',
-    name: item.name ?? item.zone_name ?? item.title ?? item.label ?? '—',
+    id: String(id),
+    name: String(name),
     city: item.city ?? item.zone_city ?? '',
     status: item.status ?? item.is_active ?? null,
     createdAt: item.created_at ? String(item.created_at).slice(0, 10) : '—',
@@ -58,18 +61,21 @@ export function validateCreateZoneForm(form) {
   return null
 }
 
-/** جلب المناطق جاهزة لقائمة اختيار current_zone_id في نموذج إضافة السائق */
-export async function fetchZonesForSelect() {
-  const data = await getZones()
+/** GET /api/zones — المناطق المتاحة (api.md) لاختيار current_zone_id */
+export async function fetchAvailableZones() {
+  const data = await getZones({ per_page: 100 })
   return extractZoneList(data)
     .map(mapZone)
-    .filter((zone) => zone.id !== '')
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+}
+
+/** جلب المناطق جاهزة لقائمة اختيار current_zone_id في نموذج إضافة السائق */
+export async function fetchZonesForSelect() {
+  return fetchAvailableZones()
 }
 
 /** جلب قائمة المناطق لصفحة الإدارة */
 export async function fetchZonesList() {
-  const data = await getZones()
-  return extractZoneList(data)
-    .map(mapZone)
-    .filter((zone) => zone.id !== '')
+  return fetchAvailableZones()
 }

@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const REQUEST_TIMEOUT_MS = 20000
 
 export async function apiRequest(path, options = {}) {
   const headers = {
@@ -17,11 +18,29 @@ export async function apiRequest(path, options = {}) {
     headers.Authorization = `Bearer ${token}`
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-    credentials: 'include',
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  let response
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      credentials: 'include',
+      signal: controller.signal,
+    })
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      const error = new Error('انتهت مهلة الاتصال بالخادم. تأكد أن Laravel Backend يعمل على المنفذ 8000.')
+      error.status = 0
+      throw error
+    }
+    const error = new Error('تعذّر الاتصال بالخادم. تأكد أن Laravel Backend يعمل.')
+    error.status = 0
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
     let message = `API error: ${response.status}`

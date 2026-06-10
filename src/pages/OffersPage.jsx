@@ -93,7 +93,6 @@ export function OffersPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20 animate-in fade-in duration-500">
       
-      {/* Header */}
       <div className="flex flex-col items-start gap-1 border-b border-white/10 pb-5">
         <h1 className="text-2xl font-bold text-white">العروض والخصومات</h1>
         <p className="text-sm text-white/60">عرض العروض الترويجية وخصومات المنتجات</p>
@@ -105,7 +104,6 @@ export function OffersPage() {
         </div>
       )}
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
@@ -148,7 +146,6 @@ export function OffersPage() {
         </div>
       </div>
 
-      {/* Offers List */}
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-20 text-white/60">
           <Loader2 className="size-5 animate-spin" />
@@ -213,14 +210,13 @@ export function OffersPage() {
       </div>
       )}
 
-      {/* Offer Details Modal */}
       {detailsModalOpen && selectedOffer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-white/5 p-6">
               <h2 className="text-2xl font-bold text-white">تفاصيل العرض</h2>
-              <button onClick={closeDetails} className="text-white/50 hover:text-white/70">
+              <button type="button" onClick={closeDetails} className="text-white/50 hover:text-white/70">
                 <X className="size-6" />
               </button>
             </div>
@@ -288,11 +284,22 @@ export function OffersPage() {
                 )}
               </div>
 
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={closeDetails}
+                  className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors"
+                >
+                  إغلاق
+                </button>
+              </div>
+
             </div>
             )}
           </div>
         </div>
       )}
+
     </div>
   )
 }

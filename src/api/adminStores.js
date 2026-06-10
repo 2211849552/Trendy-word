@@ -34,6 +34,29 @@ export function reactivateAdminStore(store) {
   })
 }
 
+// PUT /api/admin/stores/{store}
+export function updateAdminStore(store, body) {
+  return apiRequest(`/api/admin/stores/${encodeURIComponent(String(store))}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
+// PUT /api/admin/stores/{store}/delivery-prices
+export function updateStoreDeliveryPrices(store, deliveryPrices) {
+  return apiRequest(`/api/admin/stores/${encodeURIComponent(String(store))}/delivery-prices`, {
+    method: 'PUT',
+    body: JSON.stringify({ delivery_prices: deliveryPrices }),
+  })
+}
+
+// POST /api/admin/stores/{store}/settle-custody
+export function settleStoreCustody(store) {
+  return apiRequest(`/api/admin/stores/${encodeURIComponent(String(store))}/settle-custody`, {
+    method: 'POST',
+  })
+}
+
 export function extractStoreList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data
@@ -88,6 +111,10 @@ export function mapAdminStore(item) {
     rawStatus: item.status ?? '',
     createdAt: item.created_at?.slice(0, 10) ?? '',
     deactivationReason: item.deactivation_reason ?? '',
+    zoneId: item.zone_id ?? null,
+    googleMapUrl: item.google_map_url ?? '',
+    deliveryPrices: item.delivery_prices ?? {},
+    custodyBalance: Number(item.custody_balance ?? 0),
     owner,
   }
 }

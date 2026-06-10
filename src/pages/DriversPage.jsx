@@ -19,6 +19,7 @@ import {
   getDrivers,
   getDriver,
   createDriver,
+  updateDriver,
   deactivateDriver,
   reactivateDriver,
   extractDriverList,
@@ -33,8 +34,11 @@ import {
   firstValidationError,
   DRIVER_VEHICLE_TYPES,
   DRIVER_CREATE_FIELDS,
+  DRIVER_UPDATE_FIELDS,
+  emptyDriverEditForm,
+  buildUpdateDriverPayload,
 } from '../api/adminDrivers.js'
-import { fetchZonesForSelect } from '../api/zones.js'
+import { fetchAvailableZones } from '../api/zones.js'
 import { DriverChatModal } from '../components/drivers/DriverChatModal.jsx'
 
 function apiErrorMessage(err, fallback) {
@@ -106,7 +110,7 @@ function DriverCreateField({
         ) : null}
         {emptyZones ? (
           <p className="mt-1 text-xs text-white/50">
-            لا توجد مناطق في النظام. أضيفي مناطق من لوحة الإدارة ثم أعيدي تحميل القائمة.
+            لا توجد مناطق في النظام. أضيفي مناطق من صفحة «إدارة المناطق» ثم اضغطي «إعادة المحاولة».
           </p>
         ) : null}
       </div>
@@ -171,6 +175,10 @@ export function DriversPage() {
   const [detailLoading, setDetailLoading] = useState(false)
 
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [editForm, setEditForm] = useState(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [showEditForm, setShowEditForm] = useState(false)
   const [newDriver, setNewDriver] = useState(emptyDriverForm())
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState('')
@@ -235,6 +243,9 @@ export function DriversPage() {
     setDeactivateReason('')
     setShowDeactivateForm(false)
     setToggleError('')
+    setEditForm(null)
+    setShowEditForm(false)
+    setEditError('')
   }
 
   const openDetails = async (driver) => {
@@ -246,7 +257,10 @@ export function DriversPage() {
     setToggleError('')
     try {
       const data = await getDriver(driver.id)
-      setSelectedDriver(mapDriverDetail(data))
+      const mapped = mapDriverDetail(data)
+      setSelectedDriver(mapped)
+      setEditForm(emptyDriverEditForm(mapped))
+      if (!zones.length) await loadZones()
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل السائق.'))
       setTimeout(() => setActionMessage(''), 3000)
@@ -266,14 +280,18 @@ export function DriversPage() {
     setZonesLoading(true)
     setZonesError('')
     try {
-      setZones(await fetchZonesForSelect())
+      setZones(await fetchAvailableZones())
     } catch (err) {
       setZones([])
-      setZonesError(apiErrorMessage(err, 'تعذّر تحميل قائمة المناطق من GET /api/zones.'))
+      setZonesError(apiErrorMessage(err, 'تعذّر تحميل المناطق المتاحة من GET /api/zones.'))
     } finally {
       setZonesLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    loadZones()
+  }, [loadZones])
 
   const openAdd = async () => {
     setNewDriver(emptyDriverForm())
@@ -320,6 +338,33 @@ export function DriversPage() {
   const closeChat = () => {
     setChatOpen(false)
     setChatDriver(null)
+  }
+
+  const handleUpdateDriver = async (e) => {
+    e.preventDefault()
+    if (!selectedDriver || !editForm) return
+    const payload = buildUpdateDriverPayload(editForm)
+    if (!Object.keys(payload).length) {
+      setEditError('لم يتم تغيير أي حقل.')
+      return
+    }
+    setEditLoading(true)
+    setEditError('')
+    try {
+      await updateDriver(selectedDriver.id, payload)
+      const data = await getDriver(selectedDriver.id)
+      const mapped = mapDriverDetail(data)
+      setSelectedDriver(mapped)
+      setEditForm(emptyDriverEditForm(mapped))
+      setShowEditForm(false)
+      setActionMessage('تم تحديث بيانات السائق.')
+      await loadDrivers()
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setEditError(apiErrorMessage(err, 'تعذّر تحديث بيانات السائق.'))
+    } finally {
+      setEditLoading(false)
+    }
   }
 
   const handleToggleStatus = async (e) => {
@@ -601,6 +646,79 @@ export function DriversPage() {
                       </p>
                     </div>
                   </div>
+                ) : null}
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
+                <h3 className="text-sm font-bold text-white/80">تعديل البيانات</h3>
+                {!showEditForm ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditForm(true)
+                      setEditError('')
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-brand-300 px-4 py-3 text-sm font-bold text-white/80 hover:bg-brand-100"
+                  >
+                    تعديل بيانات السائق
+                  </button>
+                ) : editForm ? (
+                  <form className="space-y-4" onSubmit={handleUpdateDriver}>
+                    {DRIVER_UPDATE_FIELDS.map((field) => (
+                      <div key={field.key}>
+                        <label className="mb-2 block text-sm font-medium text-white/80">{field.label}</label>
+                        {field.type === 'vehicle_type' ? (
+                          <select
+                            value={editForm[field.key]}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                            className={driverFieldClass}
+                          >
+                            {DRIVER_VEHICLE_TYPES.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        ) : field.type === 'zone' ? (
+                          <select
+                            value={editForm[field.key]}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                            className={driverFieldClass}
+                          >
+                            <option value="">اختر المنطقة</option>
+                            {zones.map((zone) => (
+                              <option key={zone.id} value={zone.id}>{zone.name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={field.type}
+                            value={editForm[field.key]}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                            className={driverFieldClass}
+                            dir={field.dir}
+                          />
+                        )}
+                      </div>
+                    ))}
+                    {editError ? (
+                      <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{editError}</p>
+                    ) : null}
+                    <div className="flex flex-wrap gap-3">
+                      <button type="submit" disabled={editLoading} className="btn-primary disabled:opacity-60">
+                        {editLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEditForm(false)
+                          setEditForm(emptyDriverEditForm(selectedDriver))
+                          setEditError('')
+                        }}
+                        className="rounded-xl border border-white/10 bg-brand-300 px-5 py-2.5 text-sm font-bold text-white/80"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </form>
                 ) : null}
               </div>
 

@@ -55,10 +55,24 @@ function apiErrorMessage(err, fallback) {
   return err?.message || fallback
 }
 
-export function StoreDetailModal({ store, open, loading = false, onClose }) {
+export function StoreDetailModal({
+  store,
+  open,
+  loading = false,
+  onClose,
+  onUpdateStore,
+  onUpdateDeliveryPrices,
+  onSettleCustody,
+  onStoreUpdated,
+}) {
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState('')
+  const [editForm, setEditForm] = useState({ name: '', phone: '', description: '' })
+  const [deliveryPrices, setDeliveryPrices] = useState({})
+  const [actionMessage, setActionMessage] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
 
   const loadProducts = useCallback(async (storeId) => {
     if (!storeId) return
@@ -83,8 +97,23 @@ export function StoreDetailModal({ store, open, loading = false, onClose }) {
     if (!open) {
       setProducts([])
       setProductsError('')
+      setActionMessage('')
+      setActionError('')
     }
   }, [open])
+
+  useEffect(() => {
+    if (!store) return
+    setEditForm({
+      name: store.name ?? '',
+      phone: store.phone && store.phone !== '—' ? store.phone : '',
+      description: store.description ?? '',
+    })
+    const prices = store.deliveryPrices ?? store.raw?.delivery_prices ?? {}
+    setDeliveryPrices(
+      prices && typeof prices === 'object' ? { ...prices } : {},
+    )
+  }, [store])
 
   if (!open || !store) return null
 
@@ -181,6 +210,143 @@ export function StoreDetailModal({ store, open, loading = false, onClose }) {
                   <CheckCircle2 className="size-5 text-white/50" />
                 </div>
               </div>
+
+              {(onUpdateStore || onUpdateDeliveryPrices || onSettleCustody) ? (
+                <div className="border-t border-white/5 pt-6 space-y-4">
+                  <h4 className="text-lg font-bold text-white">إدارة المتجر</h4>
+                  {actionMessage ? (
+                    <p className="rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">{actionMessage}</p>
+                  ) : null}
+                  {actionError ? (
+                    <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{actionError}</p>
+                  ) : null}
+
+                  {onUpdateStore ? (
+                    <form
+                      className="space-y-3 rounded-xl border border-white/10 bg-brand-300/50 p-4"
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        setActionLoading(true)
+                        setActionError('')
+                        try {
+                          const updated = await onUpdateStore(store.id, {
+                            name: editForm.name.trim(),
+                            phone: editForm.phone.trim(),
+                            description: editForm.description.trim() || null,
+                          })
+                          if (updated) onStoreUpdated?.(updated)
+                          setActionMessage('تم تحديث بيانات المتجر.')
+                          setTimeout(() => setActionMessage(''), 3000)
+                        } catch (err) {
+                          setActionError(apiErrorMessage(err, 'تعذّر تحديث المتجر.'))
+                        } finally {
+                          setActionLoading(false)
+                        }
+                      }}
+                    >
+                      <p className="text-sm font-medium text-white/70">تعديل البيانات الأساسية</p>
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="اسم المتجر"
+                        className="input-brand"
+                        required
+                      />
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                        placeholder="الهاتف"
+                        className="input-brand"
+                        dir="ltr"
+                      />
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="الوصف"
+                        rows={2}
+                        className="input-brand resize-none"
+                      />
+                      <button type="submit" disabled={actionLoading} className="btn-primary disabled:opacity-60">
+                        {actionLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                      </button>
+                    </form>
+                  ) : null}
+
+                  {onUpdateDeliveryPrices && Object.keys(deliveryPrices).length > 0 ? (
+                    <form
+                      className="space-y-3 rounded-xl border border-white/10 bg-brand-300/50 p-4"
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        setActionLoading(true)
+                        setActionError('')
+                        try {
+                          const numericPrices = Object.fromEntries(
+                            Object.entries(deliveryPrices).map(([zoneId, price]) => [
+                              zoneId,
+                              Number(price) || 0,
+                            ]),
+                          )
+                          const updated = await onUpdateDeliveryPrices(store.id, numericPrices)
+                          if (updated) onStoreUpdated?.(updated)
+                          setActionMessage('تم تحديث أسعار التوصيل.')
+                          setTimeout(() => setActionMessage(''), 3000)
+                        } catch (err) {
+                          setActionError(apiErrorMessage(err, 'تعذّر تحديث أسعار التوصيل.'))
+                        } finally {
+                          setActionLoading(false)
+                        }
+                      }}
+                    >
+                      <p className="text-sm font-medium text-white/70">أسعار التوصيل حسب المنطقة</p>
+                      {Object.entries(deliveryPrices).map(([zoneId, price]) => (
+                        <div key={zoneId} className="flex items-center gap-3">
+                          <span className="text-sm text-white/60 shrink-0">منطقة {zoneId}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={price}
+                            onChange={(e) =>
+                              setDeliveryPrices((prev) => ({ ...prev, [zoneId]: e.target.value }))
+                            }
+                            className="input-brand flex-1"
+                            dir="ltr"
+                          />
+                        </div>
+                      ))}
+                      <button type="submit" disabled={actionLoading} className="btn-primary disabled:opacity-60">
+                        حفظ أسعار التوصيل
+                      </button>
+                    </form>
+                  ) : null}
+
+                  {onSettleCustody ? (
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={async () => {
+                        if (!window.confirm('هل تريد تسوية عهدة المتجر؟')) return
+                        setActionLoading(true)
+                        setActionError('')
+                        try {
+                          await onSettleCustody(store.id)
+                          setActionMessage('تم تسوية العهدة بنجاح.')
+                          setTimeout(() => setActionMessage(''), 3000)
+                        } catch (err) {
+                          setActionError(apiErrorMessage(err, 'تعذّر تسوية العهدة.'))
+                        } finally {
+                          setActionLoading(false)
+                        }
+                      }}
+                      className="w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-300 hover:bg-amber-500/20 disabled:opacity-60"
+                    >
+                      تسوية العهدة النقدية
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="border-t border-white/5 pt-6 space-y-4">
                 <div>

@@ -25,6 +25,7 @@ import {
 import {
   getBankCards,
   createBankCard,
+  updateBankCard,
   deleteBankCard,
   activateBankCard,
   extractBankCardList,
@@ -55,6 +56,9 @@ export function FinancePage() {
   const [cardsSaving, setCardsSaving] = useState(false)
   const [cardsError, setCardsError] = useState('')
   const [cardsMessage, setCardsMessage] = useState('')
+  const [editingCardId, setEditingCardId] = useState(null)
+  const [editCardholderName, setEditCardholderName] = useState('')
+  const [editStripePaymentMethodId, setEditStripePaymentMethodId] = useState('')
   const [selectedTx, setSelectedTx] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [transactions, setTransactions] = useState([])
@@ -222,6 +226,43 @@ export function FinancePage() {
       await loadBankCards()
     } catch (err) {
       setCardsError(err?.message || 'تعذّر تفعيل البطاقة.')
+    }
+  }
+
+  const startEditBankCard = (card) => {
+    setEditingCardId(card.id)
+    setEditCardholderName(card.cardholderName)
+    setEditStripePaymentMethodId(card.stripePaymentMethodId)
+    setCardsError('')
+    setCardsMessage('')
+  }
+
+  const cancelEditBankCard = () => {
+    setEditingCardId(null)
+    setEditCardholderName('')
+    setEditStripePaymentMethodId('')
+  }
+
+  const handleUpdateBankCard = async (e) => {
+    e.preventDefault()
+    if (!editingCardId) return
+    setCardsSaving(true)
+    setCardsError('')
+    setCardsMessage('')
+    try {
+      const payload = {}
+      if (editCardholderName.trim()) payload.cardholder_name = editCardholderName.trim()
+      if (editStripePaymentMethodId.trim()) {
+        payload.stripe_payment_method_id = editStripePaymentMethodId.trim()
+      }
+      await updateBankCard(editingCardId, payload)
+      cancelEditBankCard()
+      setCardsMessage('تم تحديث البطاقة بنجاح.')
+      await loadBankCards()
+    } catch (err) {
+      setCardsError(err?.message || 'تعذّر تحديث البطاقة.')
+    } finally {
+      setCardsSaving(false)
     }
   }
 
@@ -695,6 +736,13 @@ export function FinancePage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditBankCard(card)}
+                            className="rounded-lg border border-white/10 bg-brand-200 px-3 py-1.5 text-xs font-bold text-white/80 hover:bg-brand-100"
+                          >
+                            تعديل
+                          </button>
                           {!card.isActive ? (
                             <button
                               type="button"
@@ -717,6 +765,45 @@ export function FinancePage() {
                   </div>
                 )}
               </div>
+
+              {editingCardId ? (
+                <form className="space-y-4 border-t border-white/5 pt-5" onSubmit={handleUpdateBankCard}>
+                  <h3 className="text-sm font-bold text-white/80">تعديل البطاقة</h3>
+                  <div>
+                    <label htmlFor="edit-cardholder-name" className="mb-2 block text-sm font-medium text-white/80">
+                      اسم حامل البطاقة
+                    </label>
+                    <input
+                      id="edit-cardholder-name"
+                      type="text"
+                      value={editCardholderName}
+                      onChange={(e) => setEditCardholderName(e.target.value)}
+                      className="input-brand"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-stripe-pm" className="mb-2 block text-sm font-medium text-white/80">
+                      Stripe Payment Method ID
+                    </label>
+                    <input
+                      id="edit-stripe-pm"
+                      type="text"
+                      value={editStripePaymentMethodId}
+                      onChange={(e) => setEditStripePaymentMethodId(e.target.value)}
+                      className="input-brand"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="submit" disabled={cardsSaving} className="btn-primary disabled:opacity-60">
+                      {cardsSaving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                    </button>
+                    <button type="button" onClick={cancelEditBankCard} className="rounded-lg border border-white/10 px-4 py-2 text-sm font-bold text-white/80">
+                      إلغاء
+                    </button>
+                  </div>
+                </form>
+              ) : null}
 
               <form className="space-y-4 border-t border-white/5 pt-5" onSubmit={handleCreateBankCard}>
                 <h3 className="text-sm font-bold text-white/80">إضافة بطاقة جديدة</h3>

@@ -20,6 +20,14 @@ export function createDriver(body) {
   })
 }
 
+// PUT /api/drivers/{id} — تعديل بيانات السائق [18.9]
+export function updateDriver(id, body) {
+  return apiRequest(`/api/drivers/${encodeURIComponent(String(id))}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
 // POST /api/drivers/{id}/deactivate
 export function deactivateDriver(id, reason) {
   const payload = reason?.trim() ? { reason: reason.trim() } : {}
@@ -267,4 +275,42 @@ export function firstValidationError(errors) {
     if (errors[key]) return errors[key]
   }
   return Object.values(errors)[0] ?? null
+}
+
+/** حقول PUT /api/drivers/{id} — api.md [18.9] */
+export const DRIVER_UPDATE_FIELDS = [
+  { key: 'name', label: 'اسم السائق', type: 'text' },
+  { key: 'phone', label: 'رقم الهاتف', type: 'tel', dir: 'ltr' },
+  { key: 'email', label: 'البريد الإلكتروني', type: 'email', dir: 'ltr' },
+  { key: 'vehicle_type', label: 'نوع المركبة', type: 'vehicle_type' },
+  { key: 'plate_number', label: 'رقم لوحة المركبة', type: 'text' },
+  { key: 'current_zone_id', label: 'المنطقة الحالية', type: 'zone' },
+]
+
+export function emptyDriverEditForm(driver) {
+  return {
+    name: driver?.name && driver.name !== '—' ? driver.name : '',
+    phone: driver?.phone && driver.phone !== '—' ? driver.phone : '',
+    email: driver?.email && driver.email !== '—' ? driver.email : '',
+    vehicle_type: driver?.vehicleType || 'motorcycle',
+    plate_number: driver?.plateNumber || '',
+    current_zone_id: driver?.zoneId != null ? String(driver.zoneId) : '',
+  }
+}
+
+export function buildUpdateDriverPayload(form) {
+  const payload = {}
+  const name = form.name?.trim()
+  const phone = form.phone?.trim()
+  const email = form.email?.trim()
+  const plate = form.plate_number?.trim()
+
+  if (name) payload.name = name
+  if (phone) payload.phone = phone
+  if (email) payload.email = email
+  if (form.vehicle_type) payload.vehicle_type = form.vehicle_type
+  if (plate) payload.plate_number = plate
+  if (form.current_zone_id) payload.current_zone_id = Number(form.current_zone_id)
+
+  return payload
 }
