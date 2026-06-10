@@ -1,6 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { ImagePlus, X } from 'lucide-react'
+import {
+  CAMPAIGN_IMAGE_TYPES,
+  validateCampaignImage,
+} from '../../api/adminCampaigns.js'
+
+const acceptImages = CAMPAIGN_IMAGE_TYPES.join(',')
 
 export function EditCampaignModal({ campaign, open, onClose, onSave, saving = false }) {
   const [name, setName] = useState('')
@@ -8,7 +14,10 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const [link, setLink] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [bannerImage, setBannerImage] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
   const [errors, setErrors] = useState({})
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (!open || !campaign) return
@@ -17,8 +26,17 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     setLink(campaign.link ?? '')
     setDateFrom(campaign.dateFrom)
     setDateTo(campaign.dateTo)
+    setBannerImage(null)
+    setPreviewUrl('')
     setErrors({})
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }, [open, campaign])
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   useEffect(() => {
     if (!open) return
@@ -43,6 +61,37 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const fieldClass =
     'w-full rounded-xl border border-white/10 bg-brand-300/80 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-900 focus:bg-brand-200 focus:ring-2 focus:ring-brand-900/20'
 
+  const displayImageUrl = previewUrl || campaign.bannerImageUrl || ''
+  const hasNewImage = bannerImage instanceof File
+
+  const clearNewImage = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl('')
+    setBannerImage(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (errors.bannerImage) setErrors((x) => ({ ...x, bannerImage: '' }))
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      clearNewImage()
+      return
+    }
+
+    const imageError = validateCampaignImage(file)
+    if (imageError) {
+      setErrors((prev) => ({ ...prev, bannerImage: imageError }))
+      e.target.value = ''
+      return
+    }
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+    setBannerImage(file)
+    setErrors((prev) => ({ ...prev, bannerImage: '' }))
+  }
+
   const validate = () => {
     const e = {}
     if (!name.trim()) e.name = 'مطلوب'
@@ -51,6 +100,10 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     if (!dateTo) e.dateTo = 'مطلوب'
     if (dateFrom && dateTo && dateTo < dateFrom) {
       e.dateTo = 'يجب أن يكون بعد تاريخ البدء'
+    }
+    if (bannerImage) {
+      const imageError = validateCampaignImage(bannerImage)
+      if (imageError) e.bannerImage = imageError
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -66,6 +119,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
       link: link.trim(),
       dateFrom,
       dateTo,
+      bannerImage,
     })
   }
 
@@ -149,6 +203,62 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
               dir="ltr"
               disabled={saving}
             />
+          </div>
+
+          <div>
+            <label htmlFor="edit-image" className="mb-1.5 block text-sm font-semibold text-white/90">
+              صورة الإعلان
+            </label>
+            <p className="mb-2 text-xs text-white/50">
+              JPEG أو PNG أو WebP — حد أقصى 2 ميجابايت
+            </p>
+
+            {displayImageUrl ? (
+              <div className="relative mb-3 overflow-hidden rounded-xl border border-white/10 bg-brand-300/50">
+                <img
+                  src={displayImageUrl}
+                  alt="صورة الإعلان"
+                  className="max-h-48 w-full object-cover"
+                />
+                {hasNewImage ? (
+                  <button
+                    type="button"
+                    onClick={clearNewImage}
+                    disabled={saving}
+                    className="absolute left-2 top-2 rounded-lg bg-slate-900/70 p-1.5 text-white transition hover:bg-slate-900 disabled:opacity-50"
+                    aria-label="إلغاء الصورة الجديدة"
+                  >
+                    <X className="size-4" />
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <label
+                htmlFor="edit-image"
+                className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-brand-300/40 px-4 py-8 text-center transition hover:border-brand-500/40 hover:bg-brand-300/60"
+              >
+                <ImagePlus className="size-8 text-white/40" />
+                <span className="text-sm font-medium text-white/70">اضغطي لرفع صورة الإعلان</span>
+              </label>
+            )}
+
+            <input
+              ref={fileInputRef}
+              id="edit-image"
+              type="file"
+              accept={acceptImages}
+              onChange={handleImageChange}
+              disabled={saving}
+              className="block w-full text-xs text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white disabled:opacity-60"
+            />
+            {hasNewImage ? (
+              <p className="mt-1 text-xs text-brand-300">سيتم استبدال الصورة الحالية عند الحفظ.</p>
+            ) : campaign.bannerImageUrl ? (
+              <p className="mt-1 text-xs text-white/50">اختر ملفاً جديداً لاستبدال الصورة الحالية.</p>
+            ) : null}
+            {errors.bannerImage ? (
+              <p className="mt-1 text-xs text-rose-600">{errors.bannerImage}</p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

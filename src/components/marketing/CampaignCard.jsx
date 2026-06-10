@@ -1,4 +1,5 @@
-import { Eye, Pencil, Play, Pause, Trash2 } from 'lucide-react'
+import { Eye, ImageIcon, Pencil, Play, Pause, Trash2 } from 'lucide-react'
+import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
@@ -16,18 +17,31 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
 
   return (
     <article
-      className="flex flex-col rounded-2xl bg-brand-200 p-5 shadow-premium ring-1 ring-slate-100/80"
+      className="flex flex-col overflow-hidden rounded-2xl bg-brand-200 shadow-premium ring-1 ring-slate-100/80"
       dir="rtl"
     >
-      <div className="flex items-start justify-end gap-2">
+      <div className="relative h-40 w-full shrink-0 bg-brand-300/50">
+        {campaign.bannerImageUrl ? (
+          <img
+            src={campaign.bannerImageUrl}
+            alt={`صورة إعلان ${campaign.title}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-white/35">
+            <ImageIcon className="size-10" aria-hidden />
+            <span className="text-xs">لا توجد صورة</span>
+          </div>
+        )}
         <span
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${displayBadge}`}
+          className={`absolute left-3 top-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 backdrop-blur-sm ${displayBadge}`}
         >
           {displayStatus}
         </span>
       </div>
 
-      <h3 className="mt-3 text-lg font-bold text-white">{campaign.title}</h3>
+      <div className="flex flex-1 flex-col p-5">
+      <h3 className="text-lg font-bold text-white">{campaign.title}</h3>
       <p className="mt-1 text-sm leading-relaxed text-white/70">{campaign.description}</p>
 
       {campaign.link ? (
@@ -61,8 +75,14 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
       </ul>
 
       <p className="mt-3 text-xs text-white/60">
-        من <span className="tabular-nums font-medium text-white/80">{campaign.dateFrom}</span> إلى{' '}
-        <span className="tabular-nums font-medium text-white/80">{campaign.dateTo}</span>
+        من{' '}
+        <span dir="ltr" className="tabular-nums font-medium text-white/80">
+          {formatCampaignDateDisplay(campaign.dateFrom)}
+        </span>{' '}
+        إلى{' '}
+        <span dir="ltr" className="tabular-nums font-medium text-white/80">
+          {formatCampaignDateDisplay(campaign.dateTo)}
+        </span>
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/5 pt-4">
@@ -107,6 +127,7 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         >
           <Trash2 className="size-4" aria-hidden />
         </button>
+      </div>
       </div>
     </article>
   )

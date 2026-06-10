@@ -6,8 +6,9 @@ export async function apiRequest(path, options = {}) {
     ...options.headers,
   }
 
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
   const hasBody = options.body != null && options.body !== ''
-  if (hasBody && !headers['Content-Type']) {
+  if (hasBody && !headers['Content-Type'] && !isFormData) {
     headers['Content-Type'] = 'application/json'
   }
 
