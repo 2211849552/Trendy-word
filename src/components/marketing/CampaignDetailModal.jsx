@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
@@ -61,6 +62,20 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
         </div>
 
         <div className="space-y-6 px-5 py-6">
+          {campaign.bannerImageUrl ? (
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-brand-300/50">
+              <img
+                src={campaign.bannerImageUrl}
+                alt={`صورة إعلان ${campaign.title}`}
+                className="max-h-56 w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-white/10 bg-brand-300/30 px-4 py-10 text-center">
+              <p className="text-sm text-white/50">لا توجد صورة مرفقة لهذا الإعلان</p>
+            </div>
+          )}
+
           <div className="text-center">
             <h3 className="text-xl font-bold text-white">{campaign.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-white/70">{campaign.description}</p>
@@ -78,11 +93,15 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
               ) : null}
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
                 <p className="text-xs font-medium text-white/60">تاريخ البدء</p>
-                <p className="mt-1 text-sm font-bold text-white tabular-nums">{campaign.dateFrom}</p>
+                <p className="mt-1 text-sm font-bold text-white tabular-nums" dir="ltr">
+                  {formatCampaignDateDisplay(campaign.dateFrom)}
+                </p>
               </div>
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
                 <p className="text-xs font-medium text-white/60">تاريخ الانتهاء</p>
-                <p className="mt-1 text-sm font-bold text-white tabular-nums">{campaign.dateTo}</p>
+                <p className="mt-1 text-sm font-bold text-white tabular-nums" dir="ltr">
+                  {formatCampaignDateDisplay(campaign.dateTo)}
+                </p>
               </div>
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
                 <p className="text-xs font-medium text-white/60">الحالة</p>

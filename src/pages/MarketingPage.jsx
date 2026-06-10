@@ -11,7 +11,8 @@ import {
   extractCampaignList,
   mapCampaign,
   mapCampaignDetail,
-  toCampaignPayload,
+  toCampaignRequestBody,
+  getCampaignActivationHint,
   buildPerformanceSeries,
   buildMarketingStats,
   filterCampaignsByUiStatus,
@@ -109,7 +110,7 @@ export function MarketingPage() {
   async function handleCreate(form) {
     setSaving(true)
     try {
-      await createAdminCampaign(toCampaignPayload(form))
+      await createAdminCampaign(toCampaignRequestBody(form))
       triggerToast('تم إنشاء الحملة بنجاح')
       setCreateOpen(false)
       await loadCampaigns()
@@ -123,8 +124,7 @@ export function MarketingPage() {
   async function handleEditSave(form) {
     setSaving(true)
     try {
-      const body = toCampaignPayload(form)
-      await updateAdminCampaign(form.id, body)
+      await updateAdminCampaign(form.id, toCampaignRequestBody(form))
       triggerToast('تم تحديث الحملة بنجاح')
       setEditCampaign(null)
       await loadCampaigns()
@@ -160,6 +160,14 @@ export function MarketingPage() {
 
   async function handleToggleCampaign(camp) {
     const isActive = camp.status === 'active' && !camp.paused
+
+    if (!isActive) {
+      const hint = getCampaignActivationHint(camp)
+      if (hint) {
+        triggerToast(hint)
+        return
+      }
+    }
 
     try {
       const result = isActive

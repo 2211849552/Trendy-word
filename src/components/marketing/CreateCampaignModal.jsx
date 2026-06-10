@@ -1,25 +1,44 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { ImagePlus, X } from 'lucide-react'
+import {
+  CAMPAIGN_IMAGE_TYPES,
+  getTodayIsoDate,
+  validateCampaignImage,
+} from '../../api/adminCampaigns.js'
 
-const initial = {
-  name: '',
-  description: '',
-  link: '',
-  dateFrom: '',
-  dateTo: '',
+function emptyForm() {
+  return {
+    name: '',
+    description: '',
+    link: '',
+    dateFrom: getTodayIsoDate(),
+    dateTo: '',
+    bannerImage: null,
+  }
 }
 
+const acceptImages = CAMPAIGN_IMAGE_TYPES.join(',')
+
 export function CreateCampaignModal({ open, onClose, onSubmit, saving = false }) {
-  const [form, setForm] = useState(initial)
+  const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
+  const [previewUrl, setPreviewUrl] = useState('')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (!open) {
-      setForm(initial)
+      setForm(emptyForm())
       setErrors({})
+      setPreviewUrl('')
     }
   }, [open])
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   useEffect(() => {
     if (!open) return
@@ -46,6 +65,33 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
     if (errors[k]) setErrors((e) => ({ ...e, [k]: '' }))
   }
 
+  const clearImage = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl('')
+    set('bannerImage', null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      clearImage()
+      return
+    }
+
+    const imageError = validateCampaignImage(file)
+    if (imageError) {
+      setErrors((prev) => ({ ...prev, bannerImage: imageError }))
+      e.target.value = ''
+      return
+    }
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+    set('bannerImage', file)
+    setErrors((prev) => ({ ...prev, bannerImage: '' }))
+  }
+
   const validate = () => {
     const e = {}
     if (!form.name.trim()) e.name = 'مطلوب'
@@ -54,6 +100,10 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
     if (!form.dateTo) e.dateTo = 'مطلوب'
     if (form.dateFrom && form.dateTo && form.dateTo < form.dateFrom) {
       e.dateTo = 'يجب أن يكون بعد تاريخ البدء'
+    }
+    if (form.bannerImage) {
+      const imageError = validateCampaignImage(form.bannerImage)
+      if (imageError) e.bannerImage = imageError
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -145,6 +195,56 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
               dir="ltr"
               disabled={saving}
             />
+          </div>
+
+          <div>
+            <label htmlFor="camp-image" className="mb-1.5 block text-sm font-semibold text-white/90">
+              صورة الإعلان
+            </label>
+            <p className="mb-2 text-xs text-white/50">
+              JPEG أو PNG أو WebP — حد أقصى 2 ميجابايت
+            </p>
+
+            {previewUrl ? (
+              <div className="relative mb-3 overflow-hidden rounded-xl border border-white/10 bg-brand-300/50">
+                <img
+                  src={previewUrl}
+                  alt="معاينة صورة الإعلان"
+                  className="max-h-48 w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  disabled={saving}
+                  className="absolute left-2 top-2 rounded-lg bg-slate-900/70 p-1.5 text-white transition hover:bg-slate-900 disabled:opacity-50"
+                  aria-label="إزالة الصورة"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="camp-image"
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-brand-300/40 px-4 py-8 text-center transition hover:border-brand-500/40 hover:bg-brand-300/60"
+              >
+                <ImagePlus className="size-8 text-white/40" />
+                <span className="text-sm font-medium text-white/70">اضغطي لرفع صورة الإعلان</span>
+                <span className="text-xs text-white/45">اختياري — تظهر في واجهة الإعلان</span>
+              </label>
+            )}
+
+            <input
+              ref={fileInputRef}
+              id="camp-image"
+              type="file"
+              accept={acceptImages}
+              onChange={handleImageChange}
+              disabled={saving}
+              className={previewUrl ? 'mt-2 block w-full text-xs text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white' : 'sr-only'}
+            />
+            {errors.bannerImage ? (
+              <p className="mt-1 text-xs text-rose-600">{errors.bannerImage}</p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
