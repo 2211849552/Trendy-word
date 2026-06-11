@@ -25,6 +25,10 @@ import {
   mapEmployeeDetail,
   buildEmployeeQueryParams,
   buildEmployeeStats,
+  buildCreateEmployeeBody,
+  buildUpdateEmployeeBody,
+  extractCreatedEmployee,
+  upsertEmployeeInList,
   emptyEmployeeForm,
   employeeToForm,
   PLATFORM_ROLES,
@@ -72,34 +76,42 @@ export function StaffPage() {
   const [actionMessage, setActionMessage] = useState('')
 
   const loadSeq = useRef(0)
+  const loadDebounceRef = useRef(null)
 
-  const loadStaff = useCallback(async () => {
+  const loadStaff = useCallback(async ({ showLoading = false } = {}) => {
     const seq = ++loadSeq.current
     const params = buildEmployeeQueryParams({
       search: searchQuery,
       role: activeRole,
     })
-    const data = await getEmployees(params)
-    if (seq !== loadSeq.current) return
-    setStaff(extractEmployeeList(data).map(mapEmployee))
-    setPaginationMeta(extractPaginationMeta(data))
+    if (showLoading) {
+      setLoading(true)
+      setLoadError('')
+    }
+    try {
+      const data = await getEmployees(params)
+      if (seq !== loadSeq.current) return
+      setStaff(extractEmployeeList(data).map(mapEmployee))
+      setPaginationMeta(extractPaginationMeta(data))
+      setLoadError('')
+    } catch (err) {
+      if (seq !== loadSeq.current) return
+      setStaff([])
+      setPaginationMeta({})
+      setLoadError(apiErrorMessage(err, 'تعذّر تحميل قائمة الموظفين.'))
+    } finally {
+      if (seq === loadSeq.current && showLoading) setLoading(false)
+    }
   }, [searchQuery, activeRole])
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      setLoading(true)
-      setLoadError('')
-      try {
-        await loadStaff()
-      } catch (err) {
-        setStaff([])
-        setPaginationMeta({})
-        setLoadError(apiErrorMessage(err, 'تعذّر تحميل قائمة الموظفين.'))
-      } finally {
-        setLoading(false)
-      }
+    if (loadDebounceRef.current) clearTimeout(loadDebounceRef.current)
+    loadDebounceRef.current = setTimeout(() => {
+      loadStaff({ showLoading: true })
     }, 300)
-    return () => clearTimeout(timer)
+    return () => {
+      if (loadDebounceRef.current) clearTimeout(loadDebounceRef.current)
+    }
   }, [loadStaff])
 
   const stats = buildEmployeeStats(staff, paginationMeta)
@@ -172,24 +184,41 @@ export function StaffPage() {
 
     setSaveLoading(true)
     try {
+      if (loadDebounceRef.current) {
+        clearTimeout(loadDebounceRef.current)
+        loadDebounceRef.current = null
+      }
+
       if (editingId) {
-        const body = {
-          name: editForm.name.trim(),
-          email: editForm.email.trim(),
-          phone: editForm.phone.trim(),
-          role_id: roleId,
+        const body = buildUpdateEmployeeBody({
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          password: editForm.password,
+          roleId,
+        })
+        const updated = await updateEmployee(editingId, body)
+        const saved = extractCreatedEmployee(updated)
+        if (saved) {
+          const mapped = mapEmployee(saved)
+          setStaff((prev) => upsertEmployeeInList(prev, mapped))
         }
-        if (editForm.password.trim()) body.password = editForm.password.trim()
-        await updateEmployee(editingId, body)
         setActionMessage('تم تحديث بيانات الموظف.')
       } else {
-        await createEmployee({
-          name: editForm.name.trim(),
-          email: editForm.email.trim(),
-          phone: editForm.phone.trim(),
-          password: editForm.password.trim(),
-          role_id: roleId,
-        })
+        const created = await createEmployee(
+          buildCreateEmployeeBody({
+            name: editForm.name,
+            email: editForm.email,
+            phone: editForm.phone,
+            password: editForm.password,
+            roleId,
+          }),
+        )
+        const saved = extractCreatedEmployee(created)
+        if (saved) {
+          const mapped = mapEmployee(saved)
+          setStaff((prev) => upsertEmployeeInList(prev, mapped))
+        }
         setActionMessage('تمت إضافة الموظف بنجاح.')
       }
 

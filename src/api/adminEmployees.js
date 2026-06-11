@@ -61,6 +61,44 @@ export function extractEmployeeList(data) {
   return []
 }
 
+export function extractCreatedEmployee(data) {
+  const item = data?.data ?? data
+  return item?.id != null ? item : null
+}
+
+/** تجنّب إرسال هاتف فارغ — يسبب تعارض unique في قاعدة البيانات */
+export function buildCreateEmployeeBody({ name, email, phone, password, roleId }) {
+  const body = {
+    name: name.trim(),
+    email: email.trim(),
+    password: password.trim(),
+    role_id: roleId,
+  }
+  const trimmedPhone = phone?.trim()
+  if (trimmedPhone) body.phone = trimmedPhone
+  return body
+}
+
+export function buildUpdateEmployeeBody({ name, email, phone, password, roleId }) {
+  const body = {
+    name: name.trim(),
+    email: email.trim(),
+    role_id: roleId,
+  }
+  const trimmedPhone = phone?.trim()
+  if (trimmedPhone) body.phone = trimmedPhone
+  if (password?.trim()) body.password = password.trim()
+  return body
+}
+
+export function upsertEmployeeInList(list, employee) {
+  const idx = list.findIndex((item) => item.id === employee.id)
+  if (idx === -1) return [employee, ...list]
+  const next = [...list]
+  next[idx] = employee
+  return next
+}
+
 export function extractPaginationMeta(data) {
   return data?.meta ?? {}
 }
