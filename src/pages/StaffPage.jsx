@@ -34,7 +34,7 @@ import {
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
   if (err?.status === 403) return 'ليس لديك صلاحية إدارة الموظفين.'
-  if (err?.status === 422) return err.message || fallback
+  if (err?.status === 422 || err?.status === 500) return err.message || fallback
   if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
   return err?.message || fallback
 }

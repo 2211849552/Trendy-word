@@ -1,6 +1,25 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 const REQUEST_TIMEOUT_MS = 20000
 
+/** تحويل أخطاء SQL/قاعدة البيانات إلى رسائل مفهومة للمستخدم */
+export function sanitizeApiErrorMessage(message) {
+  if (!message || typeof message !== 'string') return message
+
+  const lower = message.toLowerCase()
+
+  if (lower.includes('duplicate entry') && lower.includes('phone')) {
+    return 'رقم الهاتف مستخدم مسبقاً. استخدمي رقماً آخر.'
+  }
+  if (lower.includes('duplicate entry') && lower.includes('email')) {
+    return 'البريد الإلكتروني مستخدم مسبقاً. استخدمي بريداً آخر.'
+  }
+  if (lower.includes('sqlstate') || lower.includes('integrity constraint')) {
+    return 'تعذّر إتمام العملية. تحققي من البيانات المدخلة (قد يكون الهاتف أو البريد مستخدماً مسبقاً).'
+  }
+
+  return message
+}
+
 export async function apiRequest(path, options = {}) {
   const headers = {
     Accept: 'application/json',
@@ -54,7 +73,7 @@ export async function apiRequest(path, options = {}) {
     } catch {
       // ignore non-JSON error bodies
     }
-    const error = new Error(message)
+    const error = new Error(sanitizeApiErrorMessage(message))
     error.status = response.status
     throw error
   }
