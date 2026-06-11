@@ -49,9 +49,13 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
       dir="rtl"
       className="sticky top-0 flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-xl"
     >
-      <div className="shrink-0 border-b border-white/10 px-6 py-7">
-        <h1 className="text-xl font-bold tracking-tight text-white">Trendy</h1>
-        <p className="mt-1 text-xs font-medium text-white/55">لوحة تحكم الإدارة العليا</p>
+      <div className="flex shrink-0 flex-col items-center gap-1.5 border-b border-white/10 px-4 py-5 text-center">
+        <img
+          src="/trendy-logo.png"
+          alt="Trendy"
+          className="block h-auto w-[88px] object-contain"
+        />
+        <p className="text-[15px] font-bold text-white">لوحة تحكم الإدارة العليا</p>
       </div>
 
       <nav
