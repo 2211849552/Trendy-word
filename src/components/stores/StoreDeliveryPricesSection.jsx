@@ -7,8 +7,20 @@ import {
   extractDeliveryPricesMap,
 } from '../../api/adminStores.js'
 
+const DEFAULT_EMPTY_PRICE = 10
+
+function parsePriceForSave(value) {
+  const trimmed = String(value ?? '').trim()
+  if (trimmed === '') return DEFAULT_EMPTY_PRICE
+  const num = Number(trimmed)
+  return Number.isFinite(num) && num >= 0 ? num : DEFAULT_EMPTY_PRICE
+}
+
 function formatDeliveryPrice(price) {
-  const value = Number(price) || 0
+  const trimmed = String(price ?? '').trim()
+  if (trimmed === '') return `${DEFAULT_EMPTY_PRICE} د.ل`
+  const value = Number(trimmed)
+  if (!Number.isFinite(value) || value < 0) return `${DEFAULT_EMPTY_PRICE} د.ل`
   if (value === 0) return 'مجاني'
   return `${value} د.ل`
 }
@@ -29,7 +41,7 @@ function mergeZonePrices(zones, pricesMap, namedPrices = []) {
   return zones.map((zone) => ({
     zoneId: zone.id,
     zoneName: nameByZoneId.get(zone.id) ?? zone.name,
-    price: pricesMap[zone.id] ?? pricesMap[String(zone.id)] ?? 0,
+    price: pricesMap[zone.id] ?? pricesMap[String(zone.id)] ?? '',
   }))
 }
 
@@ -130,7 +142,7 @@ export function StoreDeliveryPricesSection({
     setSaveError('')
     try {
       const pricesByZone = Object.fromEntries(
-        rows.map((row) => [row.zoneId, Number(row.price) || 0]),
+        rows.map((row) => [row.zoneId, parsePriceForSave(row.price)]),
       )
       const data = await updateStoreDeliveryPrices(storeId, pricesByZone)
       const updated = mapAdminStoreDetail(data)
@@ -182,7 +194,7 @@ export function StoreDeliveryPricesSection({
         <div>
           <p className="text-sm font-medium text-white/70">{title}</p>
           {canEdit ? (
-            <p className="mt-1 text-xs text-white/50">0 = توصيل مجاني — أدخلي السعر لكل منطقة ثم احفظي</p>
+            <p className="mt-1 text-xs text-white/50">الحقل الفارغ = 10 د.ل — 0 = توصيل مجاني</p>
           ) : (
             <p className="mt-1 text-xs text-white/45">تعديل الأسعار متاح لمدير النظام ومسؤول المتاجر فقط.</p>
           )}
@@ -223,7 +235,7 @@ export function StoreDeliveryPricesSection({
                         onChange={(e) => handlePriceChange(row.zoneId, e.target.value)}
                         className="input-brand w-full max-w-[180px]"
                         dir="ltr"
-                        placeholder="0"
+                        placeholder="10"
                         aria-label={`سعر التوصيل لـ ${row.zoneName}`}
                       />
                     ) : (
