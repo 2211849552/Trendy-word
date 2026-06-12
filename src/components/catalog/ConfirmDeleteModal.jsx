@@ -2,28 +2,50 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Loader2, Trash2, X } from 'lucide-react'
 
+const TONE_STYLES = {
+  danger: {
+    iconWrap: 'bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20',
+    confirm: 'bg-rose-600 hover:bg-rose-700',
+  },
+  warning: {
+    iconWrap: 'bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20',
+    confirm: 'bg-gradient-to-r from-brand-700 to-[#4285f4] hover:opacity-90',
+  },
+  primary: {
+    iconWrap: 'bg-brand-500/15 text-brand-600 ring-1 ring-brand-500/25',
+    confirm: 'bg-gradient-to-r from-brand-700 to-[#4285f4] hover:opacity-90',
+  },
+}
+
 /**
  * @param {{
  *   open: boolean;
  *   title?: string;
+ *   heading?: string;
  *   itemName?: string;
  *   message?: import('react').ReactNode;
  *   onCancel: () => void;
  *   onConfirm: () => void;
  *   loading?: boolean;
  *   confirmLabel?: string;
+ *   tone?: 'danger' | 'warning' | 'primary';
+ *   icon?: import('lucide-react').LucideIcon;
  * }} props
  */
 export function ConfirmDeleteModal({
   open,
   title = 'تأكيد الحذف',
+  heading = 'هل أنت متأكد؟',
   itemName,
   message,
   onCancel,
   onConfirm,
   loading = false,
   confirmLabel = 'تأكيد الحذف',
+  tone = 'danger',
+  icon: Icon = Trash2,
 }) {
+  const toneStyle = TONE_STYLES[tone] ?? TONE_STYLES.danger
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -69,7 +91,7 @@ export function ConfirmDeleteModal({
         aria-modal="true"
         aria-labelledby="confirm-delete-title"
         aria-describedby="confirm-delete-desc"
-        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-200"
         dir="rtl"
       >
         <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
@@ -88,10 +110,10 @@ export function ConfirmDeleteModal({
         </div>
 
         <div className="p-6 text-center">
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-            <Trash2 className="size-8" />
+          <div className={`mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl ${toneStyle.iconWrap}`}>
+            <Icon className="size-8" />
           </div>
-          <h3 className="text-xl font-bold text-white">هل أنت متأكد؟</h3>
+          <h3 className="text-xl font-bold text-white">{heading}</h3>
           <p id="confirm-delete-desc" className="mt-2 text-sm leading-relaxed text-white/60">
             {description}
           </p>
@@ -102,7 +124,7 @@ export function ConfirmDeleteModal({
             type="button"
             onClick={() => onConfirm?.()}
             disabled={loading}
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium transition-colors hover:bg-rose-700 disabled:opacity-60"
+            className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white shadow-premium transition-colors disabled:opacity-60 ${toneStyle.confirm}`}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : null}
             {confirmLabel}

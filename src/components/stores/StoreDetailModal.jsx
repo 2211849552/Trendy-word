@@ -11,8 +11,20 @@ import {
   CheckCircle2,
   Package,
   Loader2,
+  Wallet,
 } from 'lucide-react'
 import { fetchStoreProductsForDetail } from '../../api/products.js'
+import {
+  getStoreCustodySummaryForStore,
+  getStoreCustodyLogsForStore,
+  extractCustodyLogs,
+  mapCustodySummary,
+  mapCustodyLog,
+  formatCustodyDate,
+  formatCustodyAmount,
+} from '../../api/stores.js'
+import { mapSettleCustodyResponse } from '../../api/adminStores.js'
+import { ConfirmDeleteModal } from '../catalog/ConfirmDeleteModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
 
 const STATUS_LABELS = {
@@ -60,7 +72,6 @@ export function StoreDetailModal({
   open,
   loading = false,
   onClose,
-  onUpdateStore,
   onUpdateDeliveryPrices,
   onSettleCustody,
   onStoreUpdated,
@@ -68,11 +79,15 @@ export function StoreDetailModal({
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState('')
-  const [editForm, setEditForm] = useState({ name: '', phone: '', description: '' })
   const [deliveryPrices, setDeliveryPrices] = useState({})
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const [settleCustodyOpen, setSettleCustodyOpen] = useState(false)
+  const [custodySummary, setCustodySummary] = useState(null)
+  const [custodyLogs, setCustodyLogs] = useState([])
+  const [custodyLoading, setCustodyLoading] = useState(false)
+  const [custodyError, setCustodyError] = useState('')
 
   const loadProducts = useCallback(async (storeId) => {
     if (!storeId) return
@@ -88,10 +103,35 @@ export function StoreDetailModal({
     }
   }, [])
 
+  const loadCustody = useCallback(async (storeId) => {
+    if (!storeId) return
+    setCustodyLoading(true)
+    setCustodyError('')
+    try {
+      const [summaryData, logsData] = await Promise.all([
+        getStoreCustodySummaryForStore(storeId),
+        getStoreCustodyLogsForStore(storeId),
+      ])
+      setCustodySummary(mapCustodySummary(summaryData))
+      setCustodyLogs(extractCustodyLogs(logsData).map(mapCustodyLog))
+    } catch (err) {
+      setCustodySummary(null)
+      setCustodyLogs([])
+      if (err?.status === 403) {
+        setCustodyError('ليس لديك صلاحية عرض بيانات العهدة لهذا المتجر.')
+      } else {
+        setCustodyError(apiErrorMessage(err, 'تعذّر تحميل بيانات العهدة.'))
+      }
+    } finally {
+      setCustodyLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (!open || !store?.id || loading) return
     loadProducts(store.id)
-  }, [open, store?.id, loading, loadProducts])
+    if (onSettleCustody) loadCustody(store.id)
+  }, [open, store?.id, loading, loadProducts, loadCustody, onSettleCustody])
 
   useEffect(() => {
     if (!open) {
@@ -99,16 +139,38 @@ export function StoreDetailModal({
       setProductsError('')
       setActionMessage('')
       setActionError('')
+      setSettleCustodyOpen(false)
+      setCustodySummary(null)
+      setCustodyLogs([])
+      setCustodyError('')
     }
   }, [open])
 
+  async function handleSettleCustody() {
+    if (!store?.id || !onSettleCustody) return
+    setActionLoading(true)
+    setActionError('')
+    try {
+      const result = await onSettleCustody(store.id)
+      const settled = mapSettleCustodyResponse(result)
+      setSettleCustodyOpen(false)
+      await loadCustody(store.id)
+      onStoreUpdated?.({ ...store, custodyBalance: settled.custodyBalance })
+      setActionMessage(
+        settled.settledAmount > 0
+          ? `تم تسوية العهدة بنجاح (${formatCustodyAmount(settled.settledAmount)}).`
+          : 'تم تسوية العهدة بنجاح.',
+      )
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setActionError(apiErrorMessage(err, 'تعذّر تسوية العهدة.'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!store) return
-    setEditForm({
-      name: store.name ?? '',
-      phone: store.phone && store.phone !== '—' ? store.phone : '',
-      description: store.description ?? '',
-    })
     const prices = store.deliveryPrices ?? store.raw?.delivery_prices ?? {}
     setDeliveryPrices(
       prices && typeof prices === 'object' ? { ...prices } : {},
@@ -211,7 +273,7 @@ export function StoreDetailModal({
                 </div>
               </div>
 
-              {(onUpdateStore || onUpdateDeliveryPrices || onSettleCustody) ? (
+              {(onUpdateDeliveryPrices || onSettleCustody) ? (
                 <div className="border-t border-white/5 pt-6 space-y-4">
                   <h4 className="text-lg font-bold text-white">إدارة المتجر</h4>
                   {actionMessage ? (
@@ -219,59 +281,6 @@ export function StoreDetailModal({
                   ) : null}
                   {actionError ? (
                     <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{actionError}</p>
-                  ) : null}
-
-                  {onUpdateStore ? (
-                    <form
-                      className="space-y-3 rounded-xl border border-white/10 bg-brand-300/50 p-4"
-                      onSubmit={async (e) => {
-                        e.preventDefault()
-                        setActionLoading(true)
-                        setActionError('')
-                        try {
-                          const updated = await onUpdateStore(store.id, {
-                            name: editForm.name.trim(),
-                            phone: editForm.phone.trim(),
-                            description: editForm.description.trim() || null,
-                          })
-                          if (updated) onStoreUpdated?.(updated)
-                          setActionMessage('تم تحديث بيانات المتجر.')
-                          setTimeout(() => setActionMessage(''), 3000)
-                        } catch (err) {
-                          setActionError(apiErrorMessage(err, 'تعذّر تحديث المتجر.'))
-                        } finally {
-                          setActionLoading(false)
-                        }
-                      }}
-                    >
-                      <p className="text-sm font-medium text-white/70">تعديل البيانات الأساسية</p>
-                      <input
-                        type="text"
-                        value={editForm.name}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-                        placeholder="اسم المتجر"
-                        className="input-brand"
-                        required
-                      />
-                      <input
-                        type="tel"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
-                        placeholder="الهاتف"
-                        className="input-brand"
-                        dir="ltr"
-                      />
-                      <textarea
-                        value={editForm.description}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                        placeholder="الوصف"
-                        rows={2}
-                        className="input-brand resize-none"
-                      />
-                      <button type="submit" disabled={actionLoading} className="btn-primary disabled:opacity-60">
-                        {actionLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
-                      </button>
-                    </form>
                   ) : null}
 
                   {onUpdateDeliveryPrices && Object.keys(deliveryPrices).length > 0 ? (
@@ -323,27 +332,100 @@ export function StoreDetailModal({
                   ) : null}
 
                   {onSettleCustody ? (
-                    <button
-                      type="button"
-                      disabled={actionLoading}
-                      onClick={async () => {
-                        if (!window.confirm('هل تريد تسوية عهدة المتجر؟')) return
-                        setActionLoading(true)
-                        setActionError('')
-                        try {
-                          await onSettleCustody(store.id)
-                          setActionMessage('تم تسوية العهدة بنجاح.')
-                          setTimeout(() => setActionMessage(''), 3000)
-                        } catch (err) {
-                          setActionError(apiErrorMessage(err, 'تعذّر تسوية العهدة.'))
-                        } finally {
-                          setActionLoading(false)
-                        }
-                      }}
-                      className="w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-300 hover:bg-amber-500/20 disabled:opacity-60"
-                    >
-                      تسوية العهدة النقدية
-                    </button>
+                    <div className="space-y-4 rounded-xl border border-white/10 bg-brand-300/50 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-white/70">العهدة النقدية</p>
+                        {custodyLoading ? (
+                          <Loader2 className="size-4 animate-spin text-white/50" />
+                        ) : null}
+                      </div>
+
+                      {custodyError ? (
+                        <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                          {custodyError}
+                        </p>
+                      ) : null}
+
+                      {custodySummary && !custodyError ? (
+                        <>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
+                              <p className="text-xs text-white/60">الرصيد المستحق</p>
+                              <p className="mt-1 text-lg font-bold text-amber-300 tabular-nums" dir="ltr">
+                                {formatCustodyAmount(custodySummary.totalOwed, custodySummary.currency)}
+                              </p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
+                              <p className="text-xs text-white/60">عدد الطلبات</p>
+                              <p className="mt-1 text-lg font-bold text-white tabular-nums">
+                                {custodySummary.numberOfOrders}
+                              </p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
+                              <p className="text-xs text-white/60">آخر تسوية</p>
+                              <p className="mt-1 text-sm font-bold text-white">
+                                {formatCustodyDate(custodySummary.lastSettledAt)}
+                              </p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
+                              <p className="text-xs text-white/60">الحالة</p>
+                              <span className={`mt-1 inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                                custodySummary.status === 'pending_settlement'
+                                  ? 'bg-amber-500/15 text-amber-300'
+                                  : 'bg-emerald-500/15 text-emerald-300'
+                              }`}>
+                                {custodySummary.statusText}
+                              </span>
+                            </div>
+                          </div>
+
+                          {custodyLogs.length > 0 ? (
+                            <div className="overflow-hidden rounded-xl border border-white/10">
+                              <table className="w-full text-right text-sm">
+                                <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
+                                  <tr>
+                                    <th className="px-3 py-2 font-medium">التاريخ</th>
+                                    <th className="px-3 py-2 font-medium">الإجراء</th>
+                                    <th className="px-3 py-2 font-medium">المبلغ</th>
+                                    <th className="px-3 py-2 font-medium">الرصيد بعد</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                  {custodyLogs.map((log) => (
+                                    <tr key={log.id} className="hover:bg-brand-300/50">
+                                      <td className="px-3 py-2.5 text-xs text-white/70">
+                                        {formatCustodyDate(log.date)}
+                                      </td>
+                                      <td className="px-3 py-2.5 text-white">{log.action}</td>
+                                      <td className="px-3 py-2.5 font-bold tabular-nums text-white" dir="ltr">
+                                        {log.amountFormatted} د.ل
+                                      </td>
+                                      <td className="px-3 py-2.5 tabular-nums text-white/80" dir="ltr">
+                                        {formatCustodyAmount(log.balanceAfter, custodySummary.currency)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-white/55">لا يوجد سجل حركات للعهدة بعد.</p>
+                          )}
+                        </>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        disabled={actionLoading || custodyLoading || (custodySummary?.totalOwed ?? 0) <= 0}
+                        onClick={() => setSettleCustodyOpen(true)}
+                        className="w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-300 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        تسوية العهدة النقدية
+                      </button>
+                      {!custodyLoading && custodySummary && custodySummary.totalOwed <= 0 ? (
+                        <p className="text-xs text-white/50">لا توجد عهدة مستحقة للتسوية حالياً.</p>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -426,5 +508,23 @@ export function StoreDetailModal({
     </div>
   )
 
-  return createPortal(overlay, document.body)
+  return (
+    <>
+      {createPortal(overlay, document.body)}
+      <ConfirmDeleteModal
+        open={settleCustodyOpen}
+        title="تسوية العهدة النقدية"
+        heading="تأكيد تسوية العهدة"
+        message="هل تريد تسوية عهدة المتجر؟"
+        confirmLabel="تسوية العهدة"
+        tone="primary"
+        icon={Wallet}
+        loading={actionLoading}
+        onCancel={() => {
+          if (!actionLoading) setSettleCustodyOpen(false)
+        }}
+        onConfirm={handleSettleCustody}
+      />
+    </>
+  )
 }

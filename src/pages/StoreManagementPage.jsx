@@ -254,8 +254,9 @@ export function StoreManagementPage() {
   }
 
   const handleSettleCustody = async (storeId) => {
-    await settleStoreCustody(storeId)
+    const result = await settleStoreCustody(storeId)
     await loadStores()
+    return result
   }
 
   const handlePrintStores = async () => {

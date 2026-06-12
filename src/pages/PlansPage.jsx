@@ -135,7 +135,7 @@ function SubscriptionSummaryCard({ plans }) {
 
 function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () => {} }) {
   const active = plan.status !== 'paused'
-  const periodLabel = plan.duration === 'yearly' ? 'سنوي' : 'شهري'
+  const periodLabel = `${plan.durationDays ?? 30} يوم`
 
   return (
     <article

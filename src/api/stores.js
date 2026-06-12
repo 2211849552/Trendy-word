@@ -63,6 +63,65 @@ export function getStoreCustodyLogs(params = {}) {
   return apiRequest(withQuery('/api/stores/custody/logs', params))
 }
 
+export function getStoreCustodySummaryForStore(storeId) {
+  return getStoreCustodySummary({ store_id: storeId })
+}
+
+export function getStoreCustodyLogsForStore(storeId, params = {}) {
+  return getStoreCustodyLogs({ store_id: storeId, per_page: 10, ...params })
+}
+
+export function extractCustodyLogs(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.data)) return data.data
+  return []
+}
+
+export function mapCustodySummary(data) {
+  const item = data?.data ?? data
+  return {
+    totalOwed: Number(item?.total_custody_owed ?? 0),
+    numberOfOrders: Number(item?.number_of_orders ?? 0),
+    lastSettledAt: item?.last_settled_at ?? null,
+    status: item?.status ?? 'settled',
+    statusText: item?.status_text ?? '—',
+    totalProfits: Number(item?.total_profits ?? 0),
+    currency: item?.currency ?? 'LYD',
+  }
+}
+
+export function mapCustodyLog(item) {
+  return {
+    id: item.id,
+    date: item.date ?? null,
+    action: item.action ?? '—',
+    type: item.type ?? '',
+    amount: Number(item.amount ?? 0),
+    amountFormatted: item.amount_formatted ?? String(item.amount ?? 0),
+    balanceAfter: Number(item.balance_after ?? 0),
+  }
+}
+
+export function formatCustodyDate(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleString('ar-LY', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function formatCustodyAmount(value, currency = 'LYD') {
+  const amount = Number(value)
+  if (Number.isNaN(amount)) return '—'
+  const label = currency === 'LYD' ? 'د.ل' : currency
+  return `${amount.toFixed(2)} ${label}`
+}
+
 // POST /api/stores/{store}/renew
 export function renewStorePlan(store, body = {}) {
   return apiRequest(`/api/stores/${store}/renew`, {

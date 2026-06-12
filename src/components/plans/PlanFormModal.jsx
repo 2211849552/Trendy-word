@@ -2,11 +2,6 @@ import { useEffect, useId, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { PrimaryButton } from '../PrimaryButton.jsx'
 
-const DURATION_OPTIONS = [
-  { value: 'monthly', label: 'شهري' },
-  { value: 'yearly', label: 'سنوي' },
-]
-
 const STATUS_OPTIONS = [
   { value: 'active', label: 'نشط' },
   { value: 'paused', label: 'موقوف' },
@@ -16,7 +11,7 @@ function emptyForm() {
   return {
     name: '',
     price: '0',
-    duration: 'monthly',
+    durationDays: '30',
     status: 'active',
   }
 }
@@ -31,7 +26,7 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
       setForm({
         name: initialPlan.name,
         price: String(initialPlan.price),
-        duration: initialPlan.duration ?? 'monthly',
+        durationDays: String(initialPlan.durationDays ?? 30),
         status: initialPlan.status ?? 'active',
       })
     } else {
@@ -73,14 +68,16 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
     if (isView || saving) return
     const name = form.name.trim()
     const priceNum = Number(form.price)
+    const durationDays = Number(form.durationDays)
     if (!name || Number.isNaN(priceNum) || priceNum < 0) return
+    if (!Number.isInteger(durationDays) || durationDays < 1) return
 
     await onSave?.({
       mode,
       id: initialPlan?.id,
       name,
       price: priceNum,
-      duration: form.duration,
+      durationDays,
       status: form.status,
     })
   }
@@ -153,22 +150,21 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
                 </div>
               </div>
               <div>
-                <label htmlFor="plan-duration" className="mb-2 block text-sm font-bold text-white/80">
-                  دورة الفوترة
+                <label htmlFor="plan-duration-days" className="mb-2 block text-sm font-bold text-white/80">
+                  مدة الاشتراك (يوم) <span className="text-rose-500">*</span>
                 </label>
-                <select
-                  id="plan-duration"
-                  value={form.duration}
-                  onChange={(e) => setField('duration', e.target.value)}
-                  disabled={readOnly}
-                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 disabled:opacity-90"
-                >
-                  {DURATION_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  id="plan-duration-days"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={form.durationDays}
+                  onChange={(e) => setField('durationDays', e.target.value)}
+                  required={!readOnly}
+                  readOnly={readOnly}
+                  placeholder="مثال: 30"
+                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 read-only:opacity-90"
+                />
               </div>
             </div>
 

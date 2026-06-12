@@ -73,7 +73,7 @@ export function toPlanPayload(form) {
   return {
     name: form.name.trim(),
     price: Number(form.price),
-    duration_days: form.durationDays ?? durationToDays(form.duration),
+    duration_days: Number(form.durationDays) || durationToDays(form.duration),
     is_active: form.status !== 'paused',
   }
 }

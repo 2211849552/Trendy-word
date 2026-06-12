@@ -57,6 +57,17 @@ export function settleStoreCustody(store) {
   })
 }
 
+export function mapSettleCustodyResponse(data) {
+  const item = data?.data ?? data
+  return {
+    storeId: item?.store_id ?? null,
+    settledAmount: Number(item?.settled_amount ?? 0),
+    custodyBalance: Number(item?.custody_balance ?? 0),
+    walletBalance: Number(item?.wallet_balance ?? 0),
+    message: data?.message ?? '',
+  }
+}
+
 export function extractStoreList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data
