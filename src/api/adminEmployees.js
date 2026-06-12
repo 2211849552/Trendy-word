@@ -42,6 +42,11 @@ export const PLATFORM_ROLES = [
   { id: 4, slug: 'accountant', label: 'محاسب' },
 ]
 
+/** أدوار يمكن تعيينها عند إضافة/تعديل موظف — لا يشمل مدير النظام */
+export const ASSIGNABLE_PLATFORM_ROLES = PLATFORM_ROLES.filter(
+  (role) => role.slug !== 'super_admin',
+)
+
 const STATUS_UI = {
   active: 'نشط',
   inactive: 'معطل',
@@ -196,24 +201,28 @@ export function buildEmployeeStats(employees, meta = {}) {
 }
 
 export function emptyEmployeeForm() {
+  const defaultRole = ASSIGNABLE_PLATFORM_ROLES[2]
   return {
     name: '',
     email: '',
     phone: '',
-    role: PLATFORM_ROLES[3].label,
-    roleId: PLATFORM_ROLES[3].id,
+    role: defaultRole.label,
+    roleId: defaultRole.id,
     password: '',
     confirmPassword: '',
   }
 }
 
 export function employeeToForm(employee) {
+  const defaultRole = ASSIGNABLE_PLATFORM_ROLES[0]
   return {
     name: employee.name ?? '',
     email: employee.email ?? '',
     phone: employee.phone ?? '',
-    role: employee.role ?? PLATFORM_ROLES[0].label,
-    roleId: employee.roleId ?? roleLabelToId(employee.role),
+    role: employee.roleSlug === 'super_admin' ? defaultRole.label : (employee.role ?? defaultRole.label),
+    roleId: employee.roleSlug === 'super_admin'
+      ? defaultRole.id
+      : (employee.roleId ?? roleLabelToId(employee.role) ?? defaultRole.id),
     password: '',
     confirmPassword: '',
   }

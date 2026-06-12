@@ -32,6 +32,7 @@ import {
   emptyEmployeeForm,
   employeeToForm,
   PLATFORM_ROLES,
+  ASSIGNABLE_PLATFORM_ROLES,
   roleLabelToId,
 } from '../api/adminEmployees.js'
 
@@ -572,7 +573,7 @@ export function StaffPage() {
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                   className="input-brand"
                 >
-                  {PLATFORM_ROLES.map((role) => (
+                  {ASSIGNABLE_PLATFORM_ROLES.map((role) => (
                     <option key={role.slug}>{role.label}</option>
                   ))}
                 </select>
