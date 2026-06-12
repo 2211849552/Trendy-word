@@ -529,7 +529,7 @@ export function StaffPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="p-6 space-y-5 text-right">
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-5 text-right" autoComplete="off">
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1.5">الاسم الكامل</label>
                 <input
@@ -551,6 +551,7 @@ export function StaffPage() {
                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                     className="input-brand text-left font-mono"
                     dir="ltr"
+                    autoComplete="off"
                   />
                 </div>
                 <div>
@@ -561,6 +562,7 @@ export function StaffPage() {
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                     className="input-brand text-left font-mono"
                     dir="ltr"
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -571,7 +573,9 @@ export function StaffPage() {
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                   className="input-brand"
+                  required={!editingId}
                 >
+                  {!editingId ? <option value="">اختر الدور الوظيفي</option> : null}
                   {PLATFORM_ROLES.map((role) => (
                     <option key={role.slug}>{role.label}</option>
                   ))}
@@ -591,6 +595,7 @@ export function StaffPage() {
                     className="input-brand text-left"
                     dir="ltr"
                     minLength={8}
+                    autoComplete="new-password"
                   />
                 </div>
                 <div>
@@ -603,6 +608,7 @@ export function StaffPage() {
                     className="input-brand text-left"
                     dir="ltr"
                     minLength={8}
+                    autoComplete="new-password"
                   />
                 </div>
               </div>

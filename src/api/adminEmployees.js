@@ -200,8 +200,8 @@ export function emptyEmployeeForm() {
     name: '',
     email: '',
     phone: '',
-    role: PLATFORM_ROLES[3].label,
-    roleId: PLATFORM_ROLES[3].id,
+    role: '',
+    roleId: null,
     password: '',
     confirmPassword: '',
   }
