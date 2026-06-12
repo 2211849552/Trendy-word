@@ -576,12 +576,8 @@ export function StaffPage() {
                   className="input-brand"
                   required={!editingId}
                 >
-<<<<<<< HEAD
-                  {ASSIGNABLE_PLATFORM_ROLES.map((role) => (
-=======
                   {!editingId ? <option value="">اختر الدور الوظيفي</option> : null}
-                  {PLATFORM_ROLES.map((role) => (
->>>>>>> dcb1b85a424f65cf30369315ae452104c822a477
+                  {ASSIGNABLE_PLATFORM_ROLES.map((role) => (
                     <option key={role.slug}>{role.label}</option>
                   ))}
                 </select>
