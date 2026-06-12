@@ -206,8 +206,13 @@ export function emptyEmployeeForm() {
     name: '',
     email: '',
     phone: '',
+<<<<<<< HEAD
     role: defaultRole.label,
     roleId: defaultRole.id,
+=======
+    role: '',
+    roleId: null,
+>>>>>>> dcb1b85a424f65cf30369315ae452104c822a477
     password: '',
     confirmPassword: '',
   }
