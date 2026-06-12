@@ -124,9 +124,9 @@ export function StoreListView({
   onToggleStoreStatus,
   onLoadStoreDetails,
   onUpdateStore,
-  onUpdateDeliveryPrices,
   onSettleCustody,
   onPrintStores,
+  canEditDeliveryPrices = false,
   onBackToJoin,
 }) {
   const [toggleStore, setToggleStore] = useState(null)
@@ -467,9 +467,8 @@ export function StoreListView({
           setDetailModalOpen(false)
           setSelectedStore(null)
         }}
-        onUpdateStore={onUpdateStore}
-        onUpdateDeliveryPrices={onUpdateDeliveryPrices}
         onSettleCustody={onSettleCustody}
+        canEditDeliveryPrices={canEditDeliveryPrices}
         onStoreUpdated={(updated) => setSelectedStore(updated)}
       />
     </>
