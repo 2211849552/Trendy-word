@@ -1,5 +1,5 @@
 import { Eye, ImageIcon, Pencil, Play, Pause, Trash2 } from 'lucide-react'
-import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
+import { formatCampaignDateDisplay, formatCampaignPriceDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
@@ -43,6 +43,12 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
       <div className="flex flex-1 flex-col p-5">
       <h3 className="text-lg font-bold text-white">{campaign.title}</h3>
       <p className="mt-1 text-sm leading-relaxed text-white/70">{campaign.description}</p>
+
+      {campaign.price != null ? (
+        <p className="mt-3 text-sm font-semibold text-brand-300 tabular-nums" dir="ltr">
+          {formatCampaignPriceDisplay(campaign.price)}
+        </p>
+      ) : null}
 
       {campaign.link ? (
         <>

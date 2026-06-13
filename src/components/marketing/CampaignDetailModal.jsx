@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
-import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
+import { formatCampaignDateDisplay, formatCampaignPriceDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
@@ -88,6 +88,14 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
                   <p className="text-xs font-medium text-white/60">رابط الحملة</p>
                   <p className="mt-1 truncate text-sm font-bold text-white" dir="ltr">
                     {campaign.link}
+                  </p>
+                </div>
+              ) : null}
+              {campaign.price != null ? (
+                <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
+                  <p className="text-xs font-medium text-white/60">سعر الحملة</p>
+                  <p className="mt-1 text-sm font-bold text-brand-300 tabular-nums" dir="ltr">
+                    {formatCampaignPriceDisplay(campaign.price)}
                   </p>
                 </div>
               ) : null}

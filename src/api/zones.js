@@ -21,6 +21,44 @@ export function createZone(body) {
   })
 }
 
+const ZONE_CITY_STORAGE_KEY = 'trendy_admin_zone_cities'
+
+function readZoneCityMap() {
+  try {
+    const raw = localStorage.getItem(ZONE_CITY_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeZoneCityMap(map) {
+  localStorage.setItem(ZONE_CITY_STORAGE_KEY, JSON.stringify(map))
+}
+
+export function saveZoneCity(zoneId, city) {
+  const trimmed = String(city ?? '').trim()
+  if (!zoneId || !trimmed) return
+  const map = readZoneCityMap()
+  map[String(zoneId)] = trimmed
+  writeZoneCityMap(map)
+}
+
+export function removeZoneCity(zoneId) {
+  if (zoneId == null || zoneId === '') return
+  const map = readZoneCityMap()
+  delete map[String(zoneId)]
+  writeZoneCityMap(map)
+}
+
+function resolveZoneCity(item) {
+  const fromApi = item?.city ?? item?.zone_city ?? ''
+  if (fromApi) return String(fromApi)
+  const id = item?.id ?? item?.zone_id
+  if (id == null) return ''
+  return readZoneCityMap()[String(id)] ?? ''
+}
+
 /** DELETE /api/admin/zones/{id} — حذف منطقة */
 export function deleteZone(id) {
   return apiRequest(`/api/admin/zones/${encodeURIComponent(String(id))}`, {
@@ -45,19 +83,29 @@ export function mapZone(item) {
   return {
     id: String(id),
     name: String(name),
-    city: item.city ?? item.zone_city ?? '',
+    city: resolveZoneCity(item),
     status: item.status ?? item.is_active ?? null,
     createdAt: item.created_at ? String(item.created_at).slice(0, 10) : '—',
     raw: item,
   }
 }
 
+export function extractCreatedZone(data) {
+  const payload = data?.data ?? data
+  if (payload?.id == null) return null
+  return mapZone(payload)
+}
+
 export function buildCreateZonePayload(form) {
-  return { name: form.name.trim() }
+  const payload = { name: form.name.trim() }
+  const city = form.city?.trim()
+  if (city) payload.city = city
+  return payload
 }
 
 export function validateCreateZoneForm(form) {
   if (!form.name?.trim()) return 'اسم المنطقة مطلوب.'
+  if (!form.city?.trim()) return 'المدينة مطلوبة.'
   return null
 }
 

@@ -12,6 +12,9 @@ import {
   deleteZone,
   buildCreateZonePayload,
   validateCreateZoneForm,
+  extractCreatedZone,
+  saveZoneCity,
+  removeZoneCity,
 } from '../api/zones.js'
 import { ConfirmDeleteModal } from '../components/catalog/ConfirmDeleteModal.jsx'
 import { PrimaryButton } from '../components/PrimaryButton.jsx'
@@ -32,6 +35,7 @@ export function ZonesPage() {
 
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [newAddressName, setNewAddressName] = useState('')
+  const [newAddressCity, setNewAddressCity] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState('')
 
@@ -64,11 +68,13 @@ export function ZonesPage() {
   const closeAdd = () => {
     setAddModalOpen(false)
     setNewAddressName('')
+    setNewAddressCity('')
     setAddError('')
   }
 
   const openAdd = () => {
     setNewAddressName('')
+    setNewAddressCity('')
     setAddError('')
     setAddModalOpen(true)
   }
@@ -77,7 +83,10 @@ export function ZonesPage() {
     e.preventDefault()
     setAddError('')
 
-    const validationError = validateCreateZoneForm({ name: newAddressName })
+    const validationError = validateCreateZoneForm({
+      name: newAddressName,
+      city: newAddressCity,
+    })
     if (validationError) {
       setAddError(validationError)
       return
@@ -85,7 +94,14 @@ export function ZonesPage() {
 
     setAddLoading(true)
     try {
-      await createZone(buildCreateZonePayload({ name: newAddressName }))
+      const result = await createZone(buildCreateZonePayload({
+        name: newAddressName,
+        city: newAddressCity,
+      }))
+      const created = extractCreatedZone(result)
+      if (created?.id) {
+        saveZoneCity(created.id, newAddressCity)
+      }
       closeAdd()
       setActionMessage('تم إضافة المنطقة بنجاح.')
       await loadAddresses()
@@ -106,6 +122,7 @@ export function ZonesPage() {
     setDeleteLoading(true)
     try {
       await deleteZone(deleteTarget.id)
+      removeZoneCity(deleteTarget.id)
       setDeleteTarget(null)
       setActionMessage('تم حذف المنطقة بنجاح.')
       await loadAddresses()
@@ -244,9 +261,24 @@ export function ZonesPage() {
                   id="address-name"
                   type="text"
                   required
-                  placeholder="مثال: طرابلس"
+                  placeholder="مثال: بن عاشور"
                   value={newAddressName}
                   onChange={(e) => setNewAddressName(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-brand-200 px-3 py-2.5 text-sm outline-none transition-colors focus:border-brand-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="address-city" className="block text-sm font-medium text-white/80 mb-1.5">
+                  المدينة *
+                </label>
+                <input
+                  id="address-city"
+                  type="text"
+                  required
+                  placeholder="مثال: طرابلس"
+                  value={newAddressCity}
+                  onChange={(e) => setNewAddressCity(e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-brand-200 px-3 py-2.5 text-sm outline-none transition-colors focus:border-brand-500"
                 />
               </div>

@@ -30,10 +30,11 @@ export function updateDriver(id, body) {
 
 // POST /api/drivers/{id}/deactivate
 export function deactivateDriver(id, reason) {
-  const payload = reason?.trim() ? { reason: reason.trim() } : {}
   return apiRequest(`/api/drivers/${encodeURIComponent(String(id))}/deactivate`, {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      reason: String(reason ?? '').trim() || 'تعطيل من لوحة الإدارة',
+    }),
   })
 }
 
@@ -42,6 +43,46 @@ export function reactivateDriver(id) {
   return apiRequest(`/api/drivers/${encodeURIComponent(String(id))}/reactivate`, {
     method: 'POST',
   })
+}
+
+// GET /api/drivers/my/custody-balance?driver_id={id}
+export function getDriverCustodyBalance(driverId) {
+  const query = new URLSearchParams({ driver_id: String(driverId) }).toString()
+  return apiRequest(`/api/drivers/my/custody-balance?${query}`)
+}
+
+// POST /api/drivers/{id}/settle-cash — تسوية العهدة النقدية للسائق
+export function settleDriverCash(driverId, body) {
+  return apiRequest(`/api/drivers/${encodeURIComponent(String(driverId))}/settle-cash`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function mapDriverCustodyBalance(data) {
+  const item = data?.data ?? data
+  return {
+    balance: Number(item?.custody_balance ?? 0),
+    currency: item?.currency ?? 'LYD',
+    firstCollectedAt: item?.first_cash_collected_at ?? null,
+    isBlockedFromCod: Boolean(item?.is_blocked_from_cod ?? false),
+  }
+}
+
+export function mapSettleDriverCashResponse(data) {
+  const item = data?.data ?? data
+  return {
+    earningsBalance: Number(item?.earnings_balance ?? 0),
+    cashCollectedBalance: Number(item?.cash_collected_balance ?? 0),
+    pendingCash: Number(item?.pending_cash ?? 0),
+    message: data?.message ?? '',
+  }
+}
+
+export function formatDriverCustodyAmount(value, currency = 'LYD') {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return '—'
+  return `${num.toLocaleString('ar-LY')} ${currency === 'LYD' ? 'د.ل' : currency}`
 }
 
 /** أنواع المركبة المدعومة في POST /api/drivers */
@@ -76,6 +117,7 @@ export function extractPaginationMeta(data) {
 const ACCOUNT_STATUS_UI = {
   active: 'نشط',
   inactive: 'معطل',
+  disabled: 'معطل',
 }
 
 const AVAILABILITY_UI = {
@@ -114,17 +156,20 @@ function formatVehicle(item) {
 }
 
 function resolveDisplayStatus(item) {
+  const profile = item.driver_profile ?? item.profile ?? {}
   const accountStatus = item.status ?? 'active'
-  if (accountStatus === 'inactive') {
+  if (accountStatus === 'inactive' || accountStatus === 'disabled') {
     return { label: 'معطل', rawStatus: 'inactive', availability: null }
   }
 
   const availability =
+    profile.availability_status ??
+    item.driver_profile?.availability_status ??
     item.online_status ??
     item.availability ??
     item.connection_status ??
     item.driver_profile?.online_status ??
-    'available'
+    'offline'
 
   if (['on_trip', 'busy', 'delivering'].includes(availability)) {
     return { label: 'في مهمة', rawStatus: 'active', availability }
@@ -156,8 +201,17 @@ export function mapDriver(item) {
     rawStatus: display.rawStatus,
     availability: display.availability,
     accountStatusLabel: ACCOUNT_STATUS_UI[item.status] ?? item.status ?? '—',
-    custodyBalance: Number(profile.custody_balance ?? item.custody_balance ?? 0),
-    totalEarnings: Number(stats.total_earnings ?? item.total_earnings ?? 0),
+    custodyBalance: Number(
+      profile.cash_collected_balance ??
+        profile.custody_balance ??
+        item.cash_collected_balance ??
+        item.custody_balance ??
+        0,
+    ),
+    pendingCash: Number(profile.pending_cash ?? item.pending_cash ?? 0),
+    isBlockedFromCod: Boolean(profile.is_blocked_from_cod ?? item.is_blocked_from_cod ?? false),
+    firstCashCollectedAt: profile.first_cash_collected_at ?? item.first_cash_collected_at ?? null,
+    totalEarnings: Number(stats.total_earnings ?? item.total_earnings ?? profile.earnings ?? 0),
     joinDate: item.created_at ? String(item.created_at).slice(0, 10) : '—',
     raw: item,
   }
@@ -179,28 +233,57 @@ export function mapDriverDetail(data) {
   }
 }
 
-export function buildDriverQueryParams({ search, status, perPage = 100 } = {}) {
+export function buildDriverQueryParams({ status, perPage = 100 } = {}) {
   const params = { per_page: perPage }
-  const trimmed = search?.trim()
-  if (trimmed) params.search = trimmed
 
   switch (status) {
     case 'معطل':
-      params.status = 'inactive'
+      params.status = 'disabled'
       break
     case 'متاح':
-      params.status = 'active'
-      params.availability = 'available'
-      break
     case 'في مهمة':
       params.status = 'active'
-      params.availability = 'on_trip'
       break
     default:
       break
   }
 
   return params
+}
+
+function driverSearchHaystack(driver) {
+  return [
+    driver.name,
+    driver.phone,
+    driver.email,
+    driver.vehicle,
+    driver.vehicleTypeLabel,
+    driver.plateNumber,
+    driver.licenseNumber,
+  ]
+    .filter((value) => value && value !== '—')
+    .join(' ')
+    .toLowerCase()
+}
+
+/** فلترة القائمة محلياً — حالات التوفر والبحث بالمركبة (غير مدعومة مباشرة في API) */
+export function applyDriverListFilters(drivers, { search, status } = {}) {
+  let list = Array.isArray(drivers) ? drivers : []
+
+  if (status === 'متاح') {
+    list = list.filter((driver) => driver.status === 'متاح')
+  } else if (status === 'في مهمة') {
+    list = list.filter((driver) => driver.status === 'في مهمة')
+  } else if (status === 'معطل') {
+    list = list.filter((driver) => driver.status === 'معطل' || driver.rawStatus === 'inactive')
+  }
+
+  const trimmed = search?.trim().toLowerCase()
+  if (trimmed) {
+    list = list.filter((driver) => driverSearchHaystack(driver).includes(trimmed))
+  }
+
+  return list
 }
 
 export function buildDriverStats(drivers, meta = {}) {

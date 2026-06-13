@@ -12,6 +12,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [link, setLink] = useState('')
+  const [price, setPrice] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [bannerImage, setBannerImage] = useState(null)
@@ -24,6 +25,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     setName(campaign.title)
     setDescription(campaign.description)
     setLink(campaign.link ?? '')
+    setPrice(campaign.price != null ? String(campaign.price) : '')
     setDateFrom(campaign.dateFrom)
     setDateTo(campaign.dateTo)
     setBannerImage(null)
@@ -96,6 +98,9 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     const e = {}
     if (!name.trim()) e.name = 'مطلوب'
     if (!description.trim()) e.description = 'مطلوب'
+    const priceNum = Number(price)
+    if (price === '' || Number.isNaN(priceNum)) e.price = 'مطلوب'
+    else if (priceNum < 0) e.price = 'يجب أن يكون السعر صفراً أو أكثر'
     if (!dateFrom) e.dateFrom = 'مطلوب'
     if (!dateTo) e.dateTo = 'مطلوب'
     if (dateFrom && dateTo && dateTo < dateFrom) {
@@ -112,11 +117,13 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const handleSubmit = async (ev) => {
     ev.preventDefault()
     if (saving || !validate()) return
+    const priceNum = Number(price)
     await onSave?.({
       id: campaign.id,
       name: name.trim(),
       description: description.trim(),
       link: link.trim(),
+      price: priceNum,
       dateFrom,
       dateTo,
       bannerImage,
@@ -203,6 +210,27 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
               dir="ltr"
               disabled={saving}
             />
+          </div>
+
+          <div>
+            <label htmlFor="edit-price" className="mb-1.5 block text-sm font-semibold text-white/90">
+              سعر الحملة (د.ل) <span className="text-rose-600">*</span>
+            </label>
+            <input
+              id="edit-price"
+              type="number"
+              min={0}
+              step={1}
+              value={price}
+              onChange={(e) => {
+                setPrice(e.target.value)
+                if (errors.price) setErrors((x) => ({ ...x, price: '' }))
+              }}
+              className={fieldClass}
+              dir="ltr"
+              disabled={saving}
+            />
+            {errors.price ? <p className="mt-1 text-xs text-rose-600">{errors.price}</p> : null}
           </div>
 
           <div>

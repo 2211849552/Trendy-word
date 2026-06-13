@@ -13,19 +13,18 @@ import {
   Loader2,
 } from 'lucide-react'
 import {
-  getEmployees,
   getEmployee,
-  createEmployee,
+  createEmployeeAndVerify,
   updateEmployee,
   toggleEmployeeStatus,
-  extractEmployeeList,
-  extractPaginationMeta,
   mapEmployee,
   mapEmployeeDetail,
   buildEmployeeQueryParams,
   buildEmployeeStats,
   buildCreateEmployeeBody,
   buildUpdateEmployeeBody,
+  validateCreateEmployeeForm,
+  fetchAllEmployees,
   extractCreatedEmployee,
   upsertEmployeeInList,
   emptyEmployeeForm,
@@ -89,10 +88,10 @@ export function StaffPage() {
       setLoadError('')
     }
     try {
-      const data = await getEmployees(params)
+      const { employees, meta } = await fetchAllEmployees(params)
       if (seq !== loadSeq.current) return
-      setStaff(extractEmployeeList(data).map(mapEmployee))
-      setPaginationMeta(extractPaginationMeta(data))
+      setStaff(employees)
+      setPaginationMeta(meta)
       setLoadError('')
     } catch (err) {
       if (seq !== loadSeq.current) return
@@ -161,10 +160,18 @@ export function StaffPage() {
     e.preventDefault()
     setSaveError('')
 
-    const roleId = roleLabelToId(editForm.role)
+    const roleId = editForm.roleId ?? roleLabelToId(editForm.role)
     if (!roleId) {
       setSaveError('الدور الوظيفي غير صالح.')
       return
+    }
+
+    if (!editingId) {
+      const validationError = validateCreateEmployeeForm(editForm, staff)
+      if (validationError) {
+        setSaveError(validationError)
+        return
+      }
     }
 
     if (!editingId && !editForm.password.trim()) {
@@ -184,6 +191,7 @@ export function StaffPage() {
 
     setSaveLoading(true)
     try {
+      loadSeq.current += 1
       if (loadDebounceRef.current) {
         clearTimeout(loadDebounceRef.current)
         loadDebounceRef.current = null
@@ -205,7 +213,7 @@ export function StaffPage() {
         }
         setActionMessage('تم تحديث بيانات الموظف.')
       } else {
-        const created = await createEmployee(
+        const { employee: mapped } = await createEmployeeAndVerify(
           buildCreateEmployeeBody({
             name: editForm.name,
             email: editForm.email,
@@ -214,12 +222,14 @@ export function StaffPage() {
             roleId,
           }),
         )
-        const saved = extractCreatedEmployee(created)
-        if (saved) {
-          const mapped = mapEmployee(saved)
-          setStaff((prev) => upsertEmployeeInList(prev, mapped))
-        }
-        setActionMessage('تمت إضافة الموظف بنجاح.')
+        setStaff((prev) => upsertEmployeeInList(prev, mapped))
+        setPaginationMeta((meta) => ({
+          ...meta,
+          total: Number(meta.total ?? staff.length) + (staff.some((item) => item.id === mapped.id) ? 0 : 1),
+        }))
+        setSearchQuery('')
+        setActiveRole('جميع الأدوار')
+        setActionMessage(`تم حفظ الموظف في جدول users برقم ${mapped.id} — ${mapped.email}`)
       }
 
       closeEdit()
@@ -562,14 +572,22 @@ export function StaffPage() {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1.5">الدور الوظيفي</label>
                 <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  value={editForm.roleId ?? ''}
+                  onChange={(e) => {
+                    const nextRoleId = Number(e.target.value)
+                    const role = ASSIGNABLE_PLATFORM_ROLES.find((item) => item.id === nextRoleId)
+                    setEditForm({
+                      ...editForm,
+                      roleId: Number.isFinite(nextRoleId) ? nextRoleId : null,
+                      role: role?.label ?? '',
+                    })
+                  }}
                   className="input-brand"
                   required={!editingId}
                 >
                   {!editingId ? <option value="">اختر الدور الوظيفي</option> : null}
                   {ASSIGNABLE_PLATFORM_ROLES.map((role) => (
-                    <option key={role.slug}>{role.label}</option>
+                    <option key={role.slug} value={role.id}>{role.label}</option>
                   ))}
                 </select>
               </div>

@@ -12,6 +12,7 @@ function emptyForm() {
     name: '',
     description: '',
     link: '',
+    price: '',
     dateFrom: getTodayIsoDate(),
     dateTo: '',
     bannerImage: null,
@@ -96,6 +97,9 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
     const e = {}
     if (!form.name.trim()) e.name = 'مطلوب'
     if (!form.description.trim()) e.description = 'مطلوب'
+    const priceNum = Number(form.price)
+    if (form.price === '' || Number.isNaN(priceNum)) e.price = 'مطلوب'
+    else if (priceNum < 0) e.price = 'يجب أن يكون السعر صفراً أو أكثر'
     if (!form.dateFrom) e.dateFrom = 'مطلوب'
     if (!form.dateTo) e.dateTo = 'مطلوب'
     if (form.dateFrom && form.dateTo && form.dateTo < form.dateFrom) {
@@ -195,6 +199,25 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
               dir="ltr"
               disabled={saving}
             />
+          </div>
+
+          <div>
+            <label htmlFor="camp-price" className="mb-1.5 block text-sm font-semibold text-white/90">
+              سعر الحملة (د.ل) <span className="text-rose-600">*</span>
+            </label>
+            <input
+              id="camp-price"
+              type="number"
+              min={0}
+              step={1}
+              value={form.price}
+              onChange={(e) => set('price', e.target.value)}
+              placeholder="0"
+              className={fieldClass}
+              dir="ltr"
+              disabled={saving}
+            />
+            {errors.price ? <p className="mt-1 text-xs text-rose-600">{errors.price}</p> : null}
           </div>
 
           <div>

@@ -28,6 +28,7 @@ import {
   mapDriverDetail,
   buildDriverQueryParams,
   buildDriverStats,
+  applyDriverListFilters,
   emptyDriverForm,
   buildCreateDriverPayload,
   validateCreateDriverForm,
@@ -40,6 +41,7 @@ import {
 } from '../api/adminDrivers.js'
 import { fetchAvailableZones } from '../api/zones.js'
 import { DriverChatModal } from '../components/drivers/DriverChatModal.jsx'
+import { DriverCustodySection } from '../components/drivers/DriverCustodySection.jsx'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -200,12 +202,17 @@ export function DriversPage() {
   const loadDrivers = useCallback(async () => {
     const seq = ++loadSeq.current
     const params = buildDriverQueryParams({
-      search: searchQuery,
       status: activeStatus,
     })
     const data = await getDrivers(params)
     if (seq !== loadSeq.current) return
-    setDrivers(extractDriverList(data).map(mapDriver))
+    const mapped = extractDriverList(data).map(mapDriver)
+    setDrivers(
+      applyDriverListFilters(mapped, {
+        search: searchQuery,
+        status: activeStatus,
+      }),
+    )
     setPaginationMeta(extractPaginationMeta(data))
   }, [searchQuery, activeStatus])
 
@@ -340,6 +347,15 @@ export function DriversPage() {
     setChatDriver(null)
   }
 
+  const handleDriverCustodyUpdated = (patch) => {
+    if (!selectedDriver) return
+    const updated = { ...selectedDriver, ...patch }
+    setSelectedDriver(updated)
+    setDrivers((prev) =>
+      prev.map((d) => (d.id === updated.id ? { ...d, ...patch } : d)),
+    )
+  }
+
   const handleUpdateDriver = async (e) => {
     e.preventDefault()
     if (!selectedDriver || !editForm) return
@@ -374,16 +390,18 @@ export function DriversPage() {
     setToggleLoading(true)
     setToggleError('')
     try {
+      let result
       if (selectedDriver.rawStatus === 'active') {
-        await deactivateDriver(selectedDriver.id, deactivateReason)
-        setActionMessage('تم تعطيل حساب السائق.')
+        result = await deactivateDriver(selectedDriver.id, deactivateReason)
+        setActionMessage(result?.message || 'تم تعطيل حساب السائق.')
       } else {
-        await reactivateDriver(selectedDriver.id)
-        setActionMessage('تم إعادة تفعيل حساب السائق.')
+        result = await reactivateDriver(selectedDriver.id)
+        setActionMessage(result?.message || 'تم إعادة تفعيل حساب السائق.')
       }
 
-      const data = await getDriver(selectedDriver.id)
-      setSelectedDriver(mapDriverDetail(data))
+      const mapped = mapDriverDetail(result)
+      setSelectedDriver(mapped)
+      setEditForm(emptyDriverEditForm(mapped))
       setDeactivateReason('')
       setShowDeactivateForm(false)
       await loadDrivers()
@@ -721,6 +739,19 @@ export function DriversPage() {
                   </form>
                 ) : null}
               </div>
+
+              <DriverCustodySection
+                driver={selectedDriver}
+                onDriverUpdated={handleDriverCustodyUpdated}
+                onMessage={(msg) => {
+                  setActionMessage(msg)
+                  setTimeout(() => setActionMessage(''), 4000)
+                }}
+                onError={(msg) => {
+                  setActionMessage(msg)
+                  setTimeout(() => setActionMessage(''), 4000)
+                }}
+              />
 
               <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
                 <h3 className="text-sm font-bold text-white/80">إدارة الحساب</h3>

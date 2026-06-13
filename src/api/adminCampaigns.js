@@ -147,12 +147,70 @@ export function uiFilterToApiStatus(filter) {
   return filter
 }
 
+const CAMPAIGN_PRICE_STORAGE_KEY = 'trendy_admin_campaign_prices'
+
+function readCampaignPriceMap() {
+  try {
+    const raw = localStorage.getItem(CAMPAIGN_PRICE_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeCampaignPriceMap(map) {
+  localStorage.setItem(CAMPAIGN_PRICE_STORAGE_KEY, JSON.stringify(map))
+}
+
+export function saveCampaignPrice(campaignId, price) {
+  const id = String(campaignId)
+  const num = Number(price)
+  if (!id || !Number.isFinite(num) || num < 0) return
+  const map = readCampaignPriceMap()
+  map[id] = num
+  writeCampaignPriceMap(map)
+}
+
+export function removeCampaignPrice(campaignId) {
+  if (campaignId == null || campaignId === '') return
+  const map = readCampaignPriceMap()
+  delete map[String(campaignId)]
+  writeCampaignPriceMap(map)
+}
+
+function resolveCampaignPrice(item) {
+  const fromApi = item?.price ?? item?.campaign_price
+  if (fromApi != null && fromApi !== '') {
+    const num = Number(fromApi)
+    if (Number.isFinite(num)) return num
+  }
+  const id = item?.id
+  if (id == null) return null
+  const stored = readCampaignPriceMap()[String(id)]
+  if (stored == null || stored === '') return null
+  const num = Number(stored)
+  return Number.isFinite(num) ? num : null
+}
+
+export function formatCampaignPriceDisplay(price) {
+  const num = Number(price)
+  if (!Number.isFinite(num)) return '—'
+  return `${num.toLocaleString('ar-LY')} د.ل`
+}
+
+export function extractCreatedCampaign(data) {
+  const raw = data?.data ?? data
+  if (raw?.id == null) return null
+  return mapCampaign(raw)
+}
+
 export function mapCampaign(item) {
   const mapped = mapApiStatusToUi(item.status)
   return {
     id: Number(item.id),
     title: item.name ?? item.title ?? '',
     description: item.description ?? '',
+    price: resolveCampaignPrice(item),
     link: item.link ?? item.url ?? '',
     bannerImage: item.banner_image ?? item.banner_url ?? item.image ?? null,
     bannerImageUrl:

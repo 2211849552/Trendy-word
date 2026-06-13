@@ -77,7 +77,7 @@ export function buildCreateEmployeeBody({ name, email, phone, password, roleId }
     name: name.trim(),
     email: email.trim(),
     password: password.trim(),
-    role_id: roleId,
+    role_id: Number(roleId),
   }
   const trimmedPhone = phone?.trim()
   if (trimmedPhone) body.phone = trimmedPhone
@@ -88,12 +88,86 @@ export function buildUpdateEmployeeBody({ name, email, phone, password, roleId }
   const body = {
     name: name.trim(),
     email: email.trim(),
-    role_id: roleId,
+    role_id: Number(roleId),
   }
   const trimmedPhone = phone?.trim()
   if (trimmedPhone) body.phone = trimmedPhone
   if (password?.trim()) body.password = password.trim()
   return body
+}
+
+/** تأكد أن body جاهز للإرسال إلى POST /api/employees */
+export function assertValidCreateEmployeeBody(body) {
+  if (!body?.name?.trim()) throw new Error('الاسم مطلوب.')
+  if (!body?.email?.trim()) throw new Error('البريد الإلكتروني مطلوب.')
+  if (!body?.password?.trim()) throw new Error('كلمة المرور مطلوبة.')
+
+  const roleId = Number(body.role_id)
+  if (!Number.isInteger(roleId) || !ASSIGNABLE_PLATFORM_ROLES.some((role) => role.id === roleId)) {
+    throw new Error('الدور الوظيفي غير صالح. اختاري دوراً من القائمة.')
+  }
+}
+
+export async function createEmployeeAndVerify(body) {
+  assertValidCreateEmployeeBody(body)
+
+  const created = await createEmployee(body)
+  const saved = extractCreatedEmployee(created)
+  if (!saved?.id) {
+    throw new Error('لم يتم استلام بيانات الموظف من الخادم بعد الإنشاء.')
+  }
+
+  const verified = await getEmployee(saved.id)
+  const employee = mapEmployeeDetail(verified)
+  if (!employee?.id) {
+    throw new Error(`تعذّر التحقق من حفظ الموظف #${saved.id} في جدول users.`)
+  }
+
+  return { response: created, employee }
+}
+
+export function validateCreateEmployeeForm(form, existingEmployees = []) {
+  if (!ASSIGNABLE_PLATFORM_ROLES.some((role) => role.id === form.roleId)) {
+    return 'الدور الوظيفي غير صالح. اختاري دوراً من القائمة.'
+  }
+
+  if (!form.name?.trim()) return 'الاسم مطلوب.'
+  if (!form.email?.trim()) return 'البريد الإلكتروني مطلوب.'
+  if (!form.roleId) return 'يجب اختيار الدور الوظيفي.'
+  if (!form.password?.trim()) return 'كلمة المرور مطلوبة للموظف الجديد.'
+  if (form.password.trim().length < 8) return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.'
+
+  const email = form.email.trim().toLowerCase()
+  if (existingEmployees.some((item) => String(item.email).toLowerCase() === email)) {
+    return 'البريد الإلكتروني مستخدم مسبقاً. استخدمي بريداً آخر.'
+  }
+
+  const phone = form.phone?.trim()
+  if (phone && existingEmployees.some((item) => String(item.phone) === phone)) {
+    return 'رقم الهاتف مستخدم مسبقاً. استخدمي رقماً آخر.'
+  }
+
+  return null
+}
+
+export async function fetchAllEmployees(params = {}) {
+  let page = 1
+  let lastPage = 1
+  const employees = []
+  let meta = {}
+
+  do {
+    const data = await getEmployees({ ...params, page })
+    employees.push(...extractEmployeeList(data).map(mapEmployee))
+    meta = extractPaginationMeta(data)
+    lastPage = Number(meta.last_page ?? 1)
+    page += 1
+  } while (page <= lastPage)
+
+  return {
+    employees,
+    meta: { ...meta, total: Number(meta.total ?? employees.length) },
+  }
 }
 
 export function upsertEmployeeInList(list, employee) {

@@ -16,6 +16,9 @@ import {
   buildPerformanceSeries,
   buildMarketingStats,
   filterCampaignsByUiStatus,
+  saveCampaignPrice,
+  removeCampaignPrice,
+  extractCreatedCampaign,
 } from '../api/adminCampaigns.js'
 import { StatCard } from '../components/StatCard.jsx'
 import { PrimaryButton } from '../components/PrimaryButton.jsx'
@@ -110,7 +113,11 @@ export function MarketingPage() {
   async function handleCreate(form) {
     setSaving(true)
     try {
-      await createAdminCampaign(toCampaignRequestBody(form))
+      const res = await createAdminCampaign(toCampaignRequestBody(form))
+      const created = extractCreatedCampaign(res)
+      if (created?.id != null && form.price !== '') {
+        saveCampaignPrice(created.id, form.price)
+      }
       triggerToast('تم إنشاء الحملة بنجاح')
       setCreateOpen(false)
       await loadCampaigns()
@@ -125,6 +132,9 @@ export function MarketingPage() {
     setSaving(true)
     try {
       await updateAdminCampaign(form.id, toCampaignRequestBody(form))
+      if (form.id != null && form.price != null && form.price !== '') {
+        saveCampaignPrice(form.id, form.price)
+      }
       triggerToast('تم تحديث الحملة بنجاح')
       setEditCampaign(null)
       await loadCampaigns()
@@ -146,6 +156,7 @@ export function MarketingPage() {
     setDeleting(true)
     try {
       const result = await deleteAdminCampaign(idToDelete)
+      removeCampaignPrice(idToDelete)
       loadSeq.current += 1
       setList((prev) => prev.filter((c) => Number(c.id) !== idToDelete))
       setDeleteCampaign(null)
