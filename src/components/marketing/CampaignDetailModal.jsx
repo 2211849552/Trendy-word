@@ -104,6 +104,12 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
                 </p>
               </div>
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
+                <p className="text-xs font-medium text-white/60">سعر الاشتراك</p>
+                <p className="mt-1 text-sm font-bold text-white tabular-nums">
+                  {campaign.price ? `${Number(campaign.price).toLocaleString('ar-LY')} د.ل` : '0 د.ل'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
                 <p className="text-xs font-medium text-white/60">الحالة</p>
                 <p className="mt-2">
                   <span

@@ -172,6 +172,7 @@ export function mapCampaign(item) {
     products: item.products_count ?? item.products ?? 0,
     views: item.views_count ?? item.views ?? 0,
     rawStatus: item.status ?? '',
+    price: item.price ?? 0.00,
   }
 }
 
@@ -201,6 +202,7 @@ export function toCampaignPayload(form) {
     description: form.description.trim(),
     start_date: `${startDate} 00:00:00`,
     end_date: `${endDate} 23:59:59`,
+    price: form.price != null && form.price !== '' ? Number(form.price) : 0.00,
   }
   const link = form.link?.trim()
   if (link) payload.link = link

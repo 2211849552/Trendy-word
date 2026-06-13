@@ -55,6 +55,12 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
 
       <ul className="mt-4 space-y-2 border-t border-white/5 pt-4 text-sm">
         <li className="flex justify-between gap-2">
+          <span className="font-bold text-white tabular-nums">
+            {campaign.price ? `${fmtNum(Number(campaign.price))} د.ل` : '0 د.ل'}
+          </span>
+          <span className="text-white/60">سعر الاشتراك</span>
+        </li>
+        <li className="flex justify-between gap-2">
           <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.stores.value}`}>
             {fmtNum(campaign.stores)}
           </span>

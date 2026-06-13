@@ -14,6 +14,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const [link, setLink] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [price, setPrice] = useState('')
   const [bannerImage, setBannerImage] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [errors, setErrors] = useState({})
@@ -26,6 +27,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     setLink(campaign.link ?? '')
     setDateFrom(campaign.dateFrom)
     setDateTo(campaign.dateTo)
+    setPrice(campaign.price ?? '')
     setBannerImage(null)
     setPreviewUrl('')
     setErrors({})
@@ -101,6 +103,9 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     if (dateFrom && dateTo && dateTo < dateFrom) {
       e.dateTo = 'يجب أن يكون بعد تاريخ البدء'
     }
+    if (price === '' || isNaN(price) || Number(price) < 0) {
+      e.price = 'يجب إدخال سعر صالح (أكبر من أو يساوي 0)'
+    }
     if (bannerImage) {
       const imageError = validateCampaignImage(bannerImage)
       if (imageError) e.bannerImage = imageError
@@ -120,6 +125,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
       dateFrom,
       dateTo,
       bannerImage,
+      price: price,
     })
   }
 
@@ -203,6 +209,27 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
               dir="ltr"
               disabled={saving}
             />
+          </div>
+
+          <div>
+            <label htmlFor="edit-price" className="mb-1.5 block text-sm font-semibold text-white/90">
+              سعر الاشتراك للحملة (د.ل) <span className="text-rose-600">*</span>
+            </label>
+            <input
+              id="edit-price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={price}
+              onChange={(e) => {
+                setPrice(e.target.value)
+                if (errors.price) setErrors((x) => ({ ...x, price: '' }))
+              }}
+              placeholder="مثال: 50.00"
+              className={fieldClass}
+              disabled={saving}
+            />
+            {errors.price ? <p className="mt-1 text-xs text-rose-600">{errors.price}</p> : null}
           </div>
 
           <div>
