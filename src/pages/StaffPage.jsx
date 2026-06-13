@@ -4,7 +4,6 @@ import {
   Users,
   UserCheck,
   AlertCircle,
-  TrendingUp,
   Search,
   Eye,
   Edit,
@@ -275,7 +274,7 @@ export function StaffPage() {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <Users className="size-6" />
@@ -298,14 +297,6 @@ export function StaffPage() {
           </div>
           <p className="text-sm font-medium text-white/60">حسابات معطلة</p>
           <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.disabled}</p>
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
-            <TrendingUp className="size-6" />
-          </div>
-          <p className="text-sm font-medium text-white/60">موظفون جدد (الشهر)</p>
-          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.newThisMonth}</p>
         </div>
       </div>
 

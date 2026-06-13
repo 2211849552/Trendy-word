@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Download, Search, DollarSign, CheckCircle2, AlertCircle, BarChart2, Eye, X, CreditCard, Banknote, Loader2 } from 'lucide-react'
+import { Download, Search, DollarSign, CheckCircle2, AlertCircle, Eye, X, CreditCard, Banknote, Loader2 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import {
   getAdProfits,
@@ -12,6 +12,7 @@ import {
   exportFinanceReport,
   extractFinancePayload,
   pickFinanceAmount,
+  sumSubscriptionAndAdProfits,
   extractTransactionList,
   mapTransaction,
   mapTransactionDetail,
@@ -20,6 +21,7 @@ import {
   fetchPaymentMethodsDistribution,
   fetchMonthlyRevenueSeries,
   paymentMethodsChartHasData,
+  filterPaymentMethodsChartForDisplay,
   transactionsToCsv,
 } from '../api/adminFinance.js'
 import {
@@ -68,10 +70,11 @@ export function FinancePage() {
   const [exportMessage, setExportMessage] = useState('')
   const [monthlyRevenueData, setMonthlyRevenueData] = useState([])
   const [paymentMethodsData, setPaymentMethodsData] = useState([
-    { name: 'محفظة إلكترونية', value: 0, color: '#334155' },
+    { name: 'محفظة إلكترونية', value: 0, color: '#60a5fa' },
     { name: 'نقدي', value: 0, color: '#10b981' },
   ])
   const [paymentMethodsHasData, setPaymentMethodsHasData] = useState(false)
+  const [paymentMethodsSource, setPaymentMethodsSource] = useState('none')
   const [chartsLoading, setChartsLoading] = useState(true)
   const [revenueOverview, setRevenueOverview] = useState(null)
   const [platformEarnings, setPlatformEarnings] = useState(null)
@@ -121,13 +124,15 @@ export function FinancePage() {
       setMonthlyRevenueData(monthly)
       setPaymentMethodsData(paymentMethods.chart)
       setPaymentMethodsHasData(paymentMethodsChartHasData(paymentMethods.chart))
+      setPaymentMethodsSource(paymentMethods.source ?? 'none')
     } catch {
       setMonthlyRevenueData([])
       setPaymentMethodsData([
-        { name: 'محفظة إلكترونية', value: 0, color: '#334155' },
+        { name: 'محفظة إلكترونية', value: 0, color: '#60a5fa' },
         { name: 'نقدي', value: 0, color: '#10b981' },
       ])
       setPaymentMethodsHasData(false)
+      setPaymentMethodsSource('none')
     } finally {
       setChartsLoading(false)
     }
@@ -356,6 +361,40 @@ export function FinancePage() {
     [filteredTransactions],
   )
 
+  const subscriptionAndAdProfits = useMemo(
+    () => sumSubscriptionAndAdProfits(subscriptionProfits, adProfits),
+    [subscriptionProfits, adProfits],
+  )
+
+  const displayPaymentMethods = useMemo(
+    () => filterPaymentMethodsChartForDisplay(paymentMethodsData),
+    [paymentMethodsData],
+  )
+
+  const renderPaymentMethodLabel = ({ cx, cy, midAngle, outerRadius, percent, payload }) => {
+    const pct = Number(payload?.value ?? Math.round((percent ?? 0) * 100))
+    if (!pct) return null
+
+    const RAD = Math.PI / 180
+    const radius = outerRadius + 16
+    const x = cx + radius * Math.cos(-midAngle * RAD)
+    const y = cy + radius * Math.sin(-midAngle * RAD)
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="#f8fafc"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        className="text-xs font-bold"
+        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.85))' }}
+      >
+        {`${payload.name}: ${pct}%`}
+      </text>
+    )
+  }
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -397,9 +436,7 @@ export function FinancePage() {
         </p>
       ) : null}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Revenue Card */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
             <DollarSign className="size-6" />
@@ -415,24 +452,17 @@ export function FinancePage() {
                 )}
           </p>
         </div>
-        
-        {/* Success Card */}
+
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <CheckCircle2 className="size-6" />
           </div>
-          <p className="text-sm font-medium text-white/60">أرباح الاشتراكات</p>
+          <p className="text-sm font-medium text-white/60">أرباح الاشتراكات والإعلانات</p>
           <p className="mt-1 text-2xl font-bold text-white">
-            {financeLoading
-              ? '...'
-              : formatAmount(
-                  pickFinanceAmount(subscriptionProfits, 'subscription_profits', 'total', 'amount'),
-                  '0 د.ل',
-                )}
+            {financeLoading ? '...' : formatAmount(subscriptionAndAdProfits, '0 د.ل')}
           </p>
         </div>
 
-        {/* Failed Card */}
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-500">
             <AlertCircle className="size-6" />
@@ -443,22 +473,6 @@ export function FinancePage() {
               ? '...'
               : formatAmount(
                   pickFinanceAmount(deliveryProfits, 'delivery_profits', 'total', 'amount'),
-                  '0 د.ل',
-                )}
-          </p>
-        </div>
-
-        {/* Avg Value Card */}
-        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
-            <BarChart2 className="size-6" />
-          </div>
-          <p className="text-sm font-medium text-white/60">أرباح الإعلانات</p>
-          <p className="mt-1 text-2xl font-bold text-white">
-            {financeLoading
-              ? '...'
-              : formatAmount(
-                  pickFinanceAmount(adProfits, 'ad_profits', 'total', 'amount'),
                   '0 د.ل',
                 )}
           </p>
@@ -501,36 +515,53 @@ export function FinancePage() {
             </div>
           ) : !paymentMethodsHasData ? (
             <div className="flex h-[250px] flex-col items-center justify-center gap-2 text-white/55">
-              <p className="text-sm">لا توجد طلبات مكتملة في الفترة المحددة</p>
-              <p className="text-xs text-white/40">يتم حساب النسب من الطلبات المسلّمة عبر المحفظة أو الدفع نقداً</p>
+              <p className="text-sm">لا توجد بيانات كافية في الفترة المحددة</p>
+              <p className="text-xs text-white/40">يتم حساب النسب من الطلبات المكتملة أو المعاملات المالية</p>
             </div>
           ) : (
+          <>
+          <p className="mb-3 text-center text-xs text-white/70">
+            {paymentMethodsSource === 'transactions'
+              ? 'حسب المعاملات المالية'
+              : 'حسب الطلبات المسلّمة'}
+          </p>
           <div className="h-[250px] w-full" dir="ltr">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
-                  data={paymentMethodsData}
+                  data={displayPaymentMethods}
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
-                  labelLine={false}
+                  stroke="#1e1e4d"
+                  strokeWidth={2}
+                  label={renderPaymentMethodLabel}
+                  labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
                 >
-                  {paymentMethodsData.map((entry, index) => (
+                  {displayPaymentMethods.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value}%`, 'النسبة']} />
+                <Tooltip
+                  formatter={(value, name) => [`${value}%`, name]}
+                  contentStyle={{
+                    backgroundColor: '#1e1e4d',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 12,
+                    color: '#f8fafc',
+                  }}
+                />
                 <Legend
                   iconType="circle"
-                  wrapperStyle={{ paddingTop: '12px' }}
-                  formatter={(value) => <span className="text-sm text-white/80">{value}</span>}
+                  wrapperStyle={{ paddingTop: '12px', color: '#f8fafc' }}
+                  formatter={(value) => <span className="text-sm font-medium text-white">{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
+          </>
           )}
         </div>
       </div>

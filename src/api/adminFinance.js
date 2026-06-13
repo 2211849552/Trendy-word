@@ -55,9 +55,14 @@ export function getPaymentMethodPercentages(params = {}) {
   return apiRequest(`/api/finance/payment-method-percentages${query ? `?${query}` : ''}`)
 }
 
+const PAYMENT_METHOD_COLORS = {
+  wallet: '#60a5fa',
+  cash: '#10b981',
+}
+
 const EMPTY_PAYMENT_METHODS_CHART = [
-  { name: 'محفظة إلكترونية', value: 0, color: '#334155' },
-  { name: 'نقدي', value: 0, color: '#10b981' },
+  { name: 'محفظة إلكترونية', value: 0, color: PAYMENT_METHOD_COLORS.wallet },
+  { name: 'نقدي', value: 0, color: PAYMENT_METHOD_COLORS.cash },
 ]
 
 function normalizePaymentMethodKey(key) {
@@ -71,8 +76,16 @@ function normalizePaymentMethodKey(key) {
 
 function chartFromWalletAndCash(walletPct, cashPct) {
   return [
-    { name: 'محفظة إلكترونية', value: Math.round(Number(walletPct) || 0), color: '#334155' },
-    { name: 'نقدي', value: Math.round(Number(cashPct) || 0), color: '#10b981' },
+    {
+      name: 'محفظة إلكترونية',
+      value: Math.round(Number(walletPct) || 0),
+      color: PAYMENT_METHOD_COLORS.wallet,
+    },
+    {
+      name: 'نقدي',
+      value: Math.round(Number(cashPct) || 0),
+      color: PAYMENT_METHOD_COLORS.cash,
+    },
   ]
 }
 
@@ -98,11 +111,39 @@ function mapPaymentMethodEntries(entries) {
   return chartFromWalletAndCash(totals.wallet, totals.cash)
 }
 
+function mapPaymentMethodEntriesByCount(entries) {
+  const counts = { wallet: 0, cash: 0 }
+
+  entries.forEach((entry) => {
+    const key = normalizePaymentMethodKey(
+      entry.payment_method ?? entry.method ?? entry.name ?? entry.type ?? '',
+    )
+    const count = Number(entry.count ?? entry.total ?? 0)
+    if (key === 'wallet') counts.wallet += count
+    else if (key === 'cash') counts.cash += count
+  })
+
+  const total = counts.wallet + counts.cash
+  if (!total) return EMPTY_PAYMENT_METHODS_CHART
+
+  return chartFromWalletAndCash(
+    (counts.wallet / total) * 100,
+    (counts.cash / total) * 100,
+  )
+}
+
 export function mapPaymentMethodPercentages(data) {
   const payload = extractFinancePayload(data)
 
   if (Array.isArray(payload)) {
     return payload.length ? mapPaymentMethodEntries(payload) : EMPTY_PAYMENT_METHODS_CHART
+  }
+
+  const nested = payload.payment_methods ?? payload.methods ?? payload.percentages
+  if (Array.isArray(nested) && nested.length) {
+    const hasCounts = nested.some((entry) => entry?.count != null || entry?.total != null)
+    if (hasCounts) return mapPaymentMethodEntriesByCount(nested)
+    return mapPaymentMethodEntries(nested)
   }
 
   if (payload.wallet_percentage != null || payload.cash_percentage != null) {
@@ -114,11 +155,6 @@ export function mapPaymentMethodPercentages(data) {
       payload.electronic_wallet_percentage ?? payload.wallet_percentage,
       payload.cash_on_delivery_percentage ?? payload.cash_percentage,
     )
-  }
-
-  const nested = payload.payment_methods ?? payload.methods ?? payload.percentages
-  if (Array.isArray(nested)) {
-    return nested.length ? mapPaymentMethodEntries(nested) : EMPTY_PAYMENT_METHODS_CHART
   }
 
   if (nested && typeof nested === 'object') {
@@ -143,13 +179,81 @@ export function paymentMethodsChartHasData(chart) {
   return Array.isArray(chart) && chart.some((item) => Number(item.value) > 0)
 }
 
+export function filterPaymentMethodsChartForDisplay(chart) {
+  if (!Array.isArray(chart)) return []
+  return chart.filter((item) => Number(item.value) > 0)
+}
+
+export function filterTransactionsByPeriod(transactions, periodLabel) {
+  const range = uiPeriodToDateRange(periodLabel)
+  if (!range.start_date) return transactions
+  return transactions.filter((tx) => tx.date >= range.start_date && tx.date <= range.end_date)
+}
+
 export async function fetchPaymentMethodsDistribution({ period } = {}) {
-  const params = buildFinanceQueryParams({ period })
-  const data = await getPaymentMethodPercentages(params)
-  const payload = extractFinancePayload(data)
+  const params = buildFinanceQueryParams({ period, perPage: 100 })
+
+  const [orderResult, txResult] = await Promise.allSettled([
+    getPaymentMethodPercentages(params),
+    getFinanceTransactions(params),
+  ])
+
+  const orderPayload =
+    orderResult.status === 'fulfilled' ? extractFinancePayload(orderResult.value) : {}
+  const totalOrders = Number(orderPayload.total_orders ?? 0)
+  const ordersChart =
+    orderResult.status === 'fulfilled'
+      ? mapPaymentMethodPercentages(orderResult.value)
+      : EMPTY_PAYMENT_METHODS_CHART
+
+  let transactionsChart = EMPTY_PAYMENT_METHODS_CHART
+  let transactionCount = 0
+
+  if (txResult.status === 'fulfilled') {
+    const mapped = extractTransactionList(txResult.value).map(mapTransaction)
+    const filtered = filterTransactionsByPeriod(mapped, period)
+    transactionCount = filtered.length
+    transactionsChart = buildPaymentMethodsChart(filtered)
+  }
+
+  const ordersWalletShare = Number(
+    ordersChart.find((item) => item.name === 'محفظة إلكترونية')?.value ?? 0,
+  )
+  const txHasData = paymentMethodsChartHasData(transactionsChart)
+
+  // المعاملات المالية تعكس نشاط المحفظة؛ الطلبات المكتملة قد لا تشملها
+  if (txHasData && (totalOrders === 0 || ordersWalletShare === 0)) {
+    return {
+      chart: transactionsChart,
+      totalOrders,
+      transactionCount,
+      source: 'transactions',
+    }
+  }
+
+  if (paymentMethodsChartHasData(ordersChart)) {
+    return {
+      chart: ordersChart,
+      totalOrders,
+      transactionCount,
+      source: 'orders',
+    }
+  }
+
+  if (txHasData) {
+    return {
+      chart: transactionsChart,
+      totalOrders,
+      transactionCount,
+      source: 'transactions',
+    }
+  }
+
   return {
-    chart: mapPaymentMethodPercentages(data),
-    totalOrders: Number(payload.total_orders ?? 0),
+    chart: EMPTY_PAYMENT_METHODS_CHART,
+    totalOrders,
+    transactionCount,
+    source: 'none',
   }
 }
 
@@ -162,6 +266,14 @@ export function pickFinanceAmount(payload, ...keys) {
     if (payload?.[key] != null && payload[key] !== '') return payload[key]
   }
   return null
+}
+
+export function sumSubscriptionAndAdProfits(subscriptionPayload, adPayload) {
+  const subscription = Number(
+    pickFinanceAmount(subscriptionPayload, 'subscription_profits', 'subscription_revenue') ?? 0,
+  )
+  const ads = Number(pickFinanceAmount(adPayload, 'ad_profits', 'ad_revenue') ?? 0)
+  return subscription + ads
 }
 
 export function extractTransactionList(data) {
@@ -303,14 +415,17 @@ export function filterTransactionsClient(transactions, { type, status } = {}) {
 export function buildPaymentMethodsChart(transactions) {
   if (!transactions.length) return EMPTY_PAYMENT_METHODS_CHART
 
-  const counts = { 'محفظة إلكترونية': 0, نقدي: 0 }
+  const totals = { 'محفظة إلكترونية': 0, نقدي: 0 }
   transactions.forEach((tx) => {
-    counts[tx.type] = (counts[tx.type] ?? 0) + 1
+    const weight = Math.abs(Number(tx.amount) || 0) || 1
+    totals[tx.type] = (totals[tx.type] ?? 0) + weight
   })
-  const total = transactions.length
+  const total = Object.values(totals).reduce((sum, value) => sum + value, 0)
+  if (!total) return EMPTY_PAYMENT_METHODS_CHART
+
   return chartFromWalletAndCash(
-    (counts['محفظة إلكترونية'] / total) * 100,
-    (counts['نقدي'] / total) * 100,
+    (totals['محفظة إلكترونية'] / total) * 100,
+    (totals['نقدي'] / total) * 100,
   )
 }
 

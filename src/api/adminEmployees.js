@@ -186,17 +186,10 @@ export function buildEmployeeQueryParams({ search, role, status, perPage = 100 }
 }
 
 export function buildEmployeeStats(employees, meta = {}) {
-  const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-
   return {
     total: Number(meta.total ?? employees.length),
     active: employees.filter((e) => e.rawStatus === 'active').length,
     disabled: employees.filter((e) => e.rawStatus === 'inactive').length,
-    newThisMonth: employees.filter((e) => {
-      const joined = new Date(e.hireDate)
-      return !Number.isNaN(joined.getTime()) && joined >= monthStart
-    }).length,
   }
 }
 
