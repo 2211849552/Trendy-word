@@ -16,6 +16,7 @@ function emptyForm() {
     dateFrom: getTodayIsoDate(),
     dateTo: '',
     bannerImage: null,
+    price: '',
   }
 }
 
@@ -104,6 +105,9 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
     if (!form.dateTo) e.dateTo = 'مطلوب'
     if (form.dateFrom && form.dateTo && form.dateTo < form.dateFrom) {
       e.dateTo = 'يجب أن يكون بعد تاريخ البدء'
+    }
+    if (form.price === '' || isNaN(form.price) || Number(form.price) < 0) {
+      e.price = 'يجب إدخال سعر صالح (أكبر من أو يساوي 0)'
     }
     if (form.bannerImage) {
       const imageError = validateCampaignImage(form.bannerImage)
@@ -203,11 +207,16 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
 
           <div>
             <label htmlFor="camp-price" className="mb-1.5 block text-sm font-semibold text-white/90">
+<<<<<<< HEAD
               سعر الحملة (د.ل) <span className="text-rose-600">*</span>
+=======
+              سعر الاشتراك للحملة (د.ل) <span className="text-rose-600">*</span>
+>>>>>>> 9ebc1c6f33c5cc7fab9692753235e03828fb9dda
             </label>
             <input
               id="camp-price"
               type="number"
+<<<<<<< HEAD
               min={0}
               step={1}
               value={form.price}
@@ -215,6 +224,14 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
               placeholder="0"
               className={fieldClass}
               dir="ltr"
+=======
+              min="0"
+              step="0.01"
+              value={form.price}
+              onChange={(e) => set('price', e.target.value)}
+              placeholder="مثال: 50.00"
+              className={fieldClass}
+>>>>>>> 9ebc1c6f33c5cc7fab9692753235e03828fb9dda
               disabled={saving}
             />
             {errors.price ? <p className="mt-1 text-xs text-rose-600">{errors.price}</p> : null}

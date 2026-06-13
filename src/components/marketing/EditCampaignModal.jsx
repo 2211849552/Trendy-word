@@ -15,6 +15,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const [price, setPrice] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [price, setPrice] = useState('')
   const [bannerImage, setBannerImage] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [errors, setErrors] = useState({})
@@ -28,6 +29,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     setPrice(campaign.price != null ? String(campaign.price) : '')
     setDateFrom(campaign.dateFrom)
     setDateTo(campaign.dateTo)
+    setPrice(campaign.price ?? '')
     setBannerImage(null)
     setPreviewUrl('')
     setErrors({})
@@ -106,6 +108,9 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     if (dateFrom && dateTo && dateTo < dateFrom) {
       e.dateTo = 'يجب أن يكون بعد تاريخ البدء'
     }
+    if (price === '' || isNaN(price) || Number(price) < 0) {
+      e.price = 'يجب إدخال سعر صالح (أكبر من أو يساوي 0)'
+    }
     if (bannerImage) {
       const imageError = validateCampaignImage(bannerImage)
       if (imageError) e.bannerImage = imageError
@@ -127,6 +132,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
       dateFrom,
       dateTo,
       bannerImage,
+      price: price,
     })
   }
 
@@ -214,20 +220,34 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
 
           <div>
             <label htmlFor="edit-price" className="mb-1.5 block text-sm font-semibold text-white/90">
+<<<<<<< HEAD
               سعر الحملة (د.ل) <span className="text-rose-600">*</span>
+=======
+              سعر الاشتراك للحملة (د.ل) <span className="text-rose-600">*</span>
+>>>>>>> 9ebc1c6f33c5cc7fab9692753235e03828fb9dda
             </label>
             <input
               id="edit-price"
               type="number"
+<<<<<<< HEAD
               min={0}
               step={1}
+=======
+              min="0"
+              step="0.01"
+>>>>>>> 9ebc1c6f33c5cc7fab9692753235e03828fb9dda
               value={price}
               onChange={(e) => {
                 setPrice(e.target.value)
                 if (errors.price) setErrors((x) => ({ ...x, price: '' }))
               }}
+<<<<<<< HEAD
               className={fieldClass}
               dir="ltr"
+=======
+              placeholder="مثال: 50.00"
+              className={fieldClass}
+>>>>>>> 9ebc1c6f33c5cc7fab9692753235e03828fb9dda
               disabled={saving}
             />
             {errors.price ? <p className="mt-1 text-xs text-rose-600">{errors.price}</p> : null}
