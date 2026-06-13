@@ -26,6 +26,7 @@ import {
 import { mapSettleCustodyResponse } from '../../api/adminStores.js'
 import { ConfirmDeleteModal } from '../catalog/ConfirmDeleteModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
+import { StoreDeliveryPricesSection, formatDeliveryPrice } from './StoreDeliveryPricesSection.jsx'
 
 const STATUS_LABELS = {
   active: 'نشط',
@@ -72,14 +73,13 @@ export function StoreDetailModal({
   open,
   loading = false,
   onClose,
-  onUpdateDeliveryPrices,
   onSettleCustody,
   onStoreUpdated,
+  canEditDeliveryPrices = false,
 }) {
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState('')
-  const [deliveryPrices, setDeliveryPrices] = useState({})
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
@@ -169,15 +169,9 @@ export function StoreDetailModal({
     }
   }
 
-  useEffect(() => {
-    if (!store) return
-    const prices = store.deliveryPrices ?? store.raw?.delivery_prices ?? {}
-    setDeliveryPrices(
-      prices && typeof prices === 'object' ? { ...prices } : {},
-    )
-  }, [store])
-
   if (!open || !store) return null
+
+  const deliveryPriceSummary = store.zoneDeliveryPrices ?? []
 
   const overlay = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -273,7 +267,37 @@ export function StoreDetailModal({
                 </div>
               </div>
 
-              {(onUpdateDeliveryPrices || onSettleCustody) ? (
+              {!loading && store?.id ? (
+                <div className="border-t border-white/5 pt-6 space-y-4">
+                  <h4 className="text-lg font-bold text-white">أسعار التوصيل للمتجر</h4>
+                  {deliveryPriceSummary.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {deliveryPriceSummary.map((row) => (
+                        <span
+                          key={row.zoneId}
+                          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-brand-300/80 px-3 py-1 text-xs text-white/80"
+                        >
+                          <span>{row.zoneName ?? `منطقة ${row.zoneId}`}</span>
+                          <span className="font-bold tabular-nums text-white" dir="ltr">
+                            {formatDeliveryPrice(row.deliveryPrice)}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <StoreDeliveryPricesSection
+                    storeId={store.id}
+                    initialPrices={store.deliveryPrices ?? {}}
+                    initialZoneDeliveryPrices={store.zoneDeliveryPrices ?? []}
+                    canEdit={canEditDeliveryPrices}
+                    onSaved={(updated) => {
+                      if (updated) onStoreUpdated?.(updated)
+                    }}
+                  />
+                </div>
+              ) : null}
+
+              {onSettleCustody ? (
                 <div className="border-t border-white/5 pt-6 space-y-4">
                   <h4 className="text-lg font-bold text-white">إدارة المتجر</h4>
                   {actionMessage ? (
@@ -283,56 +307,7 @@ export function StoreDetailModal({
                     <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{actionError}</p>
                   ) : null}
 
-                  {onUpdateDeliveryPrices && Object.keys(deliveryPrices).length > 0 ? (
-                    <form
-                      className="space-y-3 rounded-xl border border-white/10 bg-brand-300/50 p-4"
-                      onSubmit={async (e) => {
-                        e.preventDefault()
-                        setActionLoading(true)
-                        setActionError('')
-                        try {
-                          const numericPrices = Object.fromEntries(
-                            Object.entries(deliveryPrices).map(([zoneId, price]) => [
-                              zoneId,
-                              Number(price) || 0,
-                            ]),
-                          )
-                          const updated = await onUpdateDeliveryPrices(store.id, numericPrices)
-                          if (updated) onStoreUpdated?.(updated)
-                          setActionMessage('تم تحديث أسعار التوصيل.')
-                          setTimeout(() => setActionMessage(''), 3000)
-                        } catch (err) {
-                          setActionError(apiErrorMessage(err, 'تعذّر تحديث أسعار التوصيل.'))
-                        } finally {
-                          setActionLoading(false)
-                        }
-                      }}
-                    >
-                      <p className="text-sm font-medium text-white/70">أسعار التوصيل حسب المنطقة</p>
-                      {Object.entries(deliveryPrices).map(([zoneId, price]) => (
-                        <div key={zoneId} className="flex items-center gap-3">
-                          <span className="text-sm text-white/60 shrink-0">منطقة {zoneId}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={price}
-                            onChange={(e) =>
-                              setDeliveryPrices((prev) => ({ ...prev, [zoneId]: e.target.value }))
-                            }
-                            className="input-brand flex-1"
-                            dir="ltr"
-                          />
-                        </div>
-                      ))}
-                      <button type="submit" disabled={actionLoading} className="btn-primary disabled:opacity-60">
-                        حفظ أسعار التوصيل
-                      </button>
-                    </form>
-                  ) : null}
-
-                  {onSettleCustody ? (
-                    <div className="space-y-4 rounded-xl border border-white/10 bg-brand-300/50 p-4">
+                  <div className="space-y-4 rounded-xl border border-white/10 bg-brand-300/50 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium text-white/70">العهدة النقدية</p>
                         {custodyLoading ? (
@@ -425,8 +400,7 @@ export function StoreDetailModal({
                       {!custodyLoading && custodySummary && custodySummary.totalOwed <= 0 ? (
                         <p className="text-xs text-white/50">لا توجد عهدة مستحقة للتسوية حالياً.</p>
                       ) : null}
-                    </div>
-                  ) : null}
+                  </div>
                 </div>
               ) : null}
 

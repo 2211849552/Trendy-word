@@ -23,6 +23,7 @@ import {
   toApiStoreStatus,
 } from '../api/adminStores.js'
 import { getStoreProducts, extractProductList } from '../api/products.js'
+import { getCurrentUser, mapCurrentUser, canManageStoreDeliveryPrices } from '../api/user.js'
 
 function extractList(data) {
   if (Array.isArray(data)) return data
@@ -121,6 +122,7 @@ export function StoreManagementPage() {
   const [storesError, setStoresError] = useState('')
   const [storeQuery, setStoreQuery] = useState('')
   const [storeStatus, setStoreStatus] = useState('all')
+  const [canEditDeliveryPrices, setCanEditDeliveryPrices] = useState(true)
 
   const loadRequests = useCallback(async () => {
     setLoadingRequests(true)
@@ -173,6 +175,12 @@ export function StoreManagementPage() {
         enrichMissingMerchantData(mappedStores, setRegisteredStores)
       })
       .catch(() => {})
+
+    getCurrentUser()
+      .then((data) => {
+        setCanEditDeliveryPrices(canManageStoreDeliveryPrices(mapCurrentUser(data)))
+      })
+      .catch(() => setCanEditDeliveryPrices(false))
   }, [loadRequests])
 
   useEffect(() => {
@@ -283,9 +291,9 @@ export function StoreManagementPage() {
         onToggleStoreStatus={handleToggleStoreStatus}
         onLoadStoreDetails={handleLoadStoreDetails}
         onUpdateStore={handleUpdateStore}
-        onUpdateDeliveryPrices={handleUpdateDeliveryPrices}
         onSettleCustody={handleSettleCustody}
         onPrintStores={handlePrintStores}
+        canEditDeliveryPrices={canEditDeliveryPrices}
         onBackToJoin={() => setView('join')}
       />
     )

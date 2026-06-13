@@ -42,12 +42,95 @@ export function updateAdminStore(store, body) {
   })
 }
 
+// GET /api/admin/stores/{store}/delivery-prices
+export function getStoreDeliveryPrices(store) {
+  return apiRequest(`/api/admin/stores/${encodeURIComponent(String(store))}/delivery-prices`)
+}
+
 // PUT /api/admin/stores/{store}/delivery-prices
+export function buildDeliveryPricesPayload(pricesByZoneId) {
+  return Object.fromEntries(
+    Object.entries(pricesByZoneId).map(([zoneId, price]) => [
+      String(zoneId),
+      normalizePriceValue(price),
+    ]),
+  )
+}
+
 export function updateStoreDeliveryPrices(store, deliveryPrices) {
+  const payload = buildDeliveryPricesPayload(deliveryPrices)
   return apiRequest(`/api/admin/stores/${encodeURIComponent(String(store))}/delivery-prices`, {
     method: 'PUT',
-    body: JSON.stringify({ delivery_prices: deliveryPrices }),
+    body: JSON.stringify({ delivery_prices: payload }),
   })
+}
+
+function normalizePriceValue(price) {
+  const value = Number(price)
+  return Number.isFinite(value) && value >= 0 ? value : 0
+}
+
+/** يحوّل delivery_prices أو zone_delivery_prices إلى خريطة { zoneId: price } */
+export function extractDeliveryPricesMap(item) {
+  if (!item) return {}
+
+  const objectPrices = item.delivery_prices
+  if (objectPrices && typeof objectPrices === 'object' && !Array.isArray(objectPrices)) {
+    return Object.fromEntries(
+      Object.entries(objectPrices).map(([zoneId, price]) => [
+        String(zoneId),
+        normalizePriceValue(price),
+      ]),
+    )
+  }
+
+  const list = item.zone_delivery_prices ?? (Array.isArray(objectPrices) ? objectPrices : null)
+  if (Array.isArray(list)) {
+    return Object.fromEntries(
+      list
+        .map((row) => {
+          const zoneId = row.zone_id ?? row.id ?? row.zone?.id
+          const price = row.delivery_price ?? row.price ?? 0
+          if (zoneId == null || zoneId === '') return null
+          return [String(zoneId), normalizePriceValue(price)]
+        })
+        .filter(Boolean),
+    )
+  }
+
+  return {}
+}
+
+/** قائمة أسعار مع أسماء المناطق من StoreAdminResource */
+export function extractZoneDeliveryPricesList(item) {
+  if (Array.isArray(item?.zone_delivery_prices)) {
+    return item.zone_delivery_prices
+      .map((row) => {
+        const zoneId = row.zone_id ?? row.id ?? row.zone?.id
+        if (zoneId == null || zoneId === '') return null
+        return {
+          zoneId: String(zoneId),
+          zoneName: row.zone_name ?? row.name ?? row.zone?.name ?? null,
+          deliveryPrice: normalizePriceValue(row.delivery_price ?? row.price ?? 0),
+        }
+      })
+      .filter(Boolean)
+  }
+
+  const pricesMap = extractDeliveryPricesMap(item)
+  return Object.entries(pricesMap).map(([zoneId, deliveryPrice]) => ({
+    zoneId,
+    zoneName: null,
+    deliveryPrice,
+  }))
+}
+
+export function mapStoreDeliveryPricesResponse(data) {
+  const item = data?.data ?? data
+  return {
+    prices: extractDeliveryPricesMap(item),
+    zoneDeliveryPrices: extractZoneDeliveryPricesList(item),
+  }
 }
 
 // POST /api/admin/stores/{store}/settle-custody
@@ -124,7 +207,8 @@ export function mapAdminStore(item) {
     deactivationReason: item.deactivation_reason ?? '',
     zoneId: item.zone_id ?? null,
     googleMapUrl: item.google_map_url ?? '',
-    deliveryPrices: item.delivery_prices ?? {},
+    deliveryPrices: extractDeliveryPricesMap(item),
+    zoneDeliveryPrices: extractZoneDeliveryPricesList(item),
     custodyBalance: Number(item.custody_balance ?? 0),
     owner,
   }
