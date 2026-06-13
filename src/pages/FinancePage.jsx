@@ -84,24 +84,31 @@ export function FinancePage() {
   const loadFinanceStats = async (period = activePeriod) => {
     setFinanceLoading(true)
     const dateParams = buildFinanceQueryParams({ period })
-    try {
-      const [platform, ads, subscriptions, delivery, overview] = await Promise.all([
-        getPlatformEarnings(dateParams),
-        getAdProfits(dateParams),
-        getSubscriptionProfits(dateParams),
-        getDeliveryProfits(dateParams),
-        getRevenueOverview(dateParams),
-      ])
-      setPlatformEarnings(extractFinancePayload(platform))
-      setAdProfits(extractFinancePayload(ads))
-      setSubscriptionProfits(extractFinancePayload(subscriptions))
-      setDeliveryProfits(extractFinancePayload(delivery))
-      setRevenueOverview(extractFinancePayload(overview))
-    } catch {
-      // keep fallback values in cards
-    } finally {
-      setFinanceLoading(false)
+    const results = await Promise.allSettled([
+      getPlatformEarnings(dateParams),
+      getAdProfits(dateParams),
+      getSubscriptionProfits(dateParams),
+      getDeliveryProfits(dateParams),
+      getRevenueOverview(dateParams),
+    ])
+
+    if (results[0].status === 'fulfilled') {
+      setPlatformEarnings(extractFinancePayload(results[0].value))
     }
+    if (results[1].status === 'fulfilled') {
+      setAdProfits(extractFinancePayload(results[1].value))
+    }
+    if (results[2].status === 'fulfilled') {
+      setSubscriptionProfits(extractFinancePayload(results[2].value))
+    }
+    if (results[3].status === 'fulfilled') {
+      setDeliveryProfits(extractFinancePayload(results[3].value))
+    }
+    if (results[4].status === 'fulfilled') {
+      setRevenueOverview(extractFinancePayload(results[4].value))
+    }
+
+    setFinanceLoading(false)
   }
 
   const loadCharts = async (period = activePeriod) => {
@@ -355,7 +362,7 @@ export function FinancePage() {
         <div className="bg-brand-200 p-3 border border-white/10 shadow-premium text-right text-sm">
           <p className="text-white mb-1">{label}</p>
           <p className="text-emerald-500">
-            الإيرادات : {payload[0].value}
+            الإيرادات : {Number(payload[0].value).toLocaleString('ar-LY')} د.ل
           </p>
         </div>
       );
@@ -394,7 +401,6 @@ export function FinancePage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Revenue Card */}
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
-          <div className="absolute top-4 left-4 text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md">22% ↑</div>
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
             <DollarSign className="size-6" />
           </div>

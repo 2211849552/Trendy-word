@@ -11,9 +11,7 @@ import {
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
 export function CampaignPerformanceChart({ data = [] }) {
-  const maxViews = Math.max(...data.map((d) => d.views || 0), 1)
   const maxCount = Math.max(...data.map((d) => Math.max(d.products || 0, d.stores || 0)), 1)
-  const viewsTicks = [0, maxViews * 0.25, maxViews * 0.5, maxViews * 0.75, maxViews].map(Math.round)
   const countTicks = [0, maxCount * 0.25, maxCount * 0.5, maxCount * 0.75, maxCount].map(Math.round)
 
   if (data.length === 0) {
@@ -41,18 +39,6 @@ export function CampaignPerformanceChart({ data = [] }) {
               height={48}
             />
             <YAxis
-              yAxisId="views"
-              orientation="left"
-              domain={[0, maxViews]}
-              ticks={viewsTicks}
-              tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Cairo, sans-serif' }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)}
-            />
-            <YAxis
-              yAxisId="count"
-              orientation="right"
               domain={[0, maxCount]}
               ticks={countTicks}
               tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Cairo, sans-serif' }}
@@ -66,7 +52,7 @@ export function CampaignPerformanceChart({ data = [] }) {
                 fontFamily: 'Cairo, sans-serif',
               }}
               formatter={(value, name) => {
-                const labels = { views: 'المشاهدات', products: 'عدد المنتجات', stores: 'عدد المتاجر' }
+                const labels = { products: 'عدد المنتجات', stores: 'عدد المتاجر' }
                 return [value, labels[name] ?? name]
               }}
             />
@@ -77,7 +63,6 @@ export function CampaignPerformanceChart({ data = [] }) {
                 const map = {
                   stores: { label: 'عدد المتاجر', color: CAMPAIGN_METRICS.stores.stroke },
                   products: { label: 'عدد المنتجات', color: CAMPAIGN_METRICS.products.stroke },
-                  views: { label: 'المشاهدات', color: CAMPAIGN_METRICS.views.stroke },
                 }
                 const item = map[value]
                 if (!item) return value
@@ -93,7 +78,6 @@ export function CampaignPerformanceChart({ data = [] }) {
               }}
             />
             <Line
-              yAxisId="count"
               type="monotone"
               dataKey="stores"
               name="stores"
@@ -103,23 +87,12 @@ export function CampaignPerformanceChart({ data = [] }) {
               activeDot={{ r: 5 }}
             />
             <Line
-              yAxisId="count"
               type="monotone"
               dataKey="products"
               name="products"
               stroke={CAMPAIGN_METRICS.products.stroke}
               strokeWidth={2.5}
               dot={{ r: 3, fill: CAMPAIGN_METRICS.products.stroke }}
-              activeDot={{ r: 5 }}
-            />
-            <Line
-              yAxisId="views"
-              type="monotone"
-              dataKey="views"
-              name="views"
-              stroke={CAMPAIGN_METRICS.views.stroke}
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: CAMPAIGN_METRICS.views.stroke }}
               activeDot={{ r: 5 }}
             />
           </LineChart>

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Eye, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X, Loader2 } from 'lucide-react'
+import { Plus, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X, Loader2 } from 'lucide-react'
 import {
   getAdminCampaigns,
   getAdminCampaign,
@@ -234,15 +234,7 @@ export function MarketingPage() {
         </PrimaryButton>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="ltr">
-        <StatCard
-          label="إجمالي المشاهدات"
-          value={stats.totalViews}
-          change={stats.viewsChange}
-          trend="up"
-          icon={Eye}
-          iconClassName="bg-brand-300 text-white"
-        />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" dir="ltr">
         <StatCard
           label="الحملات المنتهية"
           value={String(stats.expired)}
