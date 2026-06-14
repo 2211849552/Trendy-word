@@ -53,7 +53,7 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
         <img
           src="/trendy-logo.png"
           alt="Trendy"
-          className="block h-auto w-[88px] object-contain"
+          className="block h-auto w-[168px] max-w-full object-contain"
         />
         <p className="text-[15px] font-bold text-white">لوحة تحكم الإدارة العليا</p>
       </div>
