@@ -81,10 +81,9 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
         <StatCard
           label="إجمالي المنتجات"
           value={String(totalProducts)}
-          change="8%"
-          trend="up"
           icon={ShoppingBag}
           iconClassName="bg-brand-300 text-white/90"
+          omitChange
         />
         <StatCard
           label="طلبات التسجيل"
