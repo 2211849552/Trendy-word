@@ -41,7 +41,7 @@ function apiErrorMessage(err, fallback) {
   return err?.message || fallback
 }
 
-export function DisputesPage() {
+export function DisputesPage({ params, setParams }) {
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -93,8 +93,15 @@ export function DisputesPage() {
         setLoading(false)
       }
     }, 300)
-    return () => clearTimeout(timer)
   }, [searchQuery, activeStatusFilter, activeTypeFilter, loadDisputes])
+
+  useEffect(() => {
+    if (params?.ticket_id) {
+      const ticketId = Number(params.ticket_id)
+      openDetailsModal({ id: ticketId })
+      setParams?.(null)
+    }
+  }, [params, setParams])
 
   const stats = buildComplaintStats(disputes)
 

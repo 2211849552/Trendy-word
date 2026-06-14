@@ -164,7 +164,7 @@ function DriverCreateField({
   )
 }
 
-export function DriversPage() {
+export function DriversPage({ params, setParams }) {
   const [drivers, setDrivers] = useState([])
   const [paginationMeta, setPaginationMeta] = useState({})
   const [loading, setLoading] = useState(true)
@@ -196,6 +196,25 @@ export function DriversPage() {
 
   const [chatDriver, setChatDriver] = useState(null)
   const [chatOpen, setChatOpen] = useState(false)
+
+  useEffect(() => {
+    if (params?.driver_id) {
+      const driverId = Number(params.driver_id)
+      
+      const fetchAndOpenChat = async () => {
+        try {
+          const data = await getDriver(driverId)
+          const mapped = mapDriverDetail(data)
+          openChat(mapped)
+        } catch {
+          openChat({ id: driverId, name: 'سائق', phone: '—' })
+        }
+      }
+      
+      fetchAndOpenChat()
+      setParams?.(null)
+    }
+  }, [params, setParams])
 
   const loadSeq = useRef(0)
 

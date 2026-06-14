@@ -42,7 +42,7 @@ function getIcon(type) {
   }
 }
 
-export function NotificationsPage() {
+export function NotificationsPage({ onNavigate }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -73,6 +73,25 @@ export function NotificationsPage() {
     }
     load()
   }, [loadNotifications])
+
+  useEffect(() => {
+    const handleNewNotification = (event) => {
+      const rawNotif = event.detail
+      if (!rawNotif) return
+
+      const mapped = mapNotification(rawNotif)
+      setNotifications((prev) => {
+        // التحقق من عدم تكرار الإشعار
+        if (prev.some((n) => n.id === mapped.id)) return prev
+        return [mapped, ...prev]
+      })
+    }
+
+    window.addEventListener('admin_new_notification', handleNewNotification)
+    return () => {
+      window.removeEventListener('admin_new_notification', handleNewNotification)
+    }
+  }, [])
 
   const stats = buildNotificationStats(notifications)
 
@@ -110,16 +129,40 @@ export function NotificationsPage() {
   }
 
   const openDetails = async (notif) => {
+    if (!notif.isRead) {
+      markAsRead(notif.id).catch(() => {})
+    }
+
+    const eventType = notif.data?.event ?? ''
+    const data = notif.data ?? {}
+
+    if (eventType === 'new_complaint' || notif.title === 'تذكرة شكوى جديدة') {
+      if (onNavigate && data.ticket_id) {
+        onNavigate('disputes', { ticket_id: data.ticket_id })
+        return
+      }
+    }
+
+    if (eventType === 'new_store_join_request' || notif.title === 'طلب انضمام متجر جديد') {
+      if (onNavigate && data.store_join_request_id) {
+        onNavigate('stores', { store_join_request_id: data.store_join_request_id })
+        return
+      }
+    }
+
+    if (eventType === 'driver_support_message' || notif.title === 'رسالة جديدة من السائق في شات الدعم') {
+      if (onNavigate && data.driver_id) {
+        onNavigate('drivers', { driver_id: data.driver_id })
+        return
+      }
+    }
+
     setSelectedNotif(notif)
     setDetailLoading(true)
     try {
-      const data = await getNotification(notif.id)
-      const detail = mapNotificationDetail(data)
+      const apiData = await getNotification(notif.id)
+      const detail = mapNotificationDetail(apiData)
       setSelectedNotif(detail)
-      if (!detail.isRead) {
-        await markAsRead(notif.id)
-        setSelectedNotif({ ...detail, isRead: true })
-      }
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الإشعار.'))
       setTimeout(() => setActionMessage(''), 3000)

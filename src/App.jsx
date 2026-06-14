@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
 import { getCurrentUser } from './api/user.js'
 import { Sidebar } from './components/Sidebar.jsx'
@@ -18,21 +19,89 @@ import { OrdersPage } from './pages/OrdersPage.jsx'
 import { DriversPage } from './pages/DriversPage.jsx'
 import { ZonesPage } from './pages/ZonesPage.jsx'
 
-function renderPage(activeNav) {
-  if (activeNav === 'stores') return <StoreManagementPage />
+function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate) {
+  if (activeNav === 'stores') return <StoreManagementPage params={activeNavParams} setParams={setActiveNavParams} />
   if (activeNav === 'plans') return <PlansPage />
   if (activeNav === 'marketing') return <MarketingPage />
   if (activeNav === 'catalog') return <CategoriesPage />
-  if (activeNav === 'disputes') return <DisputesPage />
+  if (activeNav === 'disputes') return <DisputesPage params={activeNavParams} setParams={setActiveNavParams} />
   if (activeNav === 'finance') return <FinancePage />
   if (activeNav === 'offers') return <OffersPage />
   if (activeNav === 'customers') return <CustomersPage />
   if (activeNav === 'staff') return <StaffPage />
-  if (activeNav === 'notifications') return <NotificationsPage />
+  if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} />
   if (activeNav === 'orders') return <OrdersPage />
-  if (activeNav === 'drivers') return <DriversPage />
+  if (activeNav === 'drivers') return <DriversPage params={activeNavParams} setParams={setActiveNavParams} />
   if (activeNav === 'zones') return <ZonesPage />
   return <OverviewPage />
+}
+
+function Toast({ toast, onClose, onAction }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 6000)
+    return () => clearTimeout(timer)
+  }, [onClose])
+
+  const getIcon = (type) => {
+    switch (type) {
+      case 'critical':
+        return (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+            <AlertCircle className="size-5" />
+          </div>
+        )
+      case 'warning':
+        return (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+            <AlertTriangle className="size-5" />
+          </div>
+        )
+      default:
+        return (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400">
+            <Bell className="size-5" />
+          </div>
+        )
+    }
+  }
+
+  const eventType = toast.data?.event ?? ''
+  const hasDetailsAction = ['new_complaint', 'new_store_join_request', 'driver_support_message'].includes(eventType) ||
+    toast.title === 'تذكرة شكوى جديدة' ||
+    toast.title === 'طلب انضمام متجر جديد' ||
+    toast.title === 'رسالة جديدة من السائق في شات الدعم'
+
+  return (
+    <div
+      dir="rtl"
+      className="flex w-96 max-w-full items-start gap-4 rounded-2xl border border-white/10 bg-brand-950/80 p-4 shadow-2xl backdrop-blur-md animate-in slide-in-from-left-5 fade-in duration-300"
+    >
+      {getIcon(toast.type)}
+      <div className="flex-1 min-w-0 text-right">
+        <h4 className="text-sm font-bold text-white mb-0.5">{toast.title}</h4>
+        <p className="text-xs text-white/70 leading-relaxed break-words">{toast.body}</p>
+        {hasDetailsAction && (
+          <button
+            type="button"
+            onClick={() => {
+              onAction?.(toast)
+              onClose()
+            }}
+            className="mt-2 text-xs font-bold text-brand-300 hover:text-brand-200 transition-colors cursor-pointer"
+          >
+            عرض التفاصيل
+          </button>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="text-white/40 hover:text-white rounded-lg p-1 transition-colors self-start shrink-0"
+      >
+        <X className="size-4" />
+      </button>
+    </div>
+  )
 }
 
 export default function App() {
@@ -40,6 +109,74 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
+  const [toasts, setToasts] = useState([])
+  const [activeNavParams, setActiveNavParams] = useState(null)
+
+  const handlePageNavigate = (page, params = null) => {
+    setActiveNav(page)
+    setActiveNavParams(params)
+  }
+
+  const handleToastAction = (toast) => {
+    const eventType = toast.data?.event ?? ''
+    const data = toast.data ?? {}
+
+    if (eventType === 'new_complaint' || toast.title === 'تذكرة شكوى جديدة') {
+      if (data.ticket_id) {
+        handlePageNavigate('disputes', { ticket_id: data.ticket_id })
+      }
+    } else if (eventType === 'new_store_join_request' || toast.title === 'طلب انضمام متجر جديد') {
+      if (data.store_join_request_id) {
+        handlePageNavigate('stores', { store_join_request_id: data.store_join_request_id })
+      }
+    } else if (eventType === 'driver_support_message' || toast.title === 'رسالة جديدة من السائق في شات الدعم') {
+      if (data.driver_id) {
+        handlePageNavigate('drivers', { driver_id: data.driver_id })
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const token = localStorage.getItem('auth_token')
+    if (!token) return
+
+    const apiBase = import.meta.env.VITE_API_BASE_URL ?? ''
+    const streamUrl = `${apiBase}/api/notifications/stream?token=${encodeURIComponent(token)}`
+
+    const eventSource = new EventSource(streamUrl)
+
+    eventSource.onmessage = (event) => {
+      try {
+        const notif = JSON.parse(event.data)
+        
+        setToasts((prev) => [
+          ...prev,
+          {
+            id: notif.id ?? Date.now(),
+            title: notif.title,
+            body: notif.body,
+            type: notif.type,
+            data: notif.data,
+          },
+        ])
+
+        const customEvent = new CustomEvent('admin_new_notification', { detail: notif })
+        window.dispatchEvent(customEvent)
+      } catch (err) {
+        console.error('Error parsing notification event data', err)
+      }
+    }
+
+    eventSource.onerror = (err) => {
+      console.error('SSE connection error:', err)
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (isDarkMode) {
@@ -114,7 +251,7 @@ export default function App() {
         className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <div className="mx-auto max-w-[1600px]">
-          {renderPage(activeNav)}
+          {renderPage(activeNav, activeNavParams, setActiveNavParams, handlePageNavigate)}
         </div>
       </main>
 
@@ -125,6 +262,18 @@ export default function App() {
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         onLogout={handleLogout}
       />
+
+      {/* حاوية الإشعارات الفورية المنبثقة (Toast Banners) */}
+      <div className="fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 max-w-full">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            toast={toast}
+            onAction={handleToastAction}
+            onClose={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
+          />
+        ))}
+      </div>
     </div>
   )
 }

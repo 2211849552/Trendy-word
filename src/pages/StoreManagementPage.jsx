@@ -113,7 +113,7 @@ async function enrichMissingMerchantData(stores, setStores) {
   })
 }
 
-export function StoreManagementPage() {
+export function StoreManagementPage({ params, setParams }) {
   const [view, setView] = useState('join')
   const [joinRequests, setJoinRequests] = useState([])
   const [registeredStores, setRegisteredStores] = useState([])
@@ -123,6 +123,12 @@ export function StoreManagementPage() {
   const [storeQuery, setStoreQuery] = useState('')
   const [storeStatus, setStoreStatus] = useState('all')
   const [canEditDeliveryPrices, setCanEditDeliveryPrices] = useState(true)
+
+  useEffect(() => {
+    if (params?.store_join_request_id) {
+      setView('join')
+    }
+  }, [params])
 
   const loadRequests = useCallback(async () => {
     setLoadingRequests(true)
@@ -308,6 +314,8 @@ export function StoreManagementPage() {
       onReject={handleRejectRequest}
       onLoadRequest={handleLoadRequestDetails}
       onOpenList={() => setView('list')}
+      initialRequestId={params?.store_join_request_id}
+      onClearInitialRequestId={() => setParams?.(null)}
     />
   )
 }

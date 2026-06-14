@@ -16,9 +16,17 @@ import { StatCard } from '../StatCard.jsx'
 import { JoinRequestDetailModal } from './JoinRequestDetailModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
 
-export function StoreJoinRequestsView({ requests, registeredStores = [], loading = false, onAccept, onReject, onLoadRequest, onOpenList }) {
-  const [modalRequestId, setModalRequestId] = useState(null)
+export function StoreJoinRequestsView({ requests, registeredStores = [], loading = false, onAccept, onReject, onLoadRequest, onOpenList, initialRequestId, onClearInitialRequestId }) {
+  const [modalRequestId, setModalRequestId] = useState(initialRequestId ? String(initialRequestId) : null)
   const modalRequest = requests.find((r) => r.id === modalRequestId) ?? null
+
+  useEffect(() => {
+    if (initialRequestId) {
+      setModalRequestId(String(initialRequestId))
+      onLoadRequest?.(String(initialRequestId))
+      onClearInitialRequestId?.()
+    }
+  }, [initialRequestId, onLoadRequest, onClearInitialRequestId])
 
   const openDetails = (id) => {
     setModalRequestId(id)
