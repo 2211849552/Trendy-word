@@ -130,7 +130,7 @@ export function DisputesPage({ params, setParams }) {
     setActionLoading(true)
     try {
       let detail = dispute
-      if (!detail.attachments?.length) {
+      if (!detail.imageUrl) {
         detail = await fetchComplaintDetail(dispute.id)
         setDisputes((prev) => prev.map((d) => (d.id === detail.id ? { ...d, ...detail } : d)))
         if (selectedDispute?.id === detail.id) setSelectedDispute(detail)

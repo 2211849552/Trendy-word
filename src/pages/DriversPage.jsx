@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import {
   getDrivers,
-  getDriver,
+  loadDriverAdminStats,
   createDriver,
   updateDriver,
   deactivateDriver,
@@ -41,6 +41,7 @@ import {
 } from '../api/adminDrivers.js'
 import { fetchAvailableZones } from '../api/zones.js'
 import { DriverChatModal } from '../components/drivers/DriverChatModal.jsx'
+import { DriverCustodyViewSection } from '../components/drivers/DriverCustodyViewSection.jsx'
 import { DriverCustodySection } from '../components/drivers/DriverCustodySection.jsx'
 
 function apiErrorMessage(err, fallback) {
@@ -282,10 +283,21 @@ export function DriversPage({ params, setParams }) {
     setShowDeactivateForm(false)
     setToggleError('')
     try {
-      const data = await getDriver(driver.id)
-      const mapped = mapDriverDetail(data)
+      const mapped = await loadDriverAdminStats(driver.id)
       setSelectedDriver(mapped)
       setEditForm(emptyDriverEditForm(mapped))
+      setDrivers((prev) =>
+        prev.map((d) =>
+          d.id === mapped.id
+            ? {
+                ...d,
+                deliveries: mapped.deliveries,
+                totalEarnings: mapped.totalEarnings,
+                custodyBalance: mapped.custodyBalance,
+              }
+            : d,
+        ),
+      )
       if (!zones.length) await loadZones()
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل السائق.'))
@@ -387,8 +399,7 @@ export function DriversPage({ params, setParams }) {
     setEditError('')
     try {
       await updateDriver(selectedDriver.id, payload)
-      const data = await getDriver(selectedDriver.id)
-      const mapped = mapDriverDetail(data)
+      const mapped = await loadDriverAdminStats(selectedDriver.id)
       setSelectedDriver(mapped)
       setEditForm(emptyDriverEditForm(mapped))
       setShowEditForm(false)
@@ -671,19 +682,17 @@ export function DriversPage({ params, setParams }) {
                   </div>
                 </div>
 
-                {selectedDriver.totalEarnings > 0 ? (
-                  <div className="rounded-xl bg-brand-300 border border-white/5 p-5 flex items-center gap-4">
-                    <div className="size-10 rounded-full bg-brand-200 border border-white/10 flex items-center justify-center text-white/50">
-                      <Star className="size-5" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-white/60 mb-0.5">إجمالي الأرباح</p>
-                      <p className="font-bold text-white" dir="ltr">
-                        {Number(selectedDriver.totalEarnings).toLocaleString('ar-LY')} د.ل
-                      </p>
-                    </div>
+                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 flex items-center gap-4">
+                  <div className="size-10 rounded-full bg-brand-200 border border-white/10 flex items-center justify-center text-white/50">
+                    <Star className="size-5" />
                   </div>
-                ) : null}
+                  <div className="text-right">
+                    <p className="text-xs text-white/60 mb-0.5">إجمالي الأرباح</p>
+                    <p className="font-bold text-white" dir="ltr">
+                      {Number(selectedDriver.totalEarnings ?? 0).toLocaleString('ar-LY')} د.ل
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
@@ -759,9 +768,24 @@ export function DriversPage({ params, setParams }) {
                 ) : null}
               </div>
 
+              <DriverCustodyViewSection
+                driver={selectedDriver}
+                onCustodyLoaded={(view) => {
+                  setSelectedDriver((prev) =>
+                    prev ? { ...prev, custodyView: view, custodyBalance: view.custodyBalance, pendingCash: view.pendingCash } : prev,
+                  )
+                }}
+              />
+
               <DriverCustodySection
                 driver={selectedDriver}
+                custodyView={selectedDriver.custodyView}
                 onDriverUpdated={handleDriverCustodyUpdated}
+                onSettled={(view) => {
+                  setSelectedDriver((prev) =>
+                    prev ? { ...prev, custodyView: view, custodyBalance: view.custodyBalance, pendingCash: view.pendingCash } : prev,
+                  )
+                }}
                 onMessage={(msg) => {
                   setActionMessage(msg)
                   setTimeout(() => setActionMessage(''), 4000)

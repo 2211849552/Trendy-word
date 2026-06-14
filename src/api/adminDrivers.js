@@ -1,4 +1,19 @@
 import { apiRequest } from './client.js'
+import { loadDriverCustodyView } from './driverCustody.js'
+
+export {
+  getDriverCustodyBalance,
+  getDriverFinanceCustodyBalance,
+  fetchDriverCustody,
+  loadDriverCustodyView,
+  mapDriverCustodyView,
+  getDriverSettleableBalance,
+  settleDriverCash,
+  settleDriverCustody,
+  mapDriverCustodyBalance,
+  mapSettleDriverCashResponse,
+  formatDriverCustodyAmount,
+} from './driverCustody.js'
 
 // [18] إدارة السائقين
 // GET /api/drivers — عرض القائمة والبحث والفلترة
@@ -45,44 +60,59 @@ export function reactivateDriver(id) {
   })
 }
 
-// GET /api/drivers/my/custody-balance?driver_id={id}
-export function getDriverCustodyBalance(driverId) {
-  const query = new URLSearchParams({ driver_id: String(driverId) }).toString()
-  return apiRequest(`/api/drivers/my/custody-balance?${query}`)
+// GET /api/drivers/{id} — إجمالي التوصيلات من profile.total_orders (للإدارة)
+export async function getDriverTotalDeliveries(driverId) {
+  const data = await getDriver(driverId)
+  return mapDriverDeliveries(data)
 }
 
-// POST /api/drivers/{id}/settle-cash — تسوية العهدة النقدية للسائق
-export function settleDriverCash(driverId, body) {
-  return apiRequest(`/api/drivers/${encodeURIComponent(String(driverId))}/settle-cash`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
-}
+/** جلب إحصائيات السائق للوحة الإدارة: التوصيلات + عرض العهدة */
+export async function loadDriverAdminStats(driverId) {
+  const id = Number(driverId)
+  const [driverData, custodyView] = await Promise.all([
+    getDriver(id),
+    loadDriverCustodyView(id),
+  ])
 
-export function mapDriverCustodyBalance(data) {
-  const item = data?.data ?? data
+  const detail = mapDriverDetail(driverData)
+  const deliveries = mapDriverDeliveries(driverData)
+
   return {
-    balance: Number(item?.custody_balance ?? 0),
+    ...detail,
+    deliveries: deliveries.totalDeliveries,
+    totalEarnings: deliveries.totalEarnings,
+    custodyBalance: custodyView.custodyBalance,
+    pendingCash: custodyView.pendingCash ?? detail.pendingCash,
+    isBlockedFromCod: custodyView.isBlockedFromCod ?? detail.isBlockedFromCod,
+    firstCashCollectedAt: custodyView.firstCashCollectedAt ?? detail.firstCashCollectedAt,
+    custodyView,
+    deliveriesStats: deliveries,
+  }
+}
+
+export function mapDriverDeliveries(data) {
+  const item = data?.data ?? data
+  const profile = item?.driver_profile ?? item?.profile ?? {}
+  const stats = item?.stats ?? {}
+
+  return {
+    totalDeliveries: Number(
+      profile.total_orders ??
+      stats.total_deliveries ??
+      stats.total_orders ??
+      item.total_deliveries ??
+      item.total_orders ??
+      item.deliveries ??
+      0,
+    ),
+    totalEarnings: Number(
+      profile.earnings ??
+      stats.total_earnings ??
+      item.total_earnings ??
+      0,
+    ),
     currency: item?.currency ?? 'LYD',
-    firstCollectedAt: item?.first_cash_collected_at ?? null,
-    isBlockedFromCod: Boolean(item?.is_blocked_from_cod ?? false),
   }
-}
-
-export function mapSettleDriverCashResponse(data) {
-  const item = data?.data ?? data
-  return {
-    earningsBalance: Number(item?.earnings_balance ?? 0),
-    cashCollectedBalance: Number(item?.cash_collected_balance ?? 0),
-    pendingCash: Number(item?.pending_cash ?? 0),
-    message: data?.message ?? '',
-  }
-}
-
-export function formatDriverCustodyAmount(value, currency = 'LYD') {
-  const num = Number(value)
-  if (!Number.isFinite(num)) return '—'
-  return `${num.toLocaleString('ar-LY')} ${currency === 'LYD' ? 'د.ل' : currency}`
 }
 
 /** أنواع المركبة المدعومة في POST /api/drivers */
@@ -195,8 +225,22 @@ export function mapDriver(item) {
     plateNumber: profile.plate_number ?? item.plate_number ?? '',
     zoneId: profile.current_zone_id ?? item.current_zone_id ?? null,
     zoneName: profile.zone_name ?? item.zone_name ?? item.current_zone?.name ?? '—',
-    rating: Number(item.avg_rating ?? item.rating ?? item.average_rating ?? 0),
-    deliveries: Number(stats.total_deliveries ?? item.total_deliveries ?? item.deliveries ?? 0),
+    rating: Number(
+      profile.average_rating ??
+      item.avg_rating ??
+      item.rating ??
+      item.average_rating ??
+      0,
+    ),
+    deliveries: Number(
+      profile.total_orders ??
+      stats.total_deliveries ??
+      stats.total_orders ??
+      item.total_deliveries ??
+      item.total_orders ??
+      item.deliveries ??
+      0,
+    ),
     status: display.label,
     rawStatus: display.rawStatus,
     availability: display.availability,

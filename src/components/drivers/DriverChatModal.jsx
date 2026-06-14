@@ -12,7 +12,7 @@ import { PrimaryButton } from '../PrimaryButton.jsx'
 
 function apiErrorMessage(err, fallback) {
   if (err?.code === 'NO_CHAT_ORDER' || err?.message === 'NO_CHAT_ORDER') {
-    return 'لا توجد طلبية مرتبطة بهذا السائق. المحادثة متاحة عبر طلبات التوصيل فقط.'
+    return 'تعذّر فتح محادثة مع هذا السائق. حاولي مرة أخرى.'
   }
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
   if (err?.status === 403) return 'ليس لديك صلاحية التواصل مع السائقين.'

@@ -3,15 +3,28 @@ import { extractOrderList, getOrders } from './adminOrders.js'
 
 // [17] نظام المحادثات — api.md
 // GET    /api/orders/chat
-// GET    /api/orders/chat/{id}/messages   ← {id} = معرّف الطلب (order id)
+// POST   /api/orders/chat/support       ← بدء/استئناف محادثة الإدارة ↔ السائق
+// GET    /api/orders/chat/{id}/messages   ← {id} = معرّف المحادثة (conversation id)
 // POST   /api/orders/chat/{id}/messages   ← body: { message_text: "..." }
 
 const CHAT_BASE = '/api/orders/chat'
 
-/** GET /api/orders/chat — قائمة المحادثات (قد يتعارض مع GET /api/orders/{id} على بعض إعدادات Laravel) */
+/** GET /api/orders/chat — قائمة المحادثات */
 export function getChats(params = {}) {
   const query = new URLSearchParams(params).toString()
   return apiRequest(`${CHAT_BASE}${query ? `?${query}` : ''}`)
+}
+
+/** POST /api/orders/chat/support — بدء أو استئناف محادثة الإدارة العليا مع سائق */
+export function startSupportChat(driverId) {
+  const id = Number(driverId)
+  if (!Number.isFinite(id) || id <= 0) {
+    return Promise.reject(Object.assign(new Error('معرّف السائق غير صالح.'), { status: 422 }))
+  }
+  return apiRequest(`${CHAT_BASE}/support`, {
+    method: 'POST',
+    body: JSON.stringify({ driver_id: id }),
+  })
 }
 
 /** GET /api/orders/chat/{id}/messages — رسائل محادثة طلب */
@@ -54,10 +67,16 @@ export function extractMessageList(data) {
 }
 
 function readDriverIdFromChat(chat) {
+  const participants = Array.isArray(chat?.participants) ? chat.participants : []
+  const participantId = participants.find((p) => p?.id != null)?.id ?? null
+
   return (
     chat?.driver_id ??
     chat?.driverId ??
     chat?.driver?.id ??
+    chat?.context?.driver_id ??
+    chat?.last_message?.sender?.id ??
+    participantId ??
     chat?.participant?.id ??
     chat?.other_party?.id ??
     chat?.other_party_id ??
@@ -65,6 +84,11 @@ function readDriverIdFromChat(chat) {
     chat?.user?.id ??
     null
   )
+}
+
+function isDriverSupportChat(chat) {
+  const type = String(chat?.type ?? chat?.chat_type ?? '').toLowerCase()
+  return type.includes('driver') || type.includes('support')
 }
 
 function readOrderIdFromRecord(record) {
@@ -97,18 +121,21 @@ export function findDriverChat(chats, driverId) {
   return chats.find((chat) => Number(readDriverIdFromChat(chat)) === id) ?? null
 }
 
-/** معرّف المحادثة — يُستخدم في مسارات الرسائل (order id) */
-export function resolveChatId(chat, fallbackOrderId = null) {
+/** معرّف المحادثة — يُستخدم في مسارات الرسائل (conversation id) */
+export function resolveChatId(chat, fallbackId = null) {
   const raw = chat?.raw ?? chat
   const candidates = [
+    raw?.conversation_id,
+    chat?.conversationId,
+    raw?.id,
+    chat?.id,
+    chat?.chat_id,
+    raw?.data?.id,
+    fallbackId,
     raw?.order_id,
     raw?.order?.id,
     chat?.orderId,
     chat?.order_id,
-    raw?.id,
-    chat?.id,
-    chat?.chat_id,
-    fallbackOrderId,
   ]
 
   for (const value of candidates) {
@@ -156,9 +183,20 @@ export function mapChat(item) {
 }
 
 export function mapMessage(item, currentUserId = null) {
-  const senderId = item.sender_id ?? item.user_id ?? item.from_id ?? item.author_id ?? null
+  const senderId =
+    item.sender_id ??
+    item.sender?.id ??
+    item.user_id ??
+    item.from_id ??
+    item.author_id ??
+    null
   const senderRole = String(
-    item.sender_role ?? item.sender_type ?? item.role ?? item.from_role ?? '',
+    item.sender_role ??
+    item.sender_type ??
+    item.sender?.role ??
+    item.role ??
+    item.from_role ??
+    '',
   ).toLowerCase()
 
   const isMine =
@@ -168,6 +206,7 @@ export function mapMessage(item, currentUserId = null) {
     senderRole.includes('admin') ||
     senderRole.includes('super') ||
     senderRole.includes('operations') ||
+    senderRole.includes('stores_admin') ||
     (currentUserId != null && senderId != null && Number(senderId) === Number(currentUserId))
 
   return {
@@ -180,7 +219,7 @@ export function mapMessage(item, currentUserId = null) {
       item.text ??
       '',
     senderId,
-    senderName: item.sender_name ?? item.user?.name ?? item.sender?.name ?? '—',
+    senderName: item.sender_name ?? item.sender?.name ?? item.user?.name ?? '—',
     senderRole,
     isMine,
     createdAt: item.created_at ?? item.sent_at ?? item.timestamp ?? null,
@@ -217,22 +256,36 @@ async function findLatestOrderIdForDriver(driverId) {
   return fromList ? Number(fromList) : null
 }
 
-/** تحميل سياق محادثة مع سائق — يعتمد على order id حسب api.md */
+function extractSupportChatId(data) {
+  const payload = data?.data ?? data
+  return resolveChatId(payload, null)
+}
+
+/** تحميل سياق محادثة الإدارة العليا مع سائق — POST /api/orders/chat/support */
 export async function loadDriverChatContext(driverId) {
+  const id = Number(driverId)
   let chat = null
   let chatId = null
 
   try {
-    const data = await getChats({ driver_id: driverId })
-    const chats = extractChatList(data).map(mapChat)
-    chat = findDriverChat(chats, driverId)
+    const data = await getChats({ driver_id: id, type: 'driver_support' })
+    const chats = extractChatList(data)
+      .filter(isDriverSupportChat)
+      .map(mapChat)
+    chat = findDriverChat(chats, id)
     chatId = resolveChatId(chat, null)
   } catch {
-    // GET /api/orders/chat قد يُوجَّه خطأً إلى OrderController::show(id="chat")
+    // قائمة المحادثات اختيارية — نعتمد على startSupportChat
   }
 
   if (!chatId) {
-    chatId = await findLatestOrderIdForDriver(driverId)
+    const started = await startSupportChat(id)
+    chat = mapChat(started?.data ?? started)
+    chatId = extractSupportChatId(started)
+  }
+
+  if (!chatId) {
+    chatId = await findLatestOrderIdForDriver(id)
   }
 
   if (!chatId) {

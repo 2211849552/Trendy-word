@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Loader2, Wallet, X } from 'lucide-react'
-import { formatDriverCustodyAmount } from '../../api/adminDrivers.js'
+import { formatDriverCustodyAmount } from '../../api/driverCustody.js'
 
 export function DriverSettleCustodyModal({
   open,
@@ -86,7 +86,7 @@ export function DriverSettleCustodyModal({
       >
         <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
           <h2 id="driver-settle-custody-title" className="text-lg font-bold text-white">
-            تسوية العهدة النقدية
+            تسوية العهدة مع السائق
           </h2>
           <button
             type="button"
@@ -104,7 +104,7 @@ export function DriverSettleCustodyModal({
             <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300">
               <Wallet className="size-5" />
             </div>
-            <p className="text-xs text-white/60">رصيد العهدة الحالي — {driver.name}</p>
+            <p className="text-xs text-white/60">رصيد العهدة القابل للتسوية — {driver.name}</p>
             <p className="mt-1 text-xl font-bold text-amber-300 tabular-nums" dir="ltr">
               {formatDriverCustodyAmount(balance)}
             </p>

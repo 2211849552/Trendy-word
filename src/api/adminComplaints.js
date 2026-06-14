@@ -1,4 +1,5 @@
 import { apiRequest } from './client.js'
+import { resolveMediaUrl } from '../utils/mediaUrl.js'
 
 // [6] إدارة الشكاوى
 // GET /api/complaints — بحث وفلترة
@@ -117,21 +118,78 @@ export function mapCategoryToUi(category) {
   return CATEGORY_UI[category] ?? category ?? '—'
 }
 
-export function resolveMediaUrl(url) {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  const base = import.meta.env.VITE_API_BASE_URL || ''
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+function apiOrigin() {
+  const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+  if (base) return base
+  if (import.meta.env.DEV) return 'http://127.0.0.1:8000'
+  return ''
+}
+
+/** Laravel Media Library: /storage/{mediaId}/{file_name} — الـ API قد يُرجع مساراً ناقصاً */
+export function resolveComplaintAttachmentUrl(file) {
+  if (!file) return ''
+
+  const mediaId = file.id ?? file.media_id ?? null
+  const fileName = file.file_name ?? file.filename ?? null
+
+  if (mediaId != null && fileName) {
+    const path = `storage/${mediaId}/${fileName}`
+    const origin = apiOrigin()
+    if (!import.meta.env.VITE_API_BASE_URL) {
+      return `/${path}`
+    }
+    return origin ? `${origin}/${path}` : `/${path}`
+  }
+
+  const rawUrl = file.url ?? file.full_url ?? file.path ?? file.file_path ?? ''
+  if (!rawUrl) return resolveMediaUrl(fileName ?? file.name) ?? ''
+
+  if (typeof rawUrl === 'string' && /^https?:\/\//i.test(rawUrl)) {
+    const origin = apiOrigin()
+    if (!import.meta.env.VITE_API_BASE_URL) {
+      try {
+        const parsed = new URL(rawUrl)
+        return `${parsed.pathname}${parsed.search}`
+      } catch {
+        return rawUrl
+      }
+    }
+    if (origin && rawUrl.startsWith(origin)) return rawUrl
+    return rawUrl
+  }
+
+  return resolveMediaUrl(rawUrl) ?? ''
+}
+
+function collectAttachmentSources(item) {
+  const sources = [
+    ...(Array.isArray(item.attachments) ? item.attachments : []),
+    ...(Array.isArray(item.media) ? item.media : []),
+    ...(Array.isArray(item.proofs) ? item.proofs : []),
+    ...(Array.isArray(item.files) ? item.files : []),
+  ]
+
+  if (item.image) sources.push(item.image)
+  if (item.product_image) sources.push(item.product_image)
+  if (item.photo) sources.push(item.photo)
+
+  return sources
 }
 
 function mapAttachments(item) {
-  const raw = item.attachments ?? item.media ?? []
-  const list = Array.isArray(raw) ? raw : []
-  return list.map((file) => ({
-    id: file.id,
-    url: resolveMediaUrl(file.url),
-    name: file.name ?? file.file_name ?? '',
-  }))
+  return collectAttachmentSources(item).map((file) => ({
+    id: file?.id ?? file?.media_id ?? null,
+    url: resolveComplaintAttachmentUrl(file),
+    name: file?.name ?? file?.file_name ?? file?.filename ?? '',
+    mimeType: file?.mime_type ?? file?.mimeType ?? '',
+  })).filter((file) => file.url)
+}
+
+/** GET /api/complaints/{id} — جلب صور المنتج المرفقة من الزبون */
+export async function getComplaintProductImages(complaintId) {
+  const data = await getComplaint(complaintId)
+  const item = data?.data ?? data
+  return mapAttachments(item)
 }
 
 export function mapComplaint(item) {
