@@ -71,6 +71,28 @@ export function getTodayIsoDate(ref = new Date()) {
   return `${y}-${m}-${d}`
 }
 
+/** تاريخ اليوم بصيغة YYYY-MM-DD (UTC — يطابق تحقق Laravel after_or_equal:today) */
+export function getUtcTodayIsoDate(ref = new Date()) {
+  const y = ref.getUTCFullYear()
+  const m = String(ref.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(ref.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/** تحويل تاريخ البدء المحلي إلى قيمة يقبلها الخادم */
+function toApiStartDate(dateFrom) {
+  const selected = normalizeCampaignDate(dateFrom)
+  if (!selected) return selected
+
+  const localToday = getTodayIsoDate()
+  const utcToday = getUtcTodayIsoDate()
+
+  // اليوم المحلي قد يكون يوماً أقل من UTC (مثلاً 13/6 محلياً = 14/6 UTC)
+  if (selected === localToday && selected < utcToday) return utcToday
+
+  return selected
+}
+
 /** توحيد التاريخ القادم من API إلى YYYY-MM-DD */
 export function normalizeCampaignDate(value) {
   if (!value) return ''
@@ -253,13 +275,13 @@ export function validateCampaignImage(file) {
 }
 
 export function toCampaignPayload(form) {
-  const startDate = normalizeCampaignDate(form.dateFrom)
+  const startDate = toApiStartDate(form.dateFrom)
   const endDate = normalizeCampaignDate(form.dateTo)
   const payload = {
     name: form.name.trim(),
     description: form.description.trim(),
-    start_date: `${startDate} 00:00:00`,
-    end_date: `${endDate} 23:59:59`,
+    start_date: startDate,
+    end_date: endDate,
     price: form.price != null && form.price !== '' ? Number(form.price) : 0.00,
   }
   const link = form.link?.trim()
