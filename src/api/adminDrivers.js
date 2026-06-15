@@ -441,3 +441,61 @@ export function buildUpdateDriverPayload(form) {
 
   return payload
 }
+
+/**
+ * جلب مستحقات السائق من GET /api/admin/drivers/due-balances
+ */
+export async function getDriverDueBalance(driverId) {
+  const id = Number(driverId)
+  if (!Number.isFinite(id) || id <= 0) {
+    return Promise.reject(Object.assign(new Error('معرّف السائق غير صالح.'), { status: 422 }))
+  }
+
+  const res = await apiRequest(`/api/admin/drivers/due-balances?driver_id=${encodeURIComponent(String(id))}`)
+  const data = res?.data ?? res
+
+  // إذا أرجع النظام قائمة لجميع السائقين
+  if (Array.isArray(data)) {
+    const found = data.find(
+      (item) => Number(item?.driver_id) === id || Number(item?.id) === id
+    )
+    return found ? Number(found?.due_balance ?? found?.balance ?? found?.amount ?? 0) : 0
+  }
+
+  // إذا أرجع النظام كائن الاستجابة لسائق واحد
+  if (data && typeof data === 'object') {
+    if (data?.due_balance !== undefined) return Number(data.due_balance)
+    if (data?.balance !== undefined) return Number(data.balance)
+    if (data?.amount !== undefined) return Number(data.amount)
+    if (data[id] !== undefined) return Number(data[id])
+  }
+
+  return 0
+}
+
+/**
+ * تسوية مستحقات السائق عبر POST /api/admin/drivers/{id}/settle-dues
+ */
+export function settleDriverDues(driverId, body) {
+  const id = Number(driverId)
+  if (!Number.isFinite(id) || id <= 0) {
+    return Promise.reject(Object.assign(new Error('معرّف السائق غير صالح.'), { status: 422 }))
+  }
+
+  const amount = Number(body?.amount)
+  if (!Number.isFinite(amount) || amount < 0.01) {
+    return Promise.reject(
+      Object.assign(new Error('مبلغ التسوية مطلوب (0.01 على الأقل).'), { status: 422 }),
+    )
+  }
+
+  const payload = { amount }
+  const description = String(body?.description ?? '').trim()
+  if (description) payload.description = description
+
+  return apiRequest(`/api/admin/drivers/${encodeURIComponent(String(id))}/settle-dues`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+

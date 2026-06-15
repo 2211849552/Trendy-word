@@ -37,39 +37,46 @@ export function DriverCustodyViewSection({ driver, onCustodyLoaded }) {
   const firstCollectedAt = view?.firstCashCollectedAt ?? driver?.firstCashCollectedAt ?? null
   const currency = view?.currency ?? 'LYD'
 
-  const loadView = useCallback(async () => {
-    if (!driver?.id) return
-    setLoading(true)
-    setLoadError('')
-    try {
-      const mapped = await loadDriverCustodyView(driver.id)
-      setView(mapped)
-      onCustodyLoaded?.(mapped)
-    } catch (err) {
-      if (err?.status === 403) {
-        const fallback = {
-          custodyBalance: driver.custodyBalance ?? 0,
-          pendingCash: driver.pendingCash ?? 0,
-          currency: 'LYD',
-          firstCashCollectedAt: driver.firstCashCollectedAt ?? null,
-          isBlockedFromCod: driver.isBlockedFromCod ?? false,
-          source: 'driver-profile',
-        }
-        setView(fallback)
-        onCustodyLoaded?.(fallback)
-        setLoadError('')
-        return
-      }
-      setView(null)
-      setLoadError(apiErrorMessage(err, 'تعذّر تحميل عهدة السائق.'))
-    } finally {
-      setLoading(false)
-    }
-  }, [driver, onCustodyLoaded])
-
   useEffect(() => {
+    let active = true
+    async function loadView() {
+      if (!driver?.id) return
+      setLoading(true)
+      setLoadError('')
+      try {
+        const mapped = await loadDriverCustodyView(driver.id)
+        if (!active) return
+        setView(mapped)
+        onCustodyLoaded?.(mapped)
+      } catch (err) {
+        if (!active) return
+        if (err?.status === 403) {
+          const fallback = {
+            custodyBalance: driver.custodyBalance ?? 0,
+            pendingCash: driver.pendingCash ?? 0,
+            currency: 'LYD',
+            firstCashCollectedAt: driver.firstCashCollectedAt ?? null,
+            isBlockedFromCod: driver.isBlockedFromCod ?? false,
+            source: 'driver-profile',
+          }
+          setView(fallback)
+          onCustodyLoaded?.(fallback)
+          setLoadError('')
+          return
+        }
+        setView(null)
+        setLoadError(apiErrorMessage(err, 'تعذّر تحميل عهدة السائق.'))
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
     loadView()
-  }, [loadView])
+
+    return () => {
+      active = false
+    }
+  }, [driver?.id])
 
   return (
     <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">

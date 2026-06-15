@@ -43,6 +43,7 @@ import { fetchAvailableZones } from '../api/zones.js'
 import { DriverChatModal } from '../components/drivers/DriverChatModal.jsx'
 import { DriverCustodyViewSection } from '../components/drivers/DriverCustodyViewSection.jsx'
 import { DriverCustodySection } from '../components/drivers/DriverCustodySection.jsx'
+import { DriverDuesSection } from '../components/drivers/DriverDuesSection.jsx'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -529,7 +530,6 @@ export function DriversPage({ params, setParams }) {
                 <th className="px-3 py-3 font-medium">الاسم</th>
                 <th className="px-3 py-3 font-medium">الهاتف</th>
                 <th className="px-3 py-3 font-medium">المركبة</th>
-                <th className="px-3 py-3 font-medium text-center">التقييم</th>
                 <th className="px-3 py-3 font-medium text-center">التوصيلات</th>
                 <th className="px-3 py-3 font-medium text-center">الحالة</th>
                 <th className="px-3 py-3 font-medium text-center">رسالة</th>
@@ -539,7 +539,7 @@ export function DriversPage({ params, setParams }) {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-3 py-12 text-center text-white/60">
+                  <td colSpan="7" className="px-3 py-12 text-center text-white/60">
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-5 animate-spin" />
                       جاري تحميل السائقين...
@@ -554,12 +554,6 @@ export function DriversPage({ params, setParams }) {
                     <div className="flex items-center gap-1.5">
                       <Truck className="size-3 text-white/50" />
                       {d.vehicle}
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <Star className="size-3 fill-yellow-400 text-yellow-400" />
-                      <span className="font-bold text-white/80">{d.rating.toFixed(1)}</span>
                     </div>
                   </td>
                   <td className="px-3 py-3 text-center font-medium text-white/70">{d.deliveries}</td>
@@ -594,7 +588,7 @@ export function DriversPage({ params, setParams }) {
               ))}
               {!loading && drivers.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-white/60">
+                  <td colSpan="7" className="px-6 py-12 text-center text-white/60">
                     {loadError || 'لا يوجد سائقين مطابقين للبحث أو الفلتر.'}
                   </td>
                 </tr>
@@ -644,10 +638,6 @@ export function DriversPage({ params, setParams }) {
                 </div>
                 <div className="text-left">
                   <h3 className="text-2xl font-bold text-white">{selectedDriver.name}</h3>
-                  <div className="flex items-center justify-end gap-1 mt-1">
-                    <Star className="size-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-bold text-white/70">{selectedDriver.rating.toFixed(1)} التقييم العام</span>
-                  </div>
                 </div>
               </div>
 
@@ -786,6 +776,18 @@ export function DriversPage({ params, setParams }) {
                     prev ? { ...prev, custodyView: view, custodyBalance: view.custodyBalance, pendingCash: view.pendingCash } : prev,
                   )
                 }}
+                onMessage={(msg) => {
+                  setActionMessage(msg)
+                  setTimeout(() => setActionMessage(''), 4000)
+                }}
+                onError={(msg) => {
+                  setActionMessage(msg)
+                  setTimeout(() => setActionMessage(''), 4000)
+                }}
+              />
+
+              <DriverDuesSection
+                driver={selectedDriver}
                 onMessage={(msg) => {
                   setActionMessage(msg)
                   setTimeout(() => setActionMessage(''), 4000)
