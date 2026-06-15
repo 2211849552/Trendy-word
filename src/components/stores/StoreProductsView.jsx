@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, Search, Edit, Trash2, ChevronDown, ArrowRight } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, ChevronDown, ArrowRight, Package, Eye } from 'lucide-react'
 import { registeredStores } from '../../data/stores.js'
 import { CLOTHING_CATEGORIES } from '../../data/catalogData.js'
 
