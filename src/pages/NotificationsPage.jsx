@@ -20,6 +20,7 @@ import {
   mapNotification,
   mapNotificationDetail,
   buildNotificationStats,
+  extractUnreadCount,
 } from '../api/adminNotifications.js'
 
 function apiErrorMessage(err, fallback) {
@@ -42,7 +43,7 @@ function getIcon(type) {
   }
 }
 
-export function NotificationsPage({ onNavigate }) {
+export function NotificationsPage({ onNavigate, setUnreadCount }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -55,8 +56,11 @@ export function NotificationsPage({ onNavigate }) {
     const data = await getNotifications({ per_page: 100 })
     const list = extractNotificationList(data).map(mapNotification)
     setNotifications(list)
+    if (typeof setUnreadCount === 'function') {
+      setUnreadCount(extractUnreadCount(data))
+    }
     return list
-  }, [])
+  }, [setUnreadCount])
 
   useEffect(() => {
     const load = async () => {
@@ -100,10 +104,16 @@ export function NotificationsPage({ onNavigate }) {
     if (!target || target.isRead) return
 
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)))
+    if (typeof setUnreadCount === 'function') {
+      setUnreadCount((prev) => Math.max(0, prev - 1))
+    }
     try {
       await markNotificationAsRead(id)
     } catch {
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)))
+      if (typeof setUnreadCount === 'function') {
+        setUnreadCount((prev) => prev + 1)
+      }
     }
   }
 
@@ -114,6 +124,9 @@ export function NotificationsPage({ onNavigate }) {
     setActionMessage('')
     const previous = notifications
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    if (typeof setUnreadCount === 'function') {
+      setUnreadCount(0)
+    }
 
     try {
       await markAllNotificationsAsRead()
@@ -123,6 +136,9 @@ export function NotificationsPage({ onNavigate }) {
       setNotifications(previous)
       setActionMessage(apiErrorMessage(err, 'تعذّر تحديد الإشعارات كمقروءة.'))
       setTimeout(() => setActionMessage(''), 4000)
+      if (typeof setUnreadCount === 'function') {
+        setUnreadCount(previous.filter((n) => !n.isRead).length)
+      }
     } finally {
       setActionLoading(false)
     }

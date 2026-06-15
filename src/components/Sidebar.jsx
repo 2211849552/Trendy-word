@@ -37,7 +37,7 @@ const navItems = [
   { id: 'zones', label: 'إدارة المناطق', icon: MapPin },
 ]
 
-export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, onToggleDarkMode, onLogout }) {
+export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, onToggleDarkMode, onLogout, unreadNotificationsCount = 0 }) {
   const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (id) => {
@@ -87,7 +87,7 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
                       : 'text-white/70 hover:bg-brand-200/10 hover:text-white',
                 ].join(' ')}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Icon
                     className={[
                       'size-5 shrink-0',
@@ -98,7 +98,12 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
                     strokeWidth={isLeafActive ? 2.25 : 2}
                     aria-hidden
                   />
-                  <span>{label}</span>
+                  <span className="truncate">{label}</span>
+                  {id === 'notifications' && unreadNotificationsCount > 0 && (
+                    <span className="mr-auto shrink-0 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-[10px] font-bold text-white leading-none shadow-sm animate-pulse">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
                 </div>
                 {items ? (
                   <div className={['transition-transform duration-200', isOpen ? 'rotate-180' : ''].join(' ')}>

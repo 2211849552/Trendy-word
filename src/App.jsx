@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
 import { getCurrentUser } from './api/user.js'
+import { getNotifications, extractUnreadCount, markNotificationAsRead } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { LoginPage } from './pages/LoginPage.jsx'
 import { MarketingPage } from './pages/MarketingPage.jsx'
@@ -19,7 +20,7 @@ import { OrdersPage } from './pages/OrdersPage.jsx'
 import { DriversPage } from './pages/DriversPage.jsx'
 import { ZonesPage } from './pages/ZonesPage.jsx'
 
-function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate) {
+function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, setUnreadCount) {
   if (activeNav === 'stores') return <StoreManagementPage params={activeNavParams} setParams={setActiveNavParams} />
   if (activeNav === 'plans') return <PlansPage />
   if (activeNav === 'marketing') return <MarketingPage />
@@ -29,7 +30,7 @@ function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate) 
   if (activeNav === 'offers') return <OffersPage />
   if (activeNav === 'customers') return <CustomersPage />
   if (activeNav === 'staff') return <StaffPage />
-  if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} />
+  if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} setUnreadCount={setUnreadCount} />
   if (activeNav === 'orders') return <OrdersPage />
   if (activeNav === 'drivers') return <DriversPage params={activeNavParams} setParams={setActiveNavParams} />
   if (activeNav === 'zones') return <ZonesPage />
@@ -111,6 +112,7 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true)
   const [toasts, setToasts] = useState([])
   const [activeNavParams, setActiveNavParams] = useState(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const handlePageNavigate = (page, params = null) => {
     setActiveNav(page)
@@ -120,6 +122,14 @@ export default function App() {
   const handleToastAction = (toast) => {
     const eventType = toast.data?.event ?? ''
     const data = toast.data ?? {}
+
+    if (toast.id) {
+      markNotificationAsRead(toast.id)
+        .then(() => {
+          setUnreadCount((prev) => Math.max(0, prev - 1))
+        })
+        .catch(() => {})
+    }
 
     if (eventType === 'new_complaint' || toast.title === 'تذكرة شكوى جديدة') {
       if (data.ticket_id) {
@@ -135,6 +145,24 @@ export default function App() {
       }
     }
   }
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadCount(0)
+      return
+    }
+
+    async function fetchUnread() {
+      try {
+        const data = await getNotifications({ per_page: 1 })
+        setUnreadCount(extractUnreadCount(data))
+      } catch (err) {
+        console.error('Failed to load initial unread notifications count:', err)
+      }
+    }
+
+    fetchUnread()
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -161,6 +189,8 @@ export default function App() {
             data: notif.data,
           },
         ])
+
+        setUnreadCount((prev) => prev + 1)
 
         const customEvent = new CustomEvent('admin_new_notification', { detail: notif })
         window.dispatchEvent(customEvent)
@@ -251,7 +281,7 @@ export default function App() {
         className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <div className="mx-auto max-w-[1600px]">
-          {renderPage(activeNav, activeNavParams, setActiveNavParams, handlePageNavigate)}
+          {renderPage(activeNav, activeNavParams, setActiveNavParams, handlePageNavigate, setUnreadCount)}
         </div>
       </main>
 
@@ -261,6 +291,7 @@ export default function App() {
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         onLogout={handleLogout}
+        unreadNotificationsCount={unreadCount}
       />
 
       {/* حاوية الإشعارات الفورية المنبثقة (Toast Banners) */}
