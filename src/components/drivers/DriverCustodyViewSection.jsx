@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import {
   loadDriverCustodyView,
   formatDriverCustodyAmount,
@@ -13,54 +13,76 @@ function apiErrorMessage(err, fallback) {
   return err?.message || fallback
 }
 
-function formatCustodyDate(value) {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString('ar-LY', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 export function DriverCustodyViewSection({ driver, onCustodyLoaded }) {
   const [view, setView] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const onCustodyLoadedRef = useRef(onCustodyLoaded)
+  const driverRef = useRef(driver)
+  const driverId = driver?.id
 
-  const custodyBalance = view?.custodyBalance ?? driver?.custodyBalance ?? 0
-  const pendingCash = view?.pendingCash ?? driver?.pendingCash ?? 0
-  const isBlocked = view?.isBlockedFromCod ?? driver?.isBlockedFromCod ?? false
-  const firstCollectedAt = view?.firstCashCollectedAt ?? driver?.firstCashCollectedAt ?? null
-  const currency = view?.currency ?? 'LYD'
+  onCustodyLoadedRef.current = onCustodyLoaded
+  driverRef.current = driver
+
+  const display = driver?.custodyView ?? view
+  const custodyBalance = display?.custodyBalance ?? driver?.custodyBalance ?? 0
+  const isBlocked = display?.isBlockedFromCod ?? driver?.isBlockedFromCod ?? false
+  const currency = display?.currency ?? 'LYD'
+
+  const loadView = useCallback(async () => {
+    if (!driverId) return
+    setLoading(true)
+    setLoadError('')
+    try {
+      const mapped = await loadDriverCustodyView(driverId)
+      setView(mapped)
+      onCustodyLoadedRef.current?.(mapped)
+    } catch (err) {
+      if (err?.status === 403) {
+        const current = driverRef.current
+        const fallback = {
+          custodyBalance: current?.custodyBalance ?? 0,
+          currency: 'LYD',
+          isBlockedFromCod: current?.isBlockedFromCod ?? false,
+          source: 'driver-profile',
+        }
+        setView(fallback)
+        onCustodyLoadedRef.current?.(fallback)
+        setLoadError('')
+        return
+      }
+      setView(null)
+      setLoadError(apiErrorMessage(err, 'تعذّر تحميل عهدة السائق.'))
+    } finally {
+      setLoading(false)
+    }
+  }, [driverId])
 
   useEffect(() => {
+    setView(null)
     let active = true
-    async function loadView() {
-      if (!driver?.id) return
+
+    async function run() {
+      if (!driverId) return
       setLoading(true)
       setLoadError('')
       try {
-        const mapped = await loadDriverCustodyView(driver.id)
+        const mapped = await loadDriverCustodyView(driverId)
         if (!active) return
         setView(mapped)
-        onCustodyLoaded?.(mapped)
+        onCustodyLoadedRef.current?.(mapped)
       } catch (err) {
         if (!active) return
         if (err?.status === 403) {
+          const current = driverRef.current
           const fallback = {
-            custodyBalance: driver.custodyBalance ?? 0,
-            pendingCash: driver.pendingCash ?? 0,
+            custodyBalance: current?.custodyBalance ?? 0,
             currency: 'LYD',
-            firstCashCollectedAt: driver.firstCashCollectedAt ?? null,
-            isBlockedFromCod: driver.isBlockedFromCod ?? false,
+            isBlockedFromCod: current?.isBlockedFromCod ?? false,
             source: 'driver-profile',
           }
           setView(fallback)
-          onCustodyLoaded?.(fallback)
+          onCustodyLoadedRef.current?.(fallback)
           setLoadError('')
           return
         }
@@ -71,19 +93,35 @@ export function DriverCustodyViewSection({ driver, onCustodyLoaded }) {
       }
     }
 
-    loadView()
+    run()
 
     return () => {
       active = false
     }
-  }, [driver?.id])
+  }, [driverId])
 
   return (
     <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-white/80">عرض العهدة — السائق والإدارة العليا</h3>
-        {loading ? <Loader2 className="size-4 animate-spin text-white/50" /> : null}
+        <div className="flex items-center gap-2">
+          {loading ? <Loader2 className="size-4 animate-spin text-white/50" /> : null}
+          <button
+            type="button"
+            onClick={loadView}
+            disabled={loading || !driverId}
+            className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/80 disabled:opacity-40"
+            title="تحديث رصيد العهدة"
+            aria-label="تحديث رصيد العهدة"
+          >
+            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
+
+      <p className="text-xs text-white/50">
+        رصيد النقد المحصّل (COD) من الطلبات التي قام السائق بتوصيلها وتأكيد تسليمها ولم تُسوَّ بعد مع الإدارة.
+      </p>
 
       {loadError ? (
         <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
@@ -91,25 +129,11 @@ export function DriverCustodyViewSection({ driver, onCustodyLoaded }) {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 sm:col-span-2">
-          <p className="text-xs text-white/60">رصيد العهدة النقدية</p>
-          <p className="mt-1 text-2xl font-bold text-amber-300 tabular-nums" dir="ltr">
-            {formatDriverCustodyAmount(custodyBalance, currency)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
-          <p className="text-xs text-white/60">النقد المعلق</p>
-          <p className="mt-1 text-lg font-bold text-white tabular-nums" dir="ltr">
-            {formatDriverCustodyAmount(pendingCash, currency)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
-          <p className="text-xs text-white/60">أول تحصيل نقدي</p>
-          <p className="mt-1 text-sm font-bold text-white">
-            {formatCustodyDate(firstCollectedAt)}
-          </p>
-        </div>
+      <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3">
+        <p className="text-xs text-white/60">رصيد العهدة النقدية</p>
+        <p className="mt-1 text-2xl font-bold text-amber-300 tabular-nums" dir="ltr">
+          {loading && !display ? '...' : formatDriverCustodyAmount(custodyBalance, currency)}
+        </p>
       </div>
 
       {isBlocked ? (
@@ -120,7 +144,9 @@ export function DriverCustodyViewSection({ driver, onCustodyLoaded }) {
       ) : null}
 
       {!loading && !loadError && custodyBalance <= 0 ? (
-        <p className="text-xs text-white/50">لا يوجد رصيد عهدة مسجّل حالياً لهذا السائق.</p>
+        <p className="text-xs text-white/50">
+          لا يوجد رصيد عهدة حالياً. تُسجَّل العهدة فقط للطلبات النقدية (COD) بعد تأكيد التسليم من السائق أو الإدارة.
+        </p>
       ) : null}
     </div>
   )

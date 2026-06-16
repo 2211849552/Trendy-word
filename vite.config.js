@@ -20,6 +20,9 @@ function rewriteSessionCookies(proxy) {
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    // يضمن الوصول عبر localhost و 127.0.0.1 (Windows أحياناً يربط Vite على IPv6 فقط)
+    host: '127.0.0.1',
+    port: 5173,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',

@@ -86,7 +86,7 @@ export function DriverSettleCustodyModal({
       >
         <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
           <h2 id="driver-settle-custody-title" className="text-lg font-bold text-white">
-            تسوية العهدة مع السائق
+            تأكيد تسوية العهدة مع السائق
           </h2>
           <button
             type="button"
@@ -177,7 +177,7 @@ export function DriverSettleCustodyModal({
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-900 px-5 py-2.5 text-sm font-bold text-white shadow-premium hover:bg-brand-950 disabled:opacity-60"
             >
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              {saving ? 'جاري التسوية...' : 'تأكيد التسوية'}
+              {saving ? 'جاري التأكيد...' : 'تأكيد استلام السائق للمبلغ'}
             </button>
           </div>
         </form>

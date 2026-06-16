@@ -31,26 +31,43 @@ async function fetchDriverProfileCash(driverId) {
   const profile = item?.driver_profile ?? item?.profile ?? {}
   return {
     cashCollected: Number(
-      profile.cash_collected_balance ?? profile.custody_balance ?? 0,
+      profile.cash_collected_balance ??
+      profile.custody_balance ??
+      item.cash_collected_balance ??
+      item.custody_balance ??
+      0,
     ),
-    pendingCash: Number(profile.pending_cash ?? 0),
-    firstCollectedAt: profile.first_cash_collected_at ?? null,
-    isBlockedFromCod: Boolean(profile.is_blocked_from_cod ?? false),
+    pendingCash: Number(profile.pending_cash ?? item.pending_cash ?? 0),
+    firstCollectedAt: profile.first_cash_collected_at ?? item.first_cash_collected_at ?? null,
+    isBlockedFromCod: Boolean(profile.is_blocked_from_cod ?? item.is_blocked_from_cod ?? false),
   }
 }
 
 export function mapDriverCustodyBalance(data) {
   const item = data?.data ?? data
+  const profile = item?.driver_profile ?? item?.profile ?? {}
+
   return {
     balance: Number(
       item?.custody_balance ??
       item?.cash_collected_balance ??
+      item?.balance ??
+      item?.total_custody_owed ??
+      item?.total_owed ??
+      item?.amount ??
+      profile?.cash_collected_balance ??
+      profile?.custody_balance ??
       0,
     ),
-    pendingCash: Number(item?.pending_cash ?? 0),
+    pendingCash: Number(
+      item?.pending_cash ?? profile?.pending_cash ?? 0,
+    ),
     currency: item?.currency ?? 'LYD',
-    firstCollectedAt: item?.first_cash_collected_at ?? null,
-    isBlockedFromCod: Boolean(item?.is_blocked_from_cod ?? false),
+    firstCollectedAt:
+      item?.first_cash_collected_at ?? profile?.first_cash_collected_at ?? null,
+    isBlockedFromCod: Boolean(
+      item?.is_blocked_from_cod ?? profile?.is_blocked_from_cod ?? false,
+    ),
   }
 }
 

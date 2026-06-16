@@ -65,7 +65,10 @@ export function DriverCustodySection({
   return (
     <>
       <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
-        <h3 className="text-sm font-bold text-white/80">تسوية العهدة مع السائق</h3>
+        <h3 className="text-sm font-bold text-white/80">تسوية العهدة — تأكيد استلام السائق</h3>
+        <p className="text-xs text-white/50">
+          تأكيد أن السائق استلم مبلغه من الإدارة العليا بعد تسليم العهدة النقدية المحصّلة.
+        </p>
         <button
           type="button"
           disabled={settling || settleable <= 0}

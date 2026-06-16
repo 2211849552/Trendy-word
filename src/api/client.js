@@ -54,7 +54,10 @@ export async function apiRequest(path, options = {}) {
       error.status = 0
       throw error
     }
-    const error = new Error('تعذّر الاتصال بالخادم. تأكد أن Laravel Backend يعمل.')
+    const hint = API_BASE
+      ? ` (${API_BASE})`
+      : ' — شغّلي الواجهة عبر npm run dev وافتحي http://localhost:5173'
+    const error = new Error(`تعذّر الاتصال بالخادم${hint}. تأكدي أن Laravel يعمل على http://127.0.0.1:8000`)
     error.status = 0
     throw error
   } finally {
