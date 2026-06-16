@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
-import { formatCampaignDateDisplay, formatCampaignPriceDisplay } from '../../api/adminCampaigns.js'
+import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
@@ -91,14 +91,6 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
                   </p>
                 </div>
               ) : null}
-              {campaign.price != null ? (
-                <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3 sm:col-span-2">
-                  <p className="text-xs font-medium text-white/60">سعر الحملة</p>
-                  <p className="mt-1 text-sm font-bold text-brand-300 tabular-nums" dir="ltr">
-                    {formatCampaignPriceDisplay(campaign.price)}
-                  </p>
-                </div>
-              ) : null}
               <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
                 <p className="text-xs font-medium text-white/60">تاريخ البدء</p>
                 <p className="mt-1 text-sm font-bold text-white tabular-nums" dir="ltr">
@@ -150,17 +142,6 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
                   عدد المنتجات
                 </p>
               </div>
-            </div>
-
-            <div
-              className={`mt-3 rounded-xl border px-4 py-5 text-center ${CAMPAIGN_METRICS.views.card}`}
-            >
-              <p className={`text-3xl font-bold tabular-nums ${CAMPAIGN_METRICS.views.value}`}>
-                {campaign.views.toLocaleString('ar-LY')}
-              </p>
-              <p className={`mt-1 text-sm font-medium ${CAMPAIGN_METRICS.views.label}`}>
-                المشاهدات
-              </p>
             </div>
           </div>
         </div>
