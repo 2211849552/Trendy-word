@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import {
   getDrivers,
+  getDriver,
   loadDriverAdminStats,
   createDriver,
   updateDriver,
@@ -208,8 +209,9 @@ export function DriversPage({ params, setParams }) {
           const data = await getDriver(driverId)
           const mapped = mapDriverDetail(data)
           openChat(mapped)
-        } catch {
-          openChat({ id: driverId, name: 'سائق', phone: '—' })
+        } catch (err) {
+          setActionMessage(apiErrorMessage(err, 'تعذّر تحميل بيانات السائق للمحادثة.'))
+          setTimeout(() => setActionMessage(''), 4000)
         }
       }
       
@@ -260,6 +262,7 @@ export function DriversPage({ params, setParams }) {
     switch (status) {
       case 'متاح': return 'bg-emerald-100 text-emerald-700'
       case 'في مهمة': return 'bg-yellow-100 text-yellow-700'
+      case 'غير متصل': return 'bg-slate-200 text-slate-600'
       case 'معطل': return 'bg-red-100 text-red-700'
       default: return 'bg-brand-300 text-white/80'
     }
@@ -295,6 +298,9 @@ export function DriversPage({ params, setParams }) {
                 deliveries: mapped.deliveries,
                 totalEarnings: mapped.totalEarnings,
                 custodyBalance: mapped.custodyBalance,
+                status: mapped.status,
+                availability: mapped.availability,
+                rawStatus: mapped.rawStatus,
               }
             : d,
         ),
@@ -464,7 +470,7 @@ export function DriversPage({ params, setParams }) {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center relative">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-brand-100 text-brand-500">
             <Truck className="size-6" />
@@ -490,6 +496,14 @@ export function DriversPage({ params, setParams }) {
         </div>
 
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <Truck className="size-6" />
+          </div>
+          <p className="text-sm font-medium text-white/60">غير متصلين</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? '...' : stats.offline}</p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-500">
             <AlertCircle className="size-6" />
           </div>
@@ -506,6 +520,7 @@ export function DriversPage({ params, setParams }) {
         >
           <option>جميع الحالات</option>
           <option>متاح</option>
+          <option>غير متصل</option>
           <option>في مهمة</option>
           <option>معطل</option>
         </select>

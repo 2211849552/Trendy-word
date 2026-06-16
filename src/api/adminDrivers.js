@@ -157,6 +157,7 @@ const AVAILABILITY_UI = {
   busy: 'في مهمة',
   delivering: 'في مهمة',
   offline: 'غير متصل',
+  unavailable: 'غير متصل',
 }
 
 const VEHICLE_TYPE_UI = Object.fromEntries(
@@ -185,27 +186,40 @@ function formatVehicle(item) {
   return '—'
 }
 
+function resolveDriverAvailability(item) {
+  const profile = item.driver_profile ?? item.profile ?? {}
+
+  const explicit =
+    profile.availability_status ??
+    item.availability_status ??
+    profile.online_status ??
+    item.online_status ??
+    item.availability ??
+    item.connection_status ??
+    null
+
+  if (explicit) return explicit
+
+  if (profile.is_online === false || item.is_online === false) return 'offline'
+  if (profile.is_online === true || item.is_online === true) return 'available'
+
+  return 'offline'
+}
+
 function resolveDisplayStatus(item) {
   const profile = item.driver_profile ?? item.profile ?? {}
-  const accountStatus = item.status ?? 'active'
+  const accountStatus = item.status ?? profile.status ?? 'active'
   if (accountStatus === 'inactive' || accountStatus === 'disabled') {
     return { label: 'معطل', rawStatus: 'inactive', availability: null }
   }
 
-  const availability =
-    profile.availability_status ??
-    item.driver_profile?.availability_status ??
-    item.online_status ??
-    item.availability ??
-    item.connection_status ??
-    item.driver_profile?.online_status ??
-    'offline'
+  const availability = resolveDriverAvailability(item)
 
-  if (['on_trip', 'busy', 'delivering'].includes(availability)) {
-    return { label: 'في مهمة', rawStatus: 'active', availability }
+  return {
+    label: mapDriverAvailability(availability),
+    rawStatus: 'active',
+    availability,
   }
-
-  return { label: 'متاح', rawStatus: 'active', availability }
 }
 
 export function mapDriver(item) {
@@ -286,6 +300,7 @@ export function buildDriverQueryParams({ status, perPage = 100 } = {}) {
       break
     case 'متاح':
     case 'في مهمة':
+    case 'غير متصل':
       params.status = 'active'
       break
     default:
@@ -316,6 +331,8 @@ export function applyDriverListFilters(drivers, { search, status } = {}) {
 
   if (status === 'متاح') {
     list = list.filter((driver) => driver.status === 'متاح')
+  } else if (status === 'غير متصل') {
+    list = list.filter((driver) => driver.status === 'غير متصل')
   } else if (status === 'في مهمة') {
     list = list.filter((driver) => driver.status === 'في مهمة')
   } else if (status === 'معطل') {
@@ -334,6 +351,7 @@ export function buildDriverStats(drivers, meta = {}) {
   return {
     total: Number(meta.total ?? drivers.length),
     available: drivers.filter((d) => d.status === 'متاح').length,
+    offline: drivers.filter((d) => d.status === 'غير متصل').length,
     onTrip: drivers.filter((d) => d.status === 'في مهمة').length,
     disabled: drivers.filter((d) => d.rawStatus === 'inactive' || d.status === 'معطل').length,
   }
