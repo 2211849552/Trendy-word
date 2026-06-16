@@ -13,7 +13,6 @@ import {
   mapCampaignDetail,
   toCampaignRequestBody,
   getCampaignActivationHint,
-  buildPerformanceSeries,
   buildMarketingStats,
   filterCampaignsByUiStatus,
   saveCampaignPrice,
@@ -22,7 +21,6 @@ import {
 } from '../api/adminCampaigns.js'
 import { StatCard } from '../components/StatCard.jsx'
 import { PrimaryButton } from '../components/PrimaryButton.jsx'
-import { CampaignPerformanceChart } from '../components/marketing/CampaignPerformanceChart.jsx'
 import { CampaignCard } from '../components/marketing/CampaignCard.jsx'
 import { CreateCampaignModal } from '../components/marketing/CreateCampaignModal.jsx'
 import { CampaignDetailModal } from '../components/marketing/CampaignDetailModal.jsx'
@@ -94,7 +92,6 @@ export function MarketingPage() {
   )
 
   const stats = useMemo(() => buildMarketingStats(list), [list])
-  const performanceData = useMemo(() => buildPerformanceSeries(list), [list])
 
   async function openViewModal(camp) {
     setDetailCampaign(camp)
@@ -270,10 +267,6 @@ export function MarketingPage() {
           icon={TrendingUp}
           iconClassName="bg-brand-300 text-white"
         />
-      </div>
-
-      <div className="mt-8">
-        <CampaignPerformanceChart data={performanceData} />
       </div>
 
       <div className="mt-8" dir="rtl">

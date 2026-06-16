@@ -307,15 +307,6 @@ export function toCampaignRequestBody(form) {
   return toCampaignPayload(form)
 }
 
-export function buildPerformanceSeries(campaigns) {
-  return campaigns.map((c) => ({
-    name: c.title.length > 22 ? `${c.title.slice(0, 22)}…` : c.title,
-    views: c.views || 0,
-    products: c.products || 0,
-    stores: c.stores || 0,
-  }))
-}
-
 export function buildMarketingStats(campaigns) {
   const totalViews = campaigns.reduce((sum, c) => sum + (c.views || 0), 0)
   const finished = campaigns.filter((c) => c.status === 'finished').length
