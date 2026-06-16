@@ -112,10 +112,9 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
         <StatCard
           label="المتاجر النشطة"
           value={String(activeCount)}
-          change="12%"
-          trend="up"
           icon={Store}
           iconClassName="bg-brand-300 text-white/90"
+          omitChange
         />
       </div>
 

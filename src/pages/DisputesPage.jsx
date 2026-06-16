@@ -74,6 +74,8 @@ function buildAccountActionWarning(dispute, actionType, targetType) {
   return `تحذير: سيتم ${verb} مالك المتجر [${dispute.store}]`
 }
 
+const MAX_MERCHANT_WARNING_TEXT_LENGTH = 2000
+
 export function DisputesPage({ params, setParams }) {
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -91,6 +93,7 @@ export function DisputesPage({ params, setParams }) {
   const [adminAccountAction, setAdminAccountAction] = useState('')
   const [adminTargetType, setAdminTargetType] = useState('')
   const [adminAccountReason, setAdminAccountReason] = useState('')
+  const [merchantWarningText, setMerchantWarningText] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -162,6 +165,7 @@ export function DisputesPage({ params, setParams }) {
 
   async function openDetailsModal(dispute) {
     setReplyText('')
+    setMerchantWarningText('')
     resetAdminAccountForm()
     setSelectedDispute(dispute)
     setDetailsModalOpen(true)
@@ -308,11 +312,21 @@ export function DisputesPage({ params, setParams }) {
       }
 
       if (actionName === 'warn_merchant') {
+        const warningText = merchantWarningText.trim()
+        if (!warningText) {
+          triggerToast('نص التحذير مطلوب قبل إرسال تحذير التاجر.')
+          return
+        }
+        if (warningText.length > MAX_MERCHANT_WARNING_TEXT_LENGTH) {
+          triggerToast(`نص التحذير يجب ألا يتجاوز ${MAX_MERCHANT_WARNING_TEXT_LENGTH} حرفاً.`)
+          return
+        }
         await complaintAdminAction(selectedDispute.id, {
           action_type: 'warning_merchant',
-          reason: 'تحذير للتاجر بسبب شكوى',
+          warning_text: warningText,
         })
         triggerToast('تم إرسال تحذير للتاجر')
+        setMerchantWarningText('')
         return
       }
 
@@ -874,11 +888,41 @@ export function DisputesPage({ params, setParams }) {
                         ) : null}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button type="button" disabled={actionLoading} onClick={() => handleAction('warn_merchant')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60">
-                          تحذير التاجر
+                      <div className="mb-4 rounded-xl border border-white/10 bg-brand-300 p-4 space-y-3">
+                        <p className="text-sm font-bold text-white/90">تحذير التاجر</p>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-white/70">
+                            نص التحذير <span className="text-rose-400">*</span>
+                          </label>
+                          <textarea
+                            value={merchantWarningText}
+                            onChange={(e) =>
+                              setMerchantWarningText(
+                                e.target.value.slice(0, MAX_MERCHANT_WARNING_TEXT_LENGTH),
+                              )
+                            }
+                            disabled={actionLoading}
+                            rows={4}
+                            maxLength={MAX_MERCHANT_WARNING_TEXT_LENGTH}
+                            placeholder="اكتب نص التحذير الذي سيُرسل للتاجر..."
+                            className="w-full resize-none rounded-xl border border-white/10 bg-brand-200 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                          />
+                          <p className="mt-1 text-xs text-white/50" dir="ltr">
+                            {merchantWarningText.length}/{MAX_MERCHANT_WARNING_TEXT_LENGTH}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={actionLoading || !merchantWarningText.trim()}
+                          onClick={() => handleAction('warn_merchant')}
+                          className="w-full rounded-xl bg-brand-100 py-3 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60"
+                        >
+                          إرسال تحذير للتاجر
                         </button>
-                        <button type="button" disabled={actionLoading} onClick={() => handleAction('close')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60">
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button type="button" disabled={actionLoading} onClick={() => handleAction('close')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60 md:col-span-2">
                           إغلاق الشكوى
                         </button>
                       </div>
