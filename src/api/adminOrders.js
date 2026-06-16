@@ -28,9 +28,12 @@ export function cancelOrder(id, reason) {
   })
 }
 
-// POST /api/admin/orders/{id}/reassign
-export function reassignOrder(id, driverId) {
-  const body = driverId != null && driverId !== '' ? { driver_id: Number(driverId) } : {}
+// POST /api/admin/orders/{id}/reassign — driver_id = driver_profiles.id (ليس users.id)
+export function reassignOrder(id, driverProfileId) {
+  const body =
+    driverProfileId != null && driverProfileId !== ''
+      ? { driver_id: Number(driverProfileId) }
+      : {}
   return apiRequest(`/api/admin/orders/${encodeURIComponent(String(id))}/reassign`, {
     method: 'POST',
     body: JSON.stringify(body),

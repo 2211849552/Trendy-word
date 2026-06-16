@@ -29,7 +29,7 @@ import {
   buildOrderStats,
   ORDER_STATUS_OPTIONS,
 } from '../api/adminOrders.js'
-import { getDrivers, extractDriverList, mapDriver } from '../api/adminDrivers.js'
+import { loadDriversForReassign } from '../api/adminDrivers.js'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -104,11 +104,10 @@ export function OrdersPage() {
 
   const stats = buildOrderStats(orders, paginationMeta)
 
-  const loadDriversForReassign = useCallback(async () => {
+  const fetchDriversForReassign = useCallback(async () => {
     setDriversLoading(true)
     try {
-      const data = await getDrivers({ per_page: 100, status: 'active' })
-      setDrivers(extractDriverList(data).map(mapDriver))
+      setDrivers(await loadDriversForReassign())
     } catch {
       setDrivers([])
     } finally {
@@ -150,7 +149,7 @@ export function OrdersPage() {
       const mapped = mapOrderDetail(data)
       setSelectedOrder(mapped)
       setStatusForm({ status: mapped.rawStatus, comment: '' })
-      await loadDriversForReassign()
+      await fetchDriversForReassign()
     } catch (err) {
       setLoadError(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الطلب.'))
       setTimeout(() => setLoadError(''), 3000)
@@ -204,13 +203,34 @@ export function OrdersPage() {
 
   const handleReassign = async (withDriver = true) => {
     if (!selectedOrder) return
+    if (withDriver && reassignDriverId) {
+      const driver = drivers.find(
+        (d) => String(d.profileId ?? d.id) === String(reassignDriverId),
+      )
+      const driverProfileId = driver?.profileId ?? driver?.id ?? reassignDriverId
+      if (!driverProfileId) {
+        setActionError('تعذّر تحديد السائق. أعد تحميل التفاصيل وحاول مجدداً.')
+        return
+      }
+      setActionLoading(true)
+      setActionError('')
+      try {
+        await reassignOrder(selectedOrder.orderId, driverProfileId)
+        await refreshSelectedOrder(selectedOrder.orderId)
+        setActionMessage('تم تعيين السائق للطلب.')
+        setTimeout(() => setActionMessage(''), 3000)
+      } catch (err) {
+        setActionError(apiErrorMessage(err, 'تعذّر إعادة تعيين السائق.'))
+      } finally {
+        setActionLoading(false)
+      }
+      return
+    }
+
     setActionLoading(true)
     setActionError('')
     try {
-      await reassignOrder(
-        selectedOrder.orderId,
-        withDriver && reassignDriverId ? reassignDriverId : null,
-      )
+      await reassignOrder(selectedOrder.orderId, null)
       await refreshSelectedOrder(selectedOrder.orderId)
       setActionMessage(withDriver && reassignDriverId ? 'تم تعيين السائق للطلب.' : 'تم إعادة توجيه الطلب.')
       setTimeout(() => setActionMessage(''), 3000)
@@ -527,9 +547,14 @@ export function OrdersPage() {
                       className="w-full rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
                     >
                       <option value="">تعيين تلقائي (FIFO)</option>
-                      {drivers.map((d) => (
-                        <option key={d.id} value={d.id}>{d.name} — {d.phone}</option>
-                      ))}
+                      {drivers.map((d) => {
+                        const assignId = d.profileId ?? d.id
+                        return (
+                          <option key={assignId} value={assignId}>
+                            {d.name} — {d.phone}
+                          </option>
+                        )
+                      })}
                     </select>
                     <div className="flex flex-wrap gap-2">
                       <button

@@ -206,6 +206,24 @@ function resolveDriverAvailability(item) {
   return 'offline'
 }
 
+/** معرّف ملف السائق (driver_profiles.id) — مطلوب لإعادة تعيين الطلبات */
+export function resolveDriverProfileId(item) {
+  const profile = item?.driver_profile ?? item?.profile ?? item?.driverProfile ?? {}
+  const fromProfile = profile?.id ?? profile?.driver_profile_id
+  if (fromProfile != null) return Number(fromProfile)
+
+  const fromRoot = item?.driver_profile_id ?? item?.profile_id
+  if (fromRoot != null) return Number(fromRoot)
+
+  return null
+}
+
+/** سائقون نشطون لقائمة إعادة التعيين اليدوي في تفاصيل الطلب */
+export async function loadDriversForReassign() {
+  const data = await getDrivers({ per_page: 100, status: 'active' })
+  return extractDriverList(data).map(mapDriver)
+}
+
 function resolveDisplayStatus(item) {
   const profile = item.driver_profile ?? item.profile ?? {}
   const accountStatus = item.status ?? profile.status ?? 'active'
@@ -229,6 +247,7 @@ export function mapDriver(item) {
 
   return {
     id: item.id,
+    profileId: resolveDriverProfileId(item),
     name: item.name ?? '—',
     phone: item.phone ?? '—',
     email: item.email ?? '—',
