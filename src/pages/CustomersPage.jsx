@@ -58,6 +58,7 @@ export function CustomersPage() {
   const [actionMessage, setActionMessage] = useState('')
 
   const loadSeq = useRef(0)
+  const selectedCustomerIdRef = useRef(null)
 
   const loadCustomers = useCallback(async () => {
     const seq = ++loadSeq.current
@@ -93,12 +94,14 @@ export function CustomersPage() {
   const closeDetails = () => {
     setDetailsModalOpen(false)
     setSelectedCustomer(null)
+    selectedCustomerIdRef.current = null
     setDeactivateReason('')
     setShowDeactivateForm(false)
     setToggleError('')
   }
 
   const openDetails = async (customer) => {
+    selectedCustomerIdRef.current = customer.id
     setSelectedCustomer(customer)
     setDetailsModalOpen(true)
     setDetailLoading(true)
@@ -121,6 +124,9 @@ export function CustomersPage() {
     setSelectedCustomer(mapCustomerDetail(data, customerId))
   }
 
+  const getSelectedCustomerRecordId = () =>
+    resolveCustomerId(selectedCustomer, selectedCustomerIdRef.current)
+
   const handleDeactivate = async (e) => {
     e.preventDefault()
     if (!selectedCustomer) return
@@ -130,7 +136,7 @@ export function CustomersPage() {
       return
     }
 
-    const customerId = resolveCustomerId(selectedCustomer)
+    const customerId = getSelectedCustomerRecordId()
     if (!customerId) {
       setToggleError('معرّف الزبون غير صالح.')
       return
@@ -139,7 +145,7 @@ export function CustomersPage() {
     setToggleLoading(true)
     setToggleError('')
     try {
-      await deactivateCustomer(customerId, deactivateReason.trim())
+      await deactivateCustomer(customerId, selectedCustomer, deactivateReason.trim())
       setActionMessage('تم تعطيل حساب الزبون.')
       await refreshSelectedCustomer(customerId)
       setDeactivateReason('')
@@ -157,7 +163,7 @@ export function CustomersPage() {
     e.preventDefault()
     if (!selectedCustomer) return
 
-    const customerId = resolveCustomerId(selectedCustomer)
+    const customerId = getSelectedCustomerRecordId()
     if (!customerId) {
       setToggleError('معرّف الزبون غير صالح.')
       return
@@ -166,7 +172,7 @@ export function CustomersPage() {
     setToggleLoading(true)
     setToggleError('')
     try {
-      await reactivateCustomer(customerId)
+      await reactivateCustomer(customerId, selectedCustomer)
       setActionMessage('تم إعادة تفعيل حساب الزبون.')
       await refreshSelectedCustomer(customerId)
       await loadCustomers()
@@ -374,17 +380,17 @@ export function CustomersPage() {
       </div>
 
       {detailsModalOpen && selectedCustomer ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-2xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in overflow-y-auto py-10">
+          <div className="w-full max-w-2xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
 
-            <div className="flex items-center justify-between border-b border-white/5 p-6">
+            <div className="flex items-center justify-between border-b border-white/5 p-6 shrink-0">
               <h2 className="text-2xl font-bold text-white">تفاصيل الزبون</h2>
               <button type="button" onClick={closeDetails} className="text-white/50 hover:text-white/70">
                 <X className="size-6" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {detailLoading ? (
                 <div className="flex items-center justify-center gap-2 py-16 text-white/60">
                   <Loader2 className="size-6 animate-spin" />
@@ -394,7 +400,9 @@ export function CustomersPage() {
               <>
               <div className="flex justify-between items-center text-right border-b border-white/5 pb-4 mb-2">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
-                  selectedCustomer.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                  selectedCustomer.rawStatus === 'active'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-red-100 text-red-700'
                 }`}>
                   {selectedCustomer.status}
                 </span>
@@ -458,6 +466,9 @@ export function CustomersPage() {
 
                 {selectedCustomer.rawStatus === 'active' && showDeactivateForm ? (
                   <form className="space-y-4" onSubmit={handleDeactivate}>
+                    <p className="text-sm text-white/70">
+                      سيتم التعطيل باستخدام بيانات الزبون المعروضة أعلاه. أدخلي سبب التعطيل فقط.
+                    </p>
                     <div>
                       <label htmlFor="deactivate-reason" className="mb-2 block text-sm font-medium text-white/80">
                         سبب التعطيل <span className="text-brand-300">*</span>
@@ -497,7 +508,9 @@ export function CustomersPage() {
 
                 {selectedCustomer.rawStatus !== 'active' ? (
                   <form className="space-y-4" onSubmit={handleReactivate}>
-                    <p className="text-sm text-white/70">هذا الحساب معطّل حالياً. يمكنك إعادة تفعيله.</p>
+                    <p className="text-sm text-white/70">
+                      هذا الحساب معطّل حالياً ({selectedCustomer.status}). سيتم إعادة التفعيل باستخدام بيانات الزبون المعروضة أعلاه.
+                    </p>
                     {toggleError ? (
                       <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                         {toggleError}

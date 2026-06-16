@@ -13,17 +13,59 @@ export function getCustomer(id) {
 }
 
 // POST /api/customers/{id}/deactivate
-export function deactivateCustomer(id, reason) {
+function cleanCustomerField(value) {
+  if (value == null) return null
+  const text = String(value).trim()
+  if (!text || text === '—') return null
+  return text
+}
+
+export function buildCustomerProfilePayload(customer) {
+  const raw = customer?.raw ?? {}
+  const payload = raw?.data ?? raw
+  const profile = payload?.profile ?? payload
+
+  const body = {
+    user_id: customer?.userId ?? customer?.user_id ?? profile?.user_id ?? payload?.user_id ?? null,
+    name: cleanCustomerField(customer?.name ?? profile?.name),
+    email: cleanCustomerField(customer?.email ?? profile?.email),
+    phone: cleanCustomerField(customer?.phone ?? profile?.phone),
+  }
+
+  if (customer?.defaultAddress != null) {
+    body.default_address = customer.defaultAddress
+  } else if (profile?.default_address != null) {
+    body.default_address = profile.default_address
+  }
+
+  return Object.fromEntries(Object.entries(body).filter(([, value]) => value != null))
+}
+
+export function buildDeactivateCustomerPayload(customer, reason) {
+  return {
+    ...buildCustomerProfilePayload(customer),
+    reason: String(reason ?? '').trim(),
+  }
+}
+
+export function deactivateCustomer(id, customer, reason) {
+  const body = buildDeactivateCustomerPayload(customer, reason)
   return apiRequest(`/api/customers/${encodeURIComponent(String(id))}/deactivate`, {
     method: 'POST',
-    body: JSON.stringify({ reason }),
+    body: JSON.stringify(body),
   })
 }
 
 // POST /api/customers/{id}/reactivate
-export function reactivateCustomer(id) {
+export function buildReactivateCustomerPayload(customer) {
+  return buildCustomerProfilePayload(customer)
+}
+
+export function reactivateCustomer(id, customer) {
+  const body = buildReactivateCustomerPayload(customer)
   return apiRequest(`/api/customers/${encodeURIComponent(String(id))}/reactivate`, {
     method: 'POST',
+    body: JSON.stringify(body),
   })
 }
 
@@ -46,6 +88,8 @@ export function extractPaginationMeta(data) {
 const STATUS_UI = {
   active: 'نشط',
   inactive: 'معطل',
+  suspended: 'موقوف',
+  banned: 'محظور',
 }
 
 const STATUS_API = {
@@ -97,7 +141,8 @@ export function mapCustomer(item) {
 }
 
 export function resolveCustomerId(customer, fallbackId = null) {
-  const id = customer?.id ?? customer?.customer_id ?? fallbackId
+  if (fallbackId != null && fallbackId !== '') return fallbackId
+  const id = customer?.recordId ?? customer?.customerId ?? customer?.id ?? customer?.customer_id
   if (id == null || id === '') return null
   return id
 }
@@ -106,15 +151,24 @@ export function mapCustomerDetail(data, fallbackId = null) {
   const payload = data?.data ?? data
   const profile = payload?.profile ?? payload
   const stats = payload?.stats ?? {}
+  const recordId =
+    fallbackId ??
+    profile?.customer_id ??
+    payload?.customer_id ??
+    profile?.id ??
+    payload?.id ??
+    null
   const mapped = mapCustomer({
     ...profile,
-    id: profile?.id ?? profile?.customer_id ?? payload?.id ?? payload?.customer_id ?? fallbackId,
+    id: recordId,
     total_orders: stats.total_orders,
     total_spent: stats.total_spent,
   })
   return {
     ...mapped,
-    id: resolveCustomerId(mapped, fallbackId),
+    id: recordId,
+    recordId,
+    raw: data,
     totalComplaints: Number(stats.total_complaints ?? 0),
   }
 }
@@ -132,7 +186,9 @@ export function buildCustomerStats(customers, meta = {}) {
   return {
     total: Number(meta.total ?? customers.length),
     active: customers.filter((c) => c.rawStatus === 'active' || c.status === 'نشط').length,
-    disabled: customers.filter((c) => c.rawStatus === 'inactive' || c.status === 'معطل').length,
+    disabled: customers.filter(
+      (c) => c.rawStatus === 'inactive' || c.rawStatus === 'suspended' || c.rawStatus === 'banned' || c.status === 'معطل' || c.status === 'موقوف',
+    ).length,
     orders: customers.reduce((sum, c) => sum + (c.orders || 0), 0),
   }
 }

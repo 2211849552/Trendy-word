@@ -592,8 +592,8 @@ export function DisputesPage({ params, setParams }) {
 
       {detailsModalOpen && selectedDispute && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto py-10">
-          <div className="w-full max-w-4xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
-            <div className="flex items-center justify-between border-b border-white/5 p-6" dir="rtl">
+          <div className="w-full max-w-4xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between border-b border-white/5 p-6 shrink-0" dir="rtl">
               <h2 className="text-2xl font-bold text-white">تفاصيل الشكوى</h2>
               <button type="button" onClick={() => setDetailsModalOpen(false)} className="text-white/50 hover:text-white/70">
                 <X className="size-6" />
@@ -601,12 +601,12 @@ export function DisputesPage({ params, setParams }) {
             </div>
 
             {detailLoading ? (
-              <div className="flex items-center justify-center gap-3 py-20 text-white/70">
+              <div className="flex items-center justify-center gap-3 py-20 text-white/70 flex-1 overflow-y-auto">
                 <Loader2 className="size-6 animate-spin" />
                 <span>جاري تحميل التفاصيل...</span>
               </div>
             ) : (
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 <div className="flex justify-between items-center text-right border-b border-white/5 pb-4" dir="rtl">
                   <div className="flex gap-2">
                     <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${typeBadgeClass(selectedDispute.type)}`}>
