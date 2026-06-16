@@ -54,6 +54,26 @@ function pickOrderAmount(order, keys) {
   return null
 }
 
+function complaintHasLinkedStore(dispute) {
+  const order = dispute?.raw?.order
+  if (!order) return false
+  const storeId = order.store_id ?? order.store?.id
+  const ownerId = order.store?.owner_id ?? order.store?.user_id ?? order.store?.manager_id
+  return Boolean(storeId || ownerId)
+}
+
+function accountActionVerb(actionType) {
+  return actionType === 'suspend_account' ? 'إيقاف' : 'حظر'
+}
+
+function buildAccountActionWarning(dispute, actionType, targetType) {
+  const verb = accountActionVerb(actionType)
+  if (targetType === 'customer') {
+    return `تحذير: سيتم ${verb} حساب الزبون [${dispute.customer}]`
+  }
+  return `تحذير: سيتم ${verb} مالك المتجر [${dispute.store}]`
+}
+
 export function DisputesPage({ params, setParams }) {
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -68,6 +88,9 @@ export function DisputesPage({ params, setParams }) {
   const [imageUrl, setImageUrl] = useState('')
   const [replyText, setReplyText] = useState('')
   const [financialAmount, setFinancialAmount] = useState('')
+  const [adminAccountAction, setAdminAccountAction] = useState('')
+  const [adminTargetType, setAdminTargetType] = useState('')
+  const [adminAccountReason, setAdminAccountReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -124,8 +147,22 @@ export function DisputesPage({ params, setParams }) {
     return mapComplaintDetail(data)
   }
 
+  function resetAdminAccountForm() {
+    setAdminAccountAction('')
+    setAdminTargetType('')
+    setAdminAccountReason('')
+  }
+
+  function selectAdminAccountAction(actionType) {
+    setAdminAccountAction(actionType)
+    if (!complaintHasLinkedStore(selectedDispute)) {
+      setAdminTargetType('customer')
+    }
+  }
+
   async function openDetailsModal(dispute) {
     setReplyText('')
+    resetAdminAccountForm()
     setSelectedDispute(dispute)
     setDetailsModalOpen(true)
     setDetailLoading(true)
@@ -270,22 +307,12 @@ export function DisputesPage({ params, setParams }) {
         return
       }
 
-      if (actionName === 'ban_customer') {
+      if (actionName === 'warn_merchant') {
         await complaintAdminAction(selectedDispute.id, {
-          action_type: 'ban',
-          user_id: selectedDispute.customerId,
-          reason: 'إجراء إداري من لوحة الشكاوى',
+          action_type: 'warning_merchant',
+          reason: 'تحذير للتاجر بسبب شكوى',
         })
-        triggerToast('تم حظر الزبون بنجاح')
-        return
-      }
-
-      if (actionName === 'ban_store' || actionName === 'warn_merchant') {
-        await complaintAdminAction(selectedDispute.id, {
-          action_type: actionName === 'ban_store' ? 'ban' : 'escalate_complaint',
-          reason: actionName === 'ban_store' ? 'حظر متجر بسبب شكوى' : 'تحذير للتاجر بسبب شكوى',
-        })
-        triggerToast(actionName === 'ban_store' ? 'تم تنفيذ إجراء حظر المتجر' : 'تم إرسال تحذير للتاجر')
+        triggerToast('تم إرسال تحذير للتاجر')
         return
       }
 
@@ -296,6 +323,50 @@ export function DisputesPage({ params, setParams }) {
       setActionLoading(false)
     }
   }
+
+  async function handleAccountAdminAction() {
+    if (!selectedDispute) return
+
+    if (!adminAccountAction) {
+      triggerToast('يرجى اختيار نوع الإجراء: إيقاف الحساب أو حظر الحساب.')
+      return
+    }
+    if (!adminTargetType) {
+      triggerToast('يرجى تحديد الطرف المستهدف (الزبون أو المتجر).')
+      return
+    }
+    const reason = adminAccountReason.trim()
+    if (!reason) {
+      triggerToast('سبب الإيقاف/الحظر مطلوب قبل التنفيذ.')
+      return
+    }
+    if (adminTargetType === 'store' && !complaintHasLinkedStore(selectedDispute)) {
+      triggerToast('لا يوجد طلب/متجر مرتبط بهذه التذكرة.')
+      return
+    }
+
+    setActionLoading(true)
+    try {
+      await complaintAdminAction(selectedDispute.id, {
+        action_type: adminAccountAction,
+        target_type: adminTargetType,
+        reason,
+      })
+      triggerToast(
+        adminAccountAction === 'suspend_account'
+          ? 'تم إيقاف الحساب المستهدف بنجاح'
+          : 'تم حظر الحساب المستهدف بنجاح',
+      )
+      resetAdminAccountForm()
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر تنفيذ إجراء الحساب.'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const linkedStoreAvailable = complaintHasLinkedStore(selectedDispute)
+  const accountActionSelected = adminAccountAction === 'suspend_account' || adminAccountAction === 'ban'
 
   const statusBadgeClass = (status) => {
     if (status === 'مفتوحة') return 'bg-red-100 text-red-700'
@@ -691,15 +762,121 @@ export function DisputesPage({ params, setParams }) {
                       <p className="text-sm font-bold text-white/60 flex items-center gap-2 mb-3">
                         إجراء إداري <ShieldAlert className="size-4" />
                       </p>
+
+                      <div className="mb-4 rounded-xl border border-white/10 bg-brand-300 p-4 space-y-4">
+                        <p className="text-sm font-bold text-white/90">إيقاف / حظر الحساب</p>
+
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-white/70">نوع الإجراء</p>
+                          <div className="flex flex-wrap gap-4">
+                            <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+                              <input
+                                type="radio"
+                                name="admin-account-action"
+                                value="suspend_account"
+                                checked={adminAccountAction === 'suspend_account'}
+                                onChange={() => selectAdminAccountAction('suspend_account')}
+                                disabled={actionLoading}
+                                className="size-4 accent-brand-400"
+                              />
+                              إيقاف الحساب (suspend_account)
+                            </label>
+                            <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+                              <input
+                                type="radio"
+                                name="admin-account-action"
+                                value="ban"
+                                checked={adminAccountAction === 'ban'}
+                                onChange={() => selectAdminAccountAction('ban')}
+                                disabled={actionLoading}
+                                className="size-4 accent-brand-400"
+                              />
+                              حظر الحساب (ban)
+                            </label>
+                          </div>
+                        </div>
+
+                        {accountActionSelected ? (
+                          <>
+                            <div>
+                              <p className="mb-2 text-sm font-medium text-white/70">
+                                الطرف المستهدف <span className="text-rose-400">*</span>
+                              </p>
+                              <div className="flex flex-wrap gap-4">
+                                <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+                                  <input
+                                    type="radio"
+                                    name="admin-target-type"
+                                    value="customer"
+                                    checked={adminTargetType === 'customer'}
+                                    onChange={() => setAdminTargetType('customer')}
+                                    disabled={actionLoading}
+                                    className="size-4 accent-brand-400"
+                                  />
+                                  الزبون (صاحب التذكرة)
+                                </label>
+                                <label
+                                  title={linkedStoreAvailable ? '' : 'لا يوجد طلب/متجر مرتبط بهذه التذكرة'}
+                                  className={`flex items-center gap-2 text-sm ${
+                                    linkedStoreAvailable
+                                      ? 'cursor-pointer text-white'
+                                      : 'cursor-not-allowed text-white/40'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="admin-target-type"
+                                    value="store"
+                                    checked={adminTargetType === 'store'}
+                                    onChange={() => setAdminTargetType('store')}
+                                    disabled={actionLoading || !linkedStoreAvailable}
+                                    className="size-4 accent-brand-400 disabled:opacity-40"
+                                  />
+                                  المتجر (مالك المتجر المرتبط بالطلب)
+                                </label>
+                              </div>
+                              {!linkedStoreAvailable ? (
+                                <p className="mt-2 text-xs text-white/50">
+                                  لا يوجد طلب/متجر مرتبط بهذه التذكرة — خيار المتجر غير متاح.
+                                </p>
+                              ) : null}
+                            </div>
+
+                            {adminTargetType ? (
+                              <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm font-medium text-amber-100">
+                                {buildAccountActionWarning(selectedDispute, adminAccountAction, adminTargetType)}
+                              </div>
+                            ) : null}
+
+                            <div>
+                              <label className="mb-2 block text-sm font-medium text-white/70">
+                                سبب الإيقاف/الحظر <span className="text-rose-400">*</span>
+                              </label>
+                              <textarea
+                                value={adminAccountReason}
+                                onChange={(e) => setAdminAccountReason(e.target.value)}
+                                disabled={actionLoading}
+                                rows={3}
+                                placeholder="اكتب سبب الإجراء الإداري..."
+                                className="w-full resize-none rounded-xl border border-white/10 bg-brand-200 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={actionLoading || !adminTargetType || !adminAccountReason.trim()}
+                              onClick={handleAccountAdminAction}
+                              className="w-full rounded-xl bg-brand-100 py-3 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60"
+                            >
+                              تنفيذ {accountActionVerb(adminAccountAction)} الحساب
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button type="button" disabled={actionLoading} onClick={() => handleAction('ban_store')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60">
-                          حظر المتجر
-                        </button>
                         <button type="button" disabled={actionLoading} onClick={() => handleAction('warn_merchant')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60">
                           تحذير التاجر
-                        </button>
-                        <button type="button" disabled={actionLoading} onClick={() => handleAction('ban_customer')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60">
-                          حظر الزبون
                         </button>
                         <button type="button" disabled={actionLoading} onClick={() => handleAction('close')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60">
                           إغلاق الشكوى

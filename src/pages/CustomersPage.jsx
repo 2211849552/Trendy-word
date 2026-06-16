@@ -22,6 +22,7 @@ import {
   extractPaginationMeta,
   mapCustomer,
   mapCustomerDetail,
+  resolveCustomerId,
   buildCustomerQueryParams,
   buildCustomerStats,
   customersToCsv,
@@ -106,7 +107,7 @@ export function CustomersPage() {
     setToggleError('')
     try {
       const data = await getCustomer(customer.id)
-      setSelectedCustomer(mapCustomerDetail(data))
+      setSelectedCustomer(mapCustomerDetail(data, customer.id))
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الزبون.'))
       setTimeout(() => setActionMessage(''), 3000)
@@ -115,34 +116,63 @@ export function CustomersPage() {
     }
   }
 
-  const handleToggleStatus = async (e) => {
+  const refreshSelectedCustomer = async (customerId) => {
+    const data = await getCustomer(customerId)
+    setSelectedCustomer(mapCustomerDetail(data, customerId))
+  }
+
+  const handleDeactivate = async (e) => {
     e.preventDefault()
     if (!selectedCustomer) return
 
-    if (selectedCustomer.rawStatus === 'active' && !deactivateReason.trim()) {
+    if (!deactivateReason.trim()) {
       setToggleError('سبب التعطيل مطلوب.')
+      return
+    }
+
+    const customerId = resolveCustomerId(selectedCustomer)
+    if (!customerId) {
+      setToggleError('معرّف الزبون غير صالح.')
       return
     }
 
     setToggleLoading(true)
     setToggleError('')
     try {
-      if (selectedCustomer.rawStatus === 'active') {
-        await deactivateCustomer(selectedCustomer.id, deactivateReason.trim())
-        setActionMessage('تم تعطيل حساب الزبون.')
-      } else {
-        await reactivateCustomer(selectedCustomer.id)
-        setActionMessage('تم إعادة تفعيل حساب الزبون.')
-      }
-
-      const data = await getCustomer(selectedCustomer.id)
-      setSelectedCustomer(mapCustomerDetail(data))
+      await deactivateCustomer(customerId, deactivateReason.trim())
+      setActionMessage('تم تعطيل حساب الزبون.')
+      await refreshSelectedCustomer(customerId)
       setDeactivateReason('')
       setShowDeactivateForm(false)
       await loadCustomers()
       setTimeout(() => setActionMessage(''), 3000)
     } catch (err) {
-      setToggleError(apiErrorMessage(err, 'تعذّر تحديث حالة الزبون.'))
+      setToggleError(apiErrorMessage(err, 'تعذّر تعطيل حساب الزبون.'))
+    } finally {
+      setToggleLoading(false)
+    }
+  }
+
+  const handleReactivate = async (e) => {
+    e.preventDefault()
+    if (!selectedCustomer) return
+
+    const customerId = resolveCustomerId(selectedCustomer)
+    if (!customerId) {
+      setToggleError('معرّف الزبون غير صالح.')
+      return
+    }
+
+    setToggleLoading(true)
+    setToggleError('')
+    try {
+      await reactivateCustomer(customerId)
+      setActionMessage('تم إعادة تفعيل حساب الزبون.')
+      await refreshSelectedCustomer(customerId)
+      await loadCustomers()
+      setTimeout(() => setActionMessage(''), 3000)
+    } catch (err) {
+      setToggleError(apiErrorMessage(err, 'تعذّر إعادة تفعيل حساب الزبون.'))
     } finally {
       setToggleLoading(false)
     }
@@ -427,7 +457,7 @@ export function CustomersPage() {
                 ) : null}
 
                 {selectedCustomer.rawStatus === 'active' && showDeactivateForm ? (
-                  <form className="space-y-4" onSubmit={handleToggleStatus}>
+                  <form className="space-y-4" onSubmit={handleDeactivate}>
                     <div>
                       <label htmlFor="deactivate-reason" className="mb-2 block text-sm font-medium text-white/80">
                         سبب التعطيل <span className="text-brand-300">*</span>
@@ -466,7 +496,7 @@ export function CustomersPage() {
                 ) : null}
 
                 {selectedCustomer.rawStatus !== 'active' ? (
-                  <form className="space-y-4" onSubmit={handleToggleStatus}>
+                  <form className="space-y-4" onSubmit={handleReactivate}>
                     <p className="text-sm text-white/70">هذا الحساب معطّل حالياً. يمكنك إعادة تفعيله.</p>
                     {toggleError ? (
                       <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">

@@ -96,16 +96,25 @@ export function mapCustomer(item) {
   }
 }
 
-export function mapCustomerDetail(data) {
+export function resolveCustomerId(customer, fallbackId = null) {
+  const id = customer?.id ?? customer?.customer_id ?? fallbackId
+  if (id == null || id === '') return null
+  return id
+}
+
+export function mapCustomerDetail(data, fallbackId = null) {
   const payload = data?.data ?? data
   const profile = payload?.profile ?? payload
   const stats = payload?.stats ?? {}
+  const mapped = mapCustomer({
+    ...profile,
+    id: profile?.id ?? profile?.customer_id ?? payload?.id ?? payload?.customer_id ?? fallbackId,
+    total_orders: stats.total_orders,
+    total_spent: stats.total_spent,
+  })
   return {
-    ...mapCustomer({
-      ...profile,
-      total_orders: stats.total_orders,
-      total_spent: stats.total_spent,
-    }),
+    ...mapped,
+    id: resolveCustomerId(mapped, fallbackId),
     totalComplaints: Number(stats.total_complaints ?? 0),
   }
 }
