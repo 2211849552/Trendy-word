@@ -44,7 +44,6 @@ function apiErrorMessage(err, fallback) {
 
 export function FinancePage() {
   const [activeType, setActiveType] = useState('جميع الأنواع')
-  const [activePeriod, setActivePeriod] = useState('كل الفترات')
   const [activeStatus, setActiveStatus] = useState('جميع الحالات')
   const [searchQuery, setSearchQuery] = useState('')
   
@@ -84,9 +83,9 @@ export function FinancePage() {
   const [financeLoading, setFinanceLoading] = useState(true)
   const loadSeq = useRef(0)
 
-  const loadFinanceStats = async (period = activePeriod) => {
+  const loadFinanceStats = async () => {
     setFinanceLoading(true)
-    const dateParams = buildFinanceQueryParams({ period })
+    const dateParams = buildFinanceQueryParams()
     const results = await Promise.allSettled([
       getPlatformEarnings(dateParams),
       getAdProfits(dateParams),
@@ -114,12 +113,12 @@ export function FinancePage() {
     setFinanceLoading(false)
   }
 
-  const loadCharts = async (period = activePeriod) => {
+  const loadCharts = async () => {
     setChartsLoading(true)
     try {
       const [monthly, paymentMethods] = await Promise.all([
         fetchMonthlyRevenueSeries(6),
-        fetchPaymentMethodsDistribution({ period }),
+        fetchPaymentMethodsDistribution(),
       ])
       setMonthlyRevenueData(monthly)
       setPaymentMethodsData(paymentMethods.chart)
@@ -143,12 +142,11 @@ export function FinancePage() {
     const params = buildFinanceQueryParams({
       search: searchQuery,
       status: activeStatus,
-      period: activePeriod,
     })
     const data = await getFinanceTransactions(params)
     if (seq !== loadSeq.current) return
     setTransactions(extractTransactionList(data).map(mapTransaction))
-  }, [searchQuery, activeStatus, activePeriod])
+  }, [searchQuery, activeStatus])
 
   const loadBankCards = async () => {
     setCardsLoading(true)
@@ -171,9 +169,9 @@ export function FinancePage() {
   }
 
   useEffect(() => {
-    loadCharts(activePeriod)
-    loadFinanceStats(activePeriod)
-  }, [activePeriod])
+    loadCharts()
+    loadFinanceStats()
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -323,7 +321,6 @@ export function FinancePage() {
     const params = buildFinanceQueryParams({
       search: searchQuery,
       status: activeStatus,
-      period: activePeriod,
     })
     try {
       const result = await exportFinanceReport(params)
@@ -515,7 +512,7 @@ export function FinancePage() {
             </div>
           ) : !paymentMethodsHasData ? (
             <div className="flex h-[250px] flex-col items-center justify-center gap-2 text-white/55">
-              <p className="text-sm">لا توجد بيانات كافية في الفترة المحددة</p>
+              <p className="text-sm">لا توجد بيانات كافية لعرض توزيع طرق الدفع</p>
               <p className="text-xs text-white/40">يتم حساب النسب من الطلبات المكتملة أو المعاملات المالية</p>
             </div>
           ) : (
@@ -578,16 +575,6 @@ export function FinancePage() {
             <option>ناجحة</option>
             <option>معلقة</option>
             <option>فاشلة</option>
-          </select>
-
-          <select 
-            value={activePeriod}
-            onChange={e => setActivePeriod(e.target.value)}
-            className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
-          >
-            <option>كل الفترات</option>
-            <option>هذا الشهر</option>
-            <option>الشهر الماضي</option>
           </select>
 
           <select 
