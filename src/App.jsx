@@ -12,7 +12,6 @@ import { StoreManagementPage } from './pages/StoreManagementPage.jsx'
 import { CategoriesPage } from './pages/CategoriesPage.jsx'
 import { DisputesPage } from './pages/DisputesPage.jsx'
 import { FinancePage } from './pages/FinancePage.jsx'
-import { OffersPage } from './pages/OffersPage.jsx'
 import { CustomersPage } from './pages/CustomersPage.jsx'
 import { StaffPage } from './pages/StaffPage.jsx'
 import { NotificationsPage } from './pages/NotificationsPage.jsx'
@@ -27,7 +26,6 @@ function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, 
   if (activeNav === 'catalog') return <CategoriesPage />
   if (activeNav === 'disputes') return <DisputesPage params={activeNavParams} setParams={setActiveNavParams} />
   if (activeNav === 'finance') return <FinancePage />
-  if (activeNav === 'offers') return <OffersPage />
   if (activeNav === 'customers') return <CustomersPage />
   if (activeNav === 'staff') return <StaffPage />
   if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} setUnreadCount={setUnreadCount} />

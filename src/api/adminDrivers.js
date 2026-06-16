@@ -443,7 +443,7 @@ export function buildUpdateDriverPayload(form) {
 }
 
 /**
- * جلب مستحقات السائق من GET /api/admin/drivers/due-balances
+ * جلب مستحقات السائق من GET /api/admin/drivers/{id}/due-balance
  */
 export async function getDriverDueBalance(driverId) {
   const id = Number(driverId)
@@ -451,7 +451,7 @@ export async function getDriverDueBalance(driverId) {
     return Promise.reject(Object.assign(new Error('معرّف السائق غير صالح.'), { status: 422 }))
   }
 
-  const res = await apiRequest(`/api/admin/drivers/due-balances?driver_id=${encodeURIComponent(String(id))}`)
+  const res = await apiRequest(`/api/admin/drivers/${encodeURIComponent(String(id))}/due-balance`)
   const data = res?.data ?? res
 
   // إذا أرجع النظام قائمة لجميع السائقين

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search,
-  MessageSquare,
   CheckCircle2,
   Eye,
   AlertCircle,
@@ -41,6 +40,20 @@ function apiErrorMessage(err, fallback) {
   return err?.message || fallback
 }
 
+function toPositiveAmount(value) {
+  const amount = Number(value)
+  if (!Number.isFinite(amount) || amount <= 0) return null
+  return amount
+}
+
+function pickOrderAmount(order, keys) {
+  for (const key of keys) {
+    const value = Number(order?.[key])
+    if (Number.isFinite(value)) return value
+  }
+  return null
+}
+
 export function DisputesPage({ params, setParams }) {
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -54,6 +67,7 @@ export function DisputesPage({ params, setParams }) {
   const [showImageModal, setShowImageModal] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [replyText, setReplyText] = useState('')
+  const [financialAmount, setFinancialAmount] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -203,6 +217,13 @@ export function DisputesPage({ params, setParams }) {
 
   async function handleAction(actionName) {
     if (!selectedDispute) return
+
+    const amount = toPositiveAmount(financialAmount)
+    const order = selectedDispute.raw?.order ?? {}
+    const totalAmount = pickOrderAmount(order, ['total_amount', 'total', 'grand_total']) ?? 0
+    const deliveryFee = pickOrderAmount(order, ['delivery_fee', 'shipping_fee']) ?? 0
+    const maxDeductionAmount = Math.max(0, totalAmount - deliveryFee)
+
     setActionLoading(true)
     try {
       if (actionName === 'close') {
@@ -211,23 +232,41 @@ export function DisputesPage({ params, setParams }) {
       }
 
       if (actionName === 'refund') {
+        if (!amount) {
+          triggerToast('يرجى إدخال مبلغ صحيح أكبر من صفر قبل التعويض.')
+          return
+        }
+        if (amount > totalAmount) {
+          triggerToast(`مبلغ التعويض يتجاوز الحد الأقصى المسموح (${totalAmount.toFixed(2)} د.ل).`)
+          return
+        }
         await complaintFinancialAction(selectedDispute.id, {
-          type: 'refund_to_customer',
-          amount: 1,
+          type: 'compensation',
+          amount,
           customer_id: selectedDispute.customerId,
         })
         triggerToast('تم طلب استرداد المبلغ للزبون بنجاح')
+        setFinancialAmount('')
         return
       }
 
       if (actionName === 'deduct') {
+        if (!amount) {
+          triggerToast('يرجى إدخال مبلغ صحيح أكبر من صفر قبل الخصم.')
+          return
+        }
+        if (amount > maxDeductionAmount) {
+          triggerToast(`مبلغ الخصم يتجاوز الحد الأقصى المسموح (${maxDeductionAmount.toFixed(2)} د.ل).`)
+          return
+        }
         await complaintFinancialAction(selectedDispute.id, {
           type: 'deduction_from_merchant',
-          amount: 1,
+          amount,
           customer_id: selectedDispute.customerId,
           store_id: selectedDispute.raw?.order?.store_id,
         })
         triggerToast('تم خصم المبلغ من التاجر بنجاح')
+        setFinancialAmount('')
         return
       }
 
@@ -287,14 +326,7 @@ export function DisputesPage({ params, setParams }) {
         <p className="text-sm text-white/60">إدارة شكاوى الزبائن والنزاعات بين الأطراف</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg text-brand-500">
-            <MessageSquare className="size-6" />
-          </div>
-          <p className="text-sm font-medium text-white/60">متوسط وقت الحل</p>
-          <p className="mt-1 text-2xl font-bold text-white">—</p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg text-emerald-500">
             <CheckCircle2 className="size-6" />
@@ -618,6 +650,24 @@ export function DisputesPage({ params, setParams }) {
                       <p className="text-sm font-bold text-white/60 flex items-center gap-2 mb-3">
                         إجراء مالي <DollarSign className="size-4" />
                       </p>
+                      <div className="mb-4 rounded-xl border border-white/10 bg-brand-300 p-4">
+                        <label className="mb-2 block text-sm font-medium text-white/80">
+                          مبلغ الإجراء المالي (د.ل)
+                        </label>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={financialAmount}
+                          onChange={(e) => setFinancialAmount(e.target.value)}
+                          disabled={actionLoading}
+                          placeholder="أدخل المبلغ"
+                          className="w-full rounded-xl border border-white/10 bg-brand-200 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                        />
+                        <p className="mt-2 text-xs text-white/60">
+                          حد الخصم من التاجر = (إجمالي الطلب - رسوم التوصيل)، وحد تعويض الزبون = إجمالي الطلب.
+                        </p>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                           type="button"
