@@ -16,6 +16,7 @@ import {
   extractTransactionList,
   mapTransaction,
   mapTransactionDetail,
+  enrichTransactionsWithParties,
   buildFinanceQueryParams,
   filterTransactionsClient,
   fetchPaymentMethodsDistribution,
@@ -145,7 +146,10 @@ export function FinancePage() {
     })
     const data = await getFinanceTransactions(params)
     if (seq !== loadSeq.current) return
-    setTransactions(extractTransactionList(data).map(mapTransaction))
+    const mapped = extractTransactionList(data).map(mapTransaction)
+    const enriched = await enrichTransactionsWithParties(mapped)
+    if (seq !== loadSeq.current) return
+    setTransactions(enriched)
   }, [searchQuery, activeStatus])
 
   const loadBankCards = async () => {
@@ -294,17 +298,11 @@ export function FinancePage() {
     setDetailLoading(true)
     try {
       const data = await getFinanceTransaction(tx.transactionId)
-      const detail = mapTransactionDetail(data)
-      setSelectedTx(detail)
+      const detail = await enrichTransactionsWithParties([mapTransactionDetail(data)])
+      setSelectedTx(detail[0])
       setTransactions((prev) =>
         prev.map((t) =>
-          t.transactionId === detail.transactionId
-            ? {
-                ...t,
-                customer: detail.customer !== '—' ? detail.customer : t.customer,
-                store: detail.store !== '—' ? detail.store : t.store,
-              }
-            : t,
+          t.transactionId === detail[0].transactionId ? { ...t, ...detail[0] } : t,
         ),
       )
     } catch (err) {

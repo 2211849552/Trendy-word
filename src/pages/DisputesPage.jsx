@@ -207,13 +207,17 @@ export function DisputesPage({ params, setParams }) {
   async function handleCloseComplaint(dispute, closeModal = false) {
     setActionLoading(true)
     try {
-      const result = await closeComplaint(dispute.id, {})
+      const result = await closeComplaint(dispute.id)
       const updated = mapComplaint(result?.data ?? result)
       setDisputes((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
       if (selectedDispute?.id === updated.id) setSelectedDispute(updated)
       triggerToast('تم إغلاق الشكوى بنجاح')
       if (closeModal) setDetailsModalOpen(false)
-      await loadDisputes()
+      try {
+        await loadDisputes()
+      } catch {
+        // تجاهل فشل التحديث بعد إغلاق ناجح
+      }
     } catch (err) {
       triggerToast(apiErrorMessage(err, 'تعذّر إغلاق الشكوى.'))
     } finally {

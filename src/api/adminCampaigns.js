@@ -63,6 +63,100 @@ export function extractCampaignList(data) {
   return []
 }
 
+function readCampaignCount(value) {
+  if (value == null || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+/** استخراج عدد من الحقول المحتملة في استجابة Laravel */
+export function pickCampaignCount(item, keys) {
+  for (const key of keys) {
+    const direct = readCampaignCount(item?.[key])
+    if (direct != null) return direct
+  }
+
+  const nested = item?.stats ?? item?.metrics ?? item?.counts ?? null
+  if (nested && typeof nested === 'object') {
+    for (const key of keys) {
+      const parsed = readCampaignCount(nested[key])
+      if (parsed != null) return parsed
+    }
+  }
+
+  return null
+}
+
+export function pickCampaignStores(item) {
+  return (
+    pickCampaignCount(item, [
+      'store_subscriptions_count',
+      'stores_count',
+      'subscriptions_count',
+      'subscribers_count',
+      'stores',
+      'storeSubscriptionsCount',
+      'storesCount',
+    ]) ??
+    (Array.isArray(item?.store_subscriptions) ? item.store_subscriptions.length : null) ??
+    0
+  )
+}
+
+export function pickCampaignProducts(item) {
+  return (
+    pickCampaignCount(item, [
+      'products_count',
+      'total_products',
+      'products',
+      'productsCount',
+      'totalProducts',
+    ]) ??
+    (Array.isArray(item?.products) ? item.products.length : null) ??
+    0
+  )
+}
+
+export function pickCampaignViews(item) {
+  return (
+    pickCampaignCount(item, [
+      'views_count',
+      'total_views',
+      'views',
+      'viewsCount',
+      'totalViews',
+    ]) ?? 0
+  )
+}
+
+/** دمج بيانات القائمة مع تفاصيل الحملة (الإحصائيات غالباً في show فقط) */
+export function mergeCampaignSources(summary, detail) {
+  const extra = detail?.data ?? detail ?? {}
+  return mapCampaign({ ...summary, ...extra })
+}
+
+/** جلب القائمة ثم إثراء كل حملة بتفاصيلها لعرض الأرقام الصحيحة */
+export async function fetchAdminCampaignsWithMetrics(params = {}) {
+  const data = await getAdminCampaigns(params)
+  const list = extractCampaignList(data)
+  if (list.length === 0) return []
+
+  const enriched = await Promise.all(
+    list.map(async (item) => {
+      const id = item?.id
+      if (id == null || id === '') return mapCampaign(item)
+      try {
+        const detail = await getAdminCampaign(id)
+        return mergeCampaignSources(item, detail)
+      } catch {
+        return mapCampaign(item)
+      }
+    }),
+  )
+
+  return enriched
+}
+
 /** تاريخ اليوم بصيغة YYYY-MM-DD (توقيت المتصفح المحلي) */
 export function getTodayIsoDate(ref = new Date()) {
   const y = ref.getFullYear()
@@ -228,11 +322,12 @@ export function extractCreatedCampaign(data) {
 
 export function mapCampaign(item) {
   const mapped = mapApiStatusToUi(item.status)
+  const price = resolveCampaignPrice(item)
   return {
     id: Number(item.id),
     title: item.name ?? item.title ?? '',
     description: item.description ?? '',
-    price: resolveCampaignPrice(item),
+    price: price ?? 0,
     link: item.link ?? item.url ?? '',
     bannerImage: item.banner_image ?? item.banner_url ?? item.image ?? null,
     bannerImageUrl:
@@ -248,11 +343,10 @@ export function mapCampaign(item) {
     dateTo: normalizeCampaignDate(item.end_date ?? item.date_to ?? item.dateTo),
     status: mapped.status,
     paused: mapped.paused,
-    stores: item.store_subscriptions_count ?? item.stores_count ?? item.stores ?? 0,
-    products: item.products_count ?? item.products ?? 0,
-    views: item.views_count ?? item.views ?? 0,
+    stores: pickCampaignStores(item),
+    products: pickCampaignProducts(item),
+    views: pickCampaignViews(item),
     rawStatus: item.status ?? '',
-    price: item.price ?? 0.00,
   }
 }
 

@@ -20,20 +20,51 @@ export function endPasswordResetSession() {
   passwordResetSessionReady = false
 }
 
+function toFormBody(body) {
+  const form = new URLSearchParams()
+  Object.entries(body ?? {}).forEach(([key, value]) => {
+    if (value != null && value !== '') form.set(key, String(value))
+  })
+  return form.toString()
+}
+
+function isMissingLoginFieldsError(err) {
+  const message = String(err?.message ?? '').toLowerCase()
+  return err?.status === 422 && (
+    message.includes('email field is required')
+    || message.includes('password field is required')
+    || message.includes('البريد') && message.includes('مطلوب')
+  )
+}
+
+export function extractAuthToken(data) {
+  return data?.token ?? data?.access_token ?? data?.data?.token ?? null
+}
+
+async function postAuth(path, body) {
+  try {
+    return await apiRequest(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: toFormBody(body),
+    })
+  } catch (err) {
+    if (!isMissingLoginFieldsError(err)) throw err
+    return apiRequest(path, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+}
+
 async function passwordResetRequest(path, body) {
   await beginPasswordResetSession()
-  return apiRequest(path, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
+  return postAuth(path, body)
 }
 
 // POST /api/v1/auth/admin/login
 export function adminLogin(body) {
-  return apiRequest(`${AUTH_BASE}/admin/login`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
+  return postAuth(`${AUTH_BASE}/admin/login`, body)
 }
 
 // POST /api/v1/auth/logout
@@ -57,6 +88,18 @@ export async function resetPassword(body) {
     password: body.password,
     password_confirmation: body.password_confirmation ?? body.password,
   })
+}
+
+export function loginErrorMessage(err, fallback = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.') {
+  const msg = err?.message ?? ''
+  if (err?.status === 404) return 'رابط تسجيل الدخول غير موجود (404). تأكد من API.'
+  if (err?.status === 422) return msg || 'البيانات المدخلة غير صالحة.'
+  if (err?.status === 401) return msg || fallback
+  if (err?.status === 500) return 'خطأ في الخادم (500). جرب لاحقاً.'
+  if (err?.status === 0 || err?.status == null) {
+    return 'تعذّر الاتصال بالخادم. تأكد أن Backend شغال على http://127.0.0.1:8000'
+  }
+  return msg || fallback
 }
 
 export function authErrorMessage(err, fallback) {

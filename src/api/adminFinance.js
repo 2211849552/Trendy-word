@@ -1,4 +1,6 @@
 import { apiRequest } from './client.js'
+import { getOrder, getOrders, extractOrderList } from './adminOrders.js'
+import { getAdminStore } from './adminStores.js'
 
 // أرباح المنصة — لوحة الإدارة
 // GET /api/admin/finance/ad-profits
@@ -361,26 +363,105 @@ function mapTransactionStatus(item) {
   return 'ناجحة'
 }
 
+function firstFilledString(...values) {
+  for (const value of values) {
+    if (value == null) continue
+    const normalized = String(value).trim()
+    if (normalized && normalized !== '-') return normalized
+  }
+  return ''
+}
+
+function referenceModel(referenceType) {
+  if (!referenceType) return null
+  const parts = String(referenceType).split('\\')
+  return parts[parts.length - 1] || null
+}
+
+function parseStoreFromDescription(description) {
+  if (!description) return ''
+  const text = String(description)
+  const patterns = [
+    /رسوم\s+اشتراك\s+متجر\s+(.+?)\s+في/u,
+    /اشتراك\s+(?:المتجر|متجر)\s+(.+?)\s+في/u,
+    /رسوم\s+اشتراك\s+متجر\s+(.+)$/u,
+  ]
+  for (const pattern of patterns) {
+    const match = text.match(pattern)
+    if (match?.[1]) return match[1].trim()
+  }
+  return ''
+}
+
+function parseOrderNumberFromDescription(description) {
+  const match = String(description ?? '').match(/ORD-[\w-]+/)
+  return match?.[0] ?? ''
+}
+
+function transactionMoment(item) {
+  return String(item?.date ?? item?.created_at ?? '').slice(0, 19)
+}
+
+function referenceKey(referenceType, referenceId) {
+  if (!referenceType || referenceId == null) return ''
+  return `${referenceType}:${referenceId}`
+}
+
+function isStoreSideTransaction(tx) {
+  const model = referenceModel(tx.referenceType)
+  const rawType = String(tx.rawType ?? '').toLowerCase()
+  const description = String(tx.description ?? '')
+
+  if (model === 'Store' || model === 'Plan' || model === 'MegaCampaign') return true
+  if (/متجر|اشتراك|محفظة\s+المتجر/u.test(description)) return true
+  if (['withdrawal', 'deposit'].includes(rawType) && model !== 'Order') return true
+  return false
+}
+
+function isCustomerSideTransaction(tx) {
+  const rawType = String(tx.rawType ?? '').toLowerCase()
+  const description = String(tx.description ?? '')
+
+  if (referenceModel(tx.referenceType) === 'Order') return true
+  if (rawType === 'order_payment') return true
+  if (/طلبية|مشتريات|دفع\s+قيمة/u.test(description)) return true
+  return false
+}
+
+function mapCustomerName(item) {
+  return firstFilledString(
+    item.reference_details?.customer_name,
+    item.customer_name,
+    item.user?.name,
+    item.customer?.name,
+    item.buyer_name,
+    item.actor?.customer_name,
+    item.actor?.name,
+    item.performed_by_name,
+  )
+}
+
+function mapStoreName(item) {
+  return firstFilledString(
+    item.wallet?.store?.name,
+    item.store_name,
+    item.store?.name,
+    item.reference_details?.store_name,
+    item.seller_name,
+    item.actor?.store_name,
+  )
+}
+
 export function mapTransaction(item) {
   const txId = item.transaction_id ?? item.id
   const orderNumber = item.reference_details?.order_number
+  const customerName = mapCustomerName(item)
+  const storeName = mapStoreName(item) || parseStoreFromDescription(item.description)
   return {
     id: orderNumber ? String(orderNumber) : `TX-${txId}`,
     transactionId: Number(txId),
-    customer:
-      item.reference_details?.customer_name ??
-      item.customer_name ??
-      item.user?.name ??
-      item.customer?.name ??
-      item.buyer_name ??
-      '—',
-    store:
-      item.wallet?.store?.name ??
-      item.store_name ??
-      item.store?.name ??
-      item.reference_details?.store_name ??
-      item.seller_name ??
-      '—',
+    customer: customerName,
+    store: storeName,
     amount: Number(item.net_amount ?? item.amount ?? 0),
     grossAmount: Number(item.amount ?? 0),
     fee: Number(item.fee ?? item.fee_amount ?? 0),
@@ -395,6 +476,148 @@ export function mapTransaction(item) {
     referenceDetails: item.reference_details ?? null,
     raw: item,
   }
+}
+
+function applyOrderInfo(tx, order) {
+  if (!order) return tx
+  return {
+    ...tx,
+    customer: tx.customer || order.customer,
+    store: tx.store || order.store,
+  }
+}
+
+export async function enrichTransactionsWithParties(transactions) {
+  if (!transactions.length) return transactions
+
+  const orderIds = new Set()
+  const storeIds = new Set()
+  const orderNumbers = new Set()
+
+  transactions.forEach((tx) => {
+    const model = referenceModel(tx.referenceType)
+    if (model === 'Order' && tx.referenceId) orderIds.add(Number(tx.referenceId))
+    if (model === 'Store' && tx.referenceId) storeIds.add(Number(tx.referenceId))
+
+    const orderNumber = tx.referenceDetails?.order_number
+      || parseOrderNumberFromDescription(tx.description)
+    if (orderNumber) orderNumbers.add(orderNumber)
+  })
+
+  const orderCache = new Map()
+  const storeCache = new Map()
+
+  await Promise.all([
+    ...[...orderIds].map(async (id) => {
+      try {
+        const data = await getOrder(id)
+        const order = data?.data ?? data
+        orderCache.set(id, {
+          customer: firstFilledString(order.customer_name, order.seller?.name),
+          store: firstFilledString(order.store_name),
+          orderNumber: order.order_number ?? '',
+          totalAmount: Number(order.total_amount ?? 0),
+          createdAt: String(order.created_at ?? ''),
+        })
+      } catch {
+        // ignore lookup failures
+      }
+    }),
+    ...[...storeIds].map(async (id) => {
+      try {
+        const data = await getAdminStore(id)
+        const store = data?.data ?? data
+        storeCache.set(id, {
+          store: firstFilledString(store.name),
+          owner: firstFilledString(store.owner?.name),
+        })
+      } catch {
+        // ignore lookup failures
+      }
+    }),
+    ...[...orderNumbers].map(async (orderNumber) => {
+      const cached = [...orderCache.values()].some((order) => order.orderNumber === orderNumber)
+      if (cached) return
+      try {
+        const data = await getOrders({ search: orderNumber, per_page: 5 })
+        const order = extractOrderList(data).find((item) => item.order_number === orderNumber)
+          ?? extractOrderList(data)[0]
+        if (!order?.id) return
+        orderCache.set(Number(order.id), {
+          customer: firstFilledString(order.customer_name, order.seller?.name),
+          store: firstFilledString(order.store_name),
+          orderNumber: order.order_number ?? '',
+          totalAmount: Number(order.total_amount ?? 0),
+          createdAt: String(order.created_at ?? ''),
+        })
+      } catch {
+        // ignore lookup failures
+      }
+    }),
+  ])
+
+  const storeByReferenceMoment = new Map()
+  transactions.forEach((tx) => {
+    const storeFromDescription = parseStoreFromDescription(tx.description)
+    if (!storeFromDescription) return
+    const key = `${referenceKey(tx.referenceType, tx.referenceId)}|${transactionMoment(tx.raw)}`
+    storeByReferenceMoment.set(key, storeFromDescription)
+  })
+
+  return transactions.map((tx) => {
+    let next = { ...tx }
+
+    const refMomentKey = `${referenceKey(tx.referenceType, tx.referenceId)}|${transactionMoment(tx.raw)}`
+    if (!next.store) {
+      next.store = storeByReferenceMoment.get(refMomentKey) || ''
+    }
+
+    const model = referenceModel(tx.referenceType)
+    if (model === 'Order' && tx.referenceId) {
+      next = applyOrderInfo(next, orderCache.get(Number(tx.referenceId)))
+    }
+    if (model === 'Store' && tx.referenceId) {
+      const storeInfo = storeCache.get(Number(tx.referenceId))
+      if (storeInfo) {
+        next.store = next.store || storeInfo.store
+      }
+    }
+
+    const orderNumber = tx.referenceDetails?.order_number
+      || parseOrderNumberFromDescription(tx.description)
+    if (orderNumber) {
+      const order = [...orderCache.values()].find((item) => item.orderNumber === orderNumber)
+      next = applyOrderInfo(next, order)
+    }
+
+    if (!next.customer && tx.rawType === 'order_payment' && !tx.referenceId) {
+      for (const order of orderCache.values()) {
+        const orderDate = order.createdAt.slice(0, 10)
+        if (orderDate === tx.date && Math.abs(order.totalAmount - tx.amount) < 0.02) {
+          next = applyOrderInfo(next, order)
+          break
+        }
+      }
+    }
+
+    if (!next.store && (model === 'Plan' || model === 'MegaCampaign')) {
+      next.store = parseStoreFromDescription(tx.description) || storeByReferenceMoment.get(refMomentKey) || ''
+    }
+
+    if (!next.customer && !next.store) {
+      if (isStoreSideTransaction(next)) {
+        next.store = parseStoreFromDescription(next.description) || storeByReferenceMoment.get(refMomentKey) || ''
+      } else if (isCustomerSideTransaction(next)) {
+        next.customer = firstFilledString(next.referenceDetails?.customer_name)
+      }
+    }
+
+    return {
+      ...next,
+      customer: next.customer || '—',
+      store: next.store || '—',
+    }
+  })
 }
 
 export function mapTransactionDetail(data) {

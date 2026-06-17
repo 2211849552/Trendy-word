@@ -1,14 +1,13 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X, Loader2 } from 'lucide-react'
 import {
-  getAdminCampaigns,
   getAdminCampaign,
   createAdminCampaign,
   updateAdminCampaign,
   deleteAdminCampaign,
   activateCampaign,
   deactivateCampaign,
-  extractCampaignList,
+  fetchAdminCampaignsWithMetrics,
   mapCampaign,
   mapCampaignDetail,
   toCampaignRequestBody,
@@ -61,9 +60,9 @@ export function MarketingPage() {
 
   const loadCampaigns = useCallback(async () => {
     const seq = ++loadSeq.current
-    const data = await getAdminCampaigns({ per_page: 100 })
+    const campaigns = await fetchAdminCampaignsWithMetrics({ per_page: 100 })
     if (seq !== loadSeq.current) return
-    setList(extractCampaignList(data).map(mapCampaign))
+    setList(campaigns)
   }, [])
 
   useEffect(() => {
@@ -182,7 +181,14 @@ export function MarketingPage() {
         ? await deactivateCampaign(camp.id)
         : await activateCampaign(camp.id)
 
-      const updated = mapCampaign(result?.data ?? result)
+      let updated = mapCampaign(result?.data ?? result)
+      try {
+        const detail = await getAdminCampaign(camp.id)
+        updated = mapCampaignDetail(detail)
+      } catch {
+        updated = { ...camp, ...updated, stores: camp.stores, products: camp.products, views: camp.views }
+      }
+
       setList((prev) => prev.map((x) => (x.id === camp.id ? updated : x)))
       triggerToast(isActive ? 'تم إيقاف الحملة الإعلانية' : 'تم تفعيل الحملة الإعلانية')
     } catch (err) {

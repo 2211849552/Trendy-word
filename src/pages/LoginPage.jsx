@@ -4,7 +4,9 @@ import {
   authErrorMessage,
   beginPasswordResetSession,
   endPasswordResetSession,
+  extractAuthToken,
   forgotPassword,
+  loginErrorMessage,
   resetPassword,
   verifyResetOtp,
 } from '../api/auth.js'
@@ -27,7 +29,7 @@ function LoginForm({ onForgotPassword, onSuccess }) {
     setLoading(true)
     try {
       const data = await adminLogin({ email: email.trim(), password })
-      const token = data?.token ?? data?.access_token ?? data?.data?.token
+      const token = extractAuthToken(data)
       if (token) {
         localStorage.setItem('auth_token', token)
         onSuccess?.()
@@ -35,13 +37,7 @@ function LoginForm({ onForgotPassword, onSuccess }) {
         setError('لم يتم استلام التوكن من الخادم.')
       }
     } catch (err) {
-      let msg = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
-      if (err.status === 404) msg = 'رابط تسجيل الدخول غير موجود (404). تأكد من API.'
-      else if (err.status === 422) msg = 'البيانات المدخلة غير صالحة (422).'
-      else if (err.status === 500) msg = 'خطأ في الخادم (500). جرب لاحقاً.'
-      else if (err.status === 0 || err.status == null) msg = 'تعذّر الاتصال بالخادم. تأكد أن Backend شغال.'
-      else if (err.message) msg = err.message
-      setError(msg)
+      setError(loginErrorMessage(err))
     } finally {
       setLoading(false)
     }

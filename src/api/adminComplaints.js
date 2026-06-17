@@ -29,12 +29,9 @@ export function addComplaintReply(id, message) {
   })
 }
 
-// POST /api/complaints/{id}/close
-export function closeComplaint(id, body = {}) {
-  return apiRequest(`/api/complaints/${encodeURIComponent(String(id))}/close`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
+// POST /api/complaints/{id}/close — يُحدَّث عبر PATCH status لتجنّب أخطاء الخادم على /close
+export function closeComplaint(id, _body = {}) {
+  return updateComplaintStatus(id, 'closed')
 }
 
 // POST /api/complaints/{id}/financial-action
