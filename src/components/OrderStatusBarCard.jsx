@@ -75,8 +75,8 @@ export function OrderStatusBarCard({ stats = null }) {
               />
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#0f172a" />
-                  <stop offset="100%" stopColor="#4f46e5" />
+                  <stop offset="0%" stopColor="#8b83c7" />
+                  <stop offset="100%" stopColor="#5c54a4" />
                 </linearGradient>
               </defs>
             </BarChart>
@@ -88,7 +88,7 @@ export function OrderStatusBarCard({ stats = null }) {
         )}
       </div>
 
-      <div className="mt-6 flex justify-center gap-6 border-t border-slate-50 pt-6">
+      <div className="mt-6 flex justify-center gap-6 border-t border-brand-400/30 pt-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-white/70">
           <span className="size-3 shrink-0 rounded-full bg-brand-500" aria-hidden />
           عدد الطلبات

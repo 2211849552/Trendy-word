@@ -70,8 +70,8 @@ export function FinancePage() {
   const [exportMessage, setExportMessage] = useState('')
   const [monthlyRevenueData, setMonthlyRevenueData] = useState([])
   const [paymentMethodsData, setPaymentMethodsData] = useState([
-    { name: 'محفظة إلكترونية', value: 0, color: '#60a5fa' },
-    { name: 'نقدي', value: 0, color: '#10b981' },
+    { name: 'محفظة إلكترونية', value: 0, color: '#6b63b5' },
+    { name: 'نقدي', value: 0, color: '#2ecc71' },
   ])
   const [paymentMethodsHasData, setPaymentMethodsHasData] = useState(false)
   const [paymentMethodsSource, setPaymentMethodsSource] = useState('none')
@@ -128,8 +128,8 @@ export function FinancePage() {
     } catch {
       setMonthlyRevenueData([])
       setPaymentMethodsData([
-        { name: 'محفظة إلكترونية', value: 0, color: '#60a5fa' },
-        { name: 'نقدي', value: 0, color: '#10b981' },
+        { name: 'محفظة إلكترونية', value: 0, color: '#6b63b5' },
+        { name: 'نقدي', value: 0, color: '#2ecc71' },
       ])
       setPaymentMethodsHasData(false)
       setPaymentMethodsSource('none')
@@ -379,11 +379,11 @@ export function FinancePage() {
       <text
         x={x}
         y={y}
-        fill="#f8fafc"
+        fill="#45407a"
         textAnchor={x > cx ? 'start' : 'end'}
         dominantBaseline="central"
         className="text-xs font-bold"
-        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.85))' }}
+        style={{ filter: 'none' }}
       >
         {`${payload.name}: ${pct}%`}
       </text>
@@ -493,7 +493,7 @@ export function FinancePage() {
                 <YAxis axisLine={true} tickLine={true} tick={{ fill: '#64748b', fontSize: 12 }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0', strokeWidth: 1, strokeDasharray: '3 3' }} />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} formatter={() => <span className="text-emerald-500 text-sm font-bold ml-2">الإيرادات</span>} />
-                <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} activeDot={{ r: 6 }} dot={{ fill: '#10b981', strokeWidth: 2, r: 4, stroke: 'white' }} />
+                <Line type="monotone" dataKey="value" stroke="#5c54a4" strokeWidth={3} activeDot={{ r: 6 }} dot={{ fill: '#5c54a4', strokeWidth: 2, r: 4, stroke: 'white' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -528,9 +528,9 @@ export function FinancePage() {
                   cx="50%"
                   cy="50%"
                   outerRadius={90}
-                  fill="#8884d8"
+                  fill="#5c54a4"
                   dataKey="value"
-                  stroke="#1e1e4d"
+                  stroke="#ffffff"
                   strokeWidth={2}
                   label={renderPaymentMethodLabel}
                   labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
@@ -542,16 +542,17 @@ export function FinancePage() {
                 <Tooltip
                   formatter={(value, name) => [`${value}%`, name]}
                   contentStyle={{
-                    backgroundColor: '#1e1e4d',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid rgba(92, 84, 164, 0.15)',
                     borderRadius: 12,
-                    color: '#f8fafc',
+                    color: '#3d3870',
+                    boxShadow: '0 4px 16px rgba(92, 84, 164, 0.12)',
                   }}
                 />
                 <Legend
                   iconType="circle"
-                  wrapperStyle={{ paddingTop: '12px', color: '#f8fafc' }}
-                  formatter={(value) => <span className="text-sm font-medium text-white">{value}</span>}
+                  wrapperStyle={{ paddingTop: '12px', color: '#45407a' }}
+                  formatter={(value) => <span className="text-sm font-medium text-brand-800">{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>

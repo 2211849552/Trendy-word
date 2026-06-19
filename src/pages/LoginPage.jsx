@@ -370,7 +370,7 @@ export function LoginPage({ onLoginSuccess }) {
   const [view, setView] = useState('login')
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-brand-50 px-4 py-10" dir="rtl">
+    <div className="auth-layout flex min-h-dvh items-center justify-center bg-brand-50 px-4 py-10" dir="rtl">
       <div className="glass-card w-full max-w-md p-8 sm:p-10">
         {view === 'login' ? (
           <LoginForm

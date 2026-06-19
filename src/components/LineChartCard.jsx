@@ -59,17 +59,17 @@ export function LineChartCard({ monthlyData = [] }) {
       <div className="h-[280px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fill: '#ffffff', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
-              axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+              tick={{ fill: '#64748b', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
+              axisLine={{ stroke: '#e2e8f0' }}
               tickLine={false}
             />
             <YAxis
               yAxisId="rev"
               orientation="left"
-              tick={{ fill: '#ffffff', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
+              tick={{ fill: '#64748b', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
               domain={[0, revDomainMax]}
@@ -78,7 +78,7 @@ export function LineChartCard({ monthlyData = [] }) {
             <YAxis
               yAxisId="ord"
               orientation="right"
-              tick={{ fill: '#ffffff', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
+              tick={{ fill: '#64748b', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}
               axisLine={false}
               tickLine={false}
               domain={[0, ordDomainMax]}

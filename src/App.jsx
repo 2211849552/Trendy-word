@@ -73,7 +73,7 @@ function Toast({ toast, onClose, onAction }) {
   return (
     <div
       dir="rtl"
-      className="flex w-96 max-w-full items-start gap-4 rounded-2xl border border-white/10 bg-brand-950/80 p-4 shadow-2xl backdrop-blur-md animate-in slide-in-from-left-5 fade-in duration-300"
+      className="toast-panel flex w-96 max-w-full items-start gap-4 rounded-2xl border border-white/10 bg-brand-950/90 p-4 shadow-2xl backdrop-blur-md animate-in slide-in-from-left-5 fade-in duration-300"
     >
       {getIcon(toast.type)}
       <div className="flex-1 min-w-0 text-right">
@@ -208,9 +208,9 @@ export default function App() {
 
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.remove('light')
+      document.documentElement.classList.add('dark')
     } else {
-      document.documentElement.classList.add('light')
+      document.documentElement.classList.remove('dark')
     }
   }, [isDarkMode])
 
@@ -262,8 +262,8 @@ export default function App() {
 
   if (authChecking) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-brand-50" dir="rtl">
-        <p className="text-sm text-white/55">جاري التحميل...</p>
+      <div className="auth-layout flex min-h-dvh items-center justify-center bg-brand-50" dir="rtl">
+        <p className="text-sm text-brand-800/60">جاري التحميل...</p>
       </div>
     )
   }
@@ -273,7 +273,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden flex-row bg-brand-100" dir="ltr">
+    <div className="flex h-dvh overflow-hidden flex-row bg-brand-50" dir="ltr">
       <main
         dir="rtl"
         className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
