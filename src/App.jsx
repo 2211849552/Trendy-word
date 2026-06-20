@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
-import { getCurrentUser, mapCurrentUser, hasStoreManagementAccess } from './api/user.js'
+import { getCurrentUser, mapCurrentUser, mergeCurrentUser, clearPersistedUserRoles, hasStoreManagementAccess } from './api/user.js'
+import { extractLoginUser } from './api/auth.js'
 import { getNotifications, extractUnreadCount, markNotificationAsRead } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { LoginPage } from './pages/LoginPage.jsx'
@@ -133,19 +134,17 @@ export default function App() {
       return
     }
 
-    if (currentUser) return
-
     async function fetchUser() {
       try {
         const data = await getCurrentUser()
-        setCurrentUser(mapCurrentUser(data))
+        setCurrentUser((previous) => mergeCurrentUser(previous, mapCurrentUser(data)))
       } catch (err) {
         console.error('Failed to fetch current user profile:', err)
       }
     }
 
     fetchUser()
-  }, [isAuthenticated, currentUser])
+  }, [isAuthenticated])
 
   const handlePageNavigate = (page, params = null) => {
     setActiveNav(page)
@@ -295,6 +294,7 @@ export default function App() {
       // clear local session even if server logout fails
     }
     localStorage.removeItem('auth_token')
+    clearPersistedUserRoles()
     setIsAuthenticated(false)
   }
 
@@ -306,8 +306,16 @@ export default function App() {
     )
   }
 
+  const handleLoginSuccess = (loginData) => {
+    setIsAuthenticated(true)
+    const loginUser = extractLoginUser(loginData)
+    if (loginUser?.id || loginUser?.email) {
+      setCurrentUser(mapCurrentUser(loginUser))
+    }
+  }
+
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />
   }
 
   return (

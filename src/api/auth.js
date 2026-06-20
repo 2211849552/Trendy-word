@@ -41,6 +41,10 @@ export function extractAuthToken(data) {
   return data?.token ?? data?.access_token ?? data?.data?.token ?? null
 }
 
+export function extractLoginUser(data) {
+  return data?.user ?? data?.data?.user ?? data?.data ?? null
+}
+
 async function postAuth(path, body) {
   try {
     return await apiRequest(path, {

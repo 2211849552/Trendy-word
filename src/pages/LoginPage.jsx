@@ -5,6 +5,7 @@ import {
   beginPasswordResetSession,
   endPasswordResetSession,
   extractAuthToken,
+  extractLoginUser,
   forgotPassword,
   loginErrorMessage,
   resetPassword,
@@ -32,7 +33,7 @@ function LoginForm({ onForgotPassword, onSuccess }) {
       const token = extractAuthToken(data)
       if (token) {
         localStorage.setItem('auth_token', token)
-        onSuccess?.()
+        onSuccess?.(data)
       } else {
         setError('لم يتم استلام التوكن من الخادم.')
       }

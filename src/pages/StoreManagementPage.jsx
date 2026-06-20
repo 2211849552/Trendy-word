@@ -23,7 +23,7 @@ import {
   toApiStoreStatus,
 } from '../api/adminStores.js'
 import { getStoreProducts, extractProductList } from '../api/products.js'
-import { getCurrentUser, mapCurrentUser, canManageStoreDeliveryPrices } from '../api/user.js'
+import { getCurrentUser, mapCurrentUser, hasStoreManagementAccess } from '../api/user.js'
 
 function extractList(data) {
   if (Array.isArray(data)) return data
@@ -122,7 +122,7 @@ export function StoreManagementPage({ params, setParams }) {
   const [storesError, setStoresError] = useState('')
   const [storeQuery, setStoreQuery] = useState('')
   const [storeStatus, setStoreStatus] = useState('all')
-  const [canEditDeliveryPrices, setCanEditDeliveryPrices] = useState(true)
+  const [canAccessStoreFeatures, setCanAccessStoreFeatures] = useState(false)
 
   useEffect(() => {
     if (params?.store_join_request_id) {
@@ -155,7 +155,9 @@ export function StoreManagementPage({ params, setParams }) {
       const data = await getAdminStores(params)
       const mappedStores = extractStoreList(data).map(mapAdminStore)
       setRegisteredStores(mappedStores)
-      enrichMissingProductCounts(mappedStores, setRegisteredStores)
+      if (canAccessStoreFeatures) {
+        enrichMissingProductCounts(mappedStores, setRegisteredStores)
+      }
       enrichMissingMerchantData(mappedStores, setRegisteredStores)
     } catch (err) {
       setRegisteredStores([])
@@ -169,7 +171,7 @@ export function StoreManagementPage({ params, setParams }) {
     } finally {
       setStoresLoading(false)
     }
-  }, [storeQuery, storeStatus])
+  }, [storeQuery, storeStatus, canAccessStoreFeatures])
 
   useEffect(() => {
     loadRequests()
@@ -177,17 +179,21 @@ export function StoreManagementPage({ params, setParams }) {
       .then((data) => {
         const mappedStores = extractStoreList(data).map(mapAdminStore)
         setRegisteredStores(mappedStores)
-        enrichMissingProductCounts(mappedStores, setRegisteredStores)
         enrichMissingMerchantData(mappedStores, setRegisteredStores)
       })
       .catch(() => {})
 
     getCurrentUser()
       .then((data) => {
-        setCanEditDeliveryPrices(canManageStoreDeliveryPrices(mapCurrentUser(data)))
+        setCanAccessStoreFeatures(hasStoreManagementAccess(mapCurrentUser(data)))
       })
-      .catch(() => setCanEditDeliveryPrices(false))
+      .catch(() => setCanAccessStoreFeatures(false))
   }, [loadRequests])
+
+  useEffect(() => {
+    if (!canAccessStoreFeatures || registeredStores.length === 0) return
+    enrichMissingProductCounts(registeredStores, setRegisteredStores)
+  }, [canAccessStoreFeatures, registeredStores.length])
 
   useEffect(() => {
     if (view !== 'list') return undefined
@@ -297,9 +303,10 @@ export function StoreManagementPage({ params, setParams }) {
         onToggleStoreStatus={handleToggleStoreStatus}
         onLoadStoreDetails={handleLoadStoreDetails}
         onUpdateStore={handleUpdateStore}
-        onSettleCustody={handleSettleCustody}
+        onSettleCustody={canAccessStoreFeatures ? handleSettleCustody : undefined}
         onPrintStores={handlePrintStores}
-        canEditDeliveryPrices={canEditDeliveryPrices}
+        canEditDeliveryPrices={canAccessStoreFeatures}
+        canViewStoreProducts={canAccessStoreFeatures}
         onBackToJoin={() => setView('join')}
       />
     )

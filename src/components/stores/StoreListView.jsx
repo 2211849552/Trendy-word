@@ -127,6 +127,7 @@ export function StoreListView({
   onSettleCustody,
   onPrintStores,
   canEditDeliveryPrices = false,
+  canViewStoreProducts = false,
   onBackToJoin,
 }) {
   const [toggleStore, setToggleStore] = useState(null)
@@ -469,6 +470,7 @@ export function StoreListView({
         }}
         onSettleCustody={onSettleCustody}
         canEditDeliveryPrices={canEditDeliveryPrices}
+        canViewStoreProducts={canViewStoreProducts}
         onStoreUpdated={(updated) => setSelectedStore(updated)}
       />
     </>

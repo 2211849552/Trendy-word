@@ -12,6 +12,7 @@ import {
   Package,
   Loader2,
   Wallet,
+  Search,
 } from 'lucide-react'
 import { fetchStoreProductsForDetail } from '../../api/products.js'
 import {
@@ -76,10 +77,13 @@ export function StoreDetailModal({
   onSettleCustody,
   onStoreUpdated,
   canEditDeliveryPrices = false,
+  canViewStoreProducts = false,
 }) {
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState('')
+  const [productSearchInput, setProductSearchInput] = useState('')
+  const [appliedProductSearch, setAppliedProductSearch] = useState('')
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
@@ -89,12 +93,15 @@ export function StoreDetailModal({
   const [custodyLoading, setCustodyLoading] = useState(false)
   const [custodyError, setCustodyError] = useState('')
 
-  const loadProducts = useCallback(async (storeId) => {
+  const loadProducts = useCallback(async (storeId, searchName = '') => {
     if (!storeId) return
     setProductsLoading(true)
     setProductsError('')
     try {
-      setProducts(await fetchStoreProductsForDetail(storeId))
+      const params = {}
+      const trimmed = searchName.trim()
+      if (trimmed) params.name = trimmed
+      setProducts(await fetchStoreProductsForDetail(storeId, params))
     } catch (err) {
       setProducts([])
       setProductsError(apiErrorMessage(err, 'تعذّر تحميل منتجات المتجر.'))
@@ -102,6 +109,13 @@ export function StoreDetailModal({
       setProductsLoading(false)
     }
   }, [])
+
+  const handleProductSearch = useCallback(() => {
+    if (!store?.id) return
+    const query = productSearchInput.trim()
+    setAppliedProductSearch(query)
+    loadProducts(store.id, query)
+  }, [store?.id, productSearchInput, loadProducts])
 
   const loadCustody = useCallback(async (storeId) => {
     if (!storeId) return
@@ -129,14 +143,16 @@ export function StoreDetailModal({
 
   useEffect(() => {
     if (!open || !store?.id || loading) return
-    loadProducts(store.id)
+    if (canViewStoreProducts) loadProducts(store.id)
     if (onSettleCustody) loadCustody(store.id)
-  }, [open, store?.id, loading, loadProducts, loadCustody, onSettleCustody])
+  }, [open, store?.id, loading, loadProducts, loadCustody, onSettleCustody, canViewStoreProducts])
 
   useEffect(() => {
     if (!open) {
       setProducts([])
       setProductsError('')
+      setProductSearchInput('')
+      setAppliedProductSearch('')
       setActionMessage('')
       setActionError('')
       setSettleCustodyOpen(false)
@@ -267,7 +283,7 @@ export function StoreDetailModal({
                 </div>
               </div>
 
-              {!loading && store?.id ? (
+              {canEditDeliveryPrices && !loading && store?.id ? (
                 <div className="border-t border-white/5 pt-6 space-y-4">
                   <h4 className="text-lg font-bold text-white">أسعار التوصيل للمتجر</h4>
                   {deliveryPriceSummary.length > 0 ? (
@@ -404,10 +420,38 @@ export function StoreDetailModal({
                 </div>
               ) : null}
 
+              {canViewStoreProducts ? (
               <div className="border-t border-white/5 pt-6 space-y-4">
                 <div>
                   <h4 className="text-lg font-bold text-white">منتجات المتجر</h4>
                   <p className="text-sm text-white/60">صورة كل منتج من قائمة منتجات المتجر</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative min-w-[200px] flex-1">
+                    <Search className="absolute end-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+                    <input
+                      type="search"
+                      placeholder="البحث عن منتج بالاسم..."
+                      value={productSearchInput}
+                      onChange={(e) => setProductSearchInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleProductSearch()
+                        }
+                      }}
+                      className="w-full rounded-xl border border-white/10 bg-brand-300/80 py-2.5 pe-10 ps-3 text-sm text-white outline-none transition focus:border-brand-300 focus:bg-brand-200 focus:ring-2 focus:ring-brand-500/30"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleProductSearch}
+                    disabled={productsLoading}
+                    className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white shadow-premium transition-all hover:bg-slate-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    بحث
+                  </button>
                 </div>
 
                 {productsError ? (
@@ -424,7 +468,11 @@ export function StoreDetailModal({
                 ) : products.length === 0 && !productsError ? (
                   <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/20 bg-brand-300 py-10 text-center">
                     <Package className="size-8 text-white/50 mb-3" />
-                    <p className="text-sm text-white/60">لا توجد منتجات لهذا المتجر.</p>
+                    <p className="text-sm text-white/60">
+                      {appliedProductSearch
+                        ? `لا توجد منتجات مطابقة لـ «${appliedProductSearch}».`
+                        : 'لا توجد منتجات لهذا المتجر.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-hidden rounded-xl border border-white/10">
@@ -464,11 +512,14 @@ export function StoreDetailModal({
                       </tbody>
                     </table>
                     <div className="border-t border-white/10 bg-brand-300/50 px-4 py-3 text-sm text-white/60">
-                      عرض {products.length} {products.length === 1 ? 'منتج' : 'منتجات'}
+                      {appliedProductSearch
+                        ? `عرض ${products.length} ${products.length === 1 ? 'نتيجة' : 'نتائج'} للبحث عن «${appliedProductSearch}»`
+                        : `عرض ${products.length} ${products.length === 1 ? 'منتج' : 'منتجات'}`}
                     </div>
                   </div>
                 )}
               </div>
+              ) : null}
             </>
           )}
         </div>
