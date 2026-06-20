@@ -14,7 +14,7 @@ import {
   Wallet,
   Search,
 } from 'lucide-react'
-import { fetchStoreProductsForDetail } from '../../api/products.js'
+import { fetchStoreProductsForDetail, fetchMyStoreProductsForDetail } from '../../api/products.js'
 import {
   getStoreCustodySummaryForStore,
   getStoreCustodyLogsForStore,
@@ -84,6 +84,7 @@ export function StoreDetailModal({
   const [productsError, setProductsError] = useState('')
   const [productSearchInput, setProductSearchInput] = useState('')
   const [appliedProductSearch, setAppliedProductSearch] = useState('')
+  const [productStatusFilter, setProductStatusFilter] = useState('all')
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
@@ -93,7 +94,7 @@ export function StoreDetailModal({
   const [custodyLoading, setCustodyLoading] = useState(false)
   const [custodyError, setCustodyError] = useState('')
 
-  const loadProducts = useCallback(async (storeId, searchName = '') => {
+  const loadProducts = useCallback(async (storeId, { searchName = '', status = 'all' } = {}) => {
     if (!storeId) return
     setProductsLoading(true)
     setProductsError('')
@@ -101,7 +102,22 @@ export function StoreDetailModal({
       const params = {}
       const trimmed = searchName.trim()
       if (trimmed) params.name = trimmed
-      setProducts(await fetchStoreProductsForDetail(storeId, params))
+
+      if (status && status !== 'all') {
+        params.status = status
+        try {
+          setProducts(await fetchMyStoreProductsForDetail(storeId, params))
+          return
+        } catch (myStoreErr) {
+          if (myStoreErr?.status !== 403) throw myStoreErr
+        }
+      }
+
+      let products = await fetchStoreProductsForDetail(storeId, params)
+      if (status && status !== 'all') {
+        products = products.filter((product) => product.status === status)
+      }
+      setProducts(products)
     } catch (err) {
       setProducts([])
       setProductsError(apiErrorMessage(err, 'تعذّر تحميل منتجات المتجر.'))
@@ -114,8 +130,14 @@ export function StoreDetailModal({
     if (!store?.id) return
     const query = productSearchInput.trim()
     setAppliedProductSearch(query)
-    loadProducts(store.id, query)
-  }, [store?.id, productSearchInput, loadProducts])
+    loadProducts(store.id, { searchName: query, status: productStatusFilter })
+  }, [store?.id, productSearchInput, productStatusFilter, loadProducts])
+
+  const handleProductStatusFilterChange = useCallback((status) => {
+    setProductStatusFilter(status)
+    if (!store?.id) return
+    loadProducts(store.id, { searchName: appliedProductSearch, status })
+  }, [store?.id, appliedProductSearch, loadProducts])
 
   const loadCustody = useCallback(async (storeId) => {
     if (!storeId) return
@@ -153,6 +175,7 @@ export function StoreDetailModal({
       setProductsError('')
       setProductSearchInput('')
       setAppliedProductSearch('')
+      setProductStatusFilter('all')
       setActionMessage('')
       setActionError('')
       setSettleCustodyOpen(false)
@@ -428,6 +451,16 @@ export function StoreDetailModal({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  <select
+                    value={productStatusFilter}
+                    onChange={(e) => handleProductStatusFilterChange(e.target.value)}
+                    disabled={productsLoading}
+                    className="rounded-xl border border-white/10 bg-brand-300/80 py-2.5 ps-3 pe-8 text-sm font-medium text-white/80 outline-none transition focus:border-brand-300 focus:bg-brand-200 focus:ring-2 focus:ring-brand-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <option value="all">جميع الحالات</option>
+                    <option value="active">نشط</option>
+                    <option value="archived">مؤرشف</option>
+                  </select>
                   <div className="relative min-w-[200px] flex-1">
                     <Search className="absolute end-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
                     <input
@@ -469,8 +502,8 @@ export function StoreDetailModal({
                   <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/20 bg-brand-300 py-10 text-center">
                     <Package className="size-8 text-white/50 mb-3" />
                     <p className="text-sm text-white/60">
-                      {appliedProductSearch
-                        ? `لا توجد منتجات مطابقة لـ «${appliedProductSearch}».`
+                      {appliedProductSearch || productStatusFilter !== 'all'
+                        ? 'لا توجد منتجات مطابقة للبحث أو الفلترة.'
                         : 'لا توجد منتجات لهذا المتجر.'}
                     </p>
                   </div>
@@ -512,9 +545,19 @@ export function StoreDetailModal({
                       </tbody>
                     </table>
                     <div className="border-t border-white/10 bg-brand-300/50 px-4 py-3 text-sm text-white/60">
-                      {appliedProductSearch
-                        ? `عرض ${products.length} ${products.length === 1 ? 'نتيجة' : 'نتائج'} للبحث عن «${appliedProductSearch}»`
-                        : `عرض ${products.length} ${products.length === 1 ? 'منتج' : 'منتجات'}`}
+                      {(() => {
+                        const countLabel = products.length === 1 ? 'منتج' : 'منتجات'
+                        if (appliedProductSearch && productStatusFilter !== 'all') {
+                          return `عرض ${products.length} ${countLabel} — بحث: «${appliedProductSearch}» — الحالة: ${PRODUCT_STATUS_LABELS[productStatusFilter] ?? productStatusFilter}`
+                        }
+                        if (appliedProductSearch) {
+                          return `عرض ${products.length} ${products.length === 1 ? 'نتيجة' : 'نتائج'} للبحث عن «${appliedProductSearch}»`
+                        }
+                        if (productStatusFilter !== 'all') {
+                          return `عرض ${products.length} ${countLabel} — الحالة: ${PRODUCT_STATUS_LABELS[productStatusFilter] ?? productStatusFilter}`
+                        }
+                        return `عرض ${products.length} ${countLabel}`
+                      })()}
                     </div>
                   </div>
                 )}

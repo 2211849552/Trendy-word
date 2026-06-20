@@ -8,6 +8,17 @@ export function getStoreProducts(storeId, params = {}) {
   return apiRequest(`/api/stores/${encodeURIComponent(String(storeId))}/products${query ? `?${query}` : ''}`)
 }
 
+// عرض منتجات متجر (نشطة + مؤرشفة) مع فلترة بالاسم والحالة
+// GET /api/my-store/products (+ store_id عند عرض متجر محدد)
+export function getMyStoreProducts(storeId, params = {}) {
+  const queryParams = { ...params }
+  if (storeId != null && storeId !== '') {
+    queryParams.store_id = storeId
+  }
+  const query = new URLSearchParams(queryParams).toString()
+  return apiRequest(`/api/my-store/products${query ? `?${query}` : ''}`)
+}
+
 // [5.3] تفاصيل منتج — يتضمن images[] مع url لكل صورة
 // GET /api/products/{id}
 export function getProduct(id) {
@@ -119,5 +130,16 @@ async function enrichProductImage(product) {
 /** جلب منتجات المتجر مع صورة كل منتج (قائمة المتجر + تفاصيل المنتج عند الحاجة) */
 export async function fetchStoreProductsForDetail(storeId, params = {}) {
   const products = await fetchStoreProductsList(storeId, params)
+  return Promise.all(products.map(enrichProductImage))
+}
+
+export async function fetchMyStoreProductsList(storeId, params = {}) {
+  const data = await getMyStoreProducts(storeId, { per_page: 50, ...params })
+  return extractProductList(data).map(mapProduct).filter((p) => p.id !== '')
+}
+
+/** جلب منتجات المتجر (my-store) مع صورة كل منتج — يدعم فلترة الحالة والاسم */
+export async function fetchMyStoreProductsForDetail(storeId, params = {}) {
+  const products = await fetchMyStoreProductsList(storeId, params)
   return Promise.all(products.map(enrichProductImage))
 }
