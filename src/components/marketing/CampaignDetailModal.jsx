@@ -2,10 +2,18 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
+import { CampaignSubscribedStoresSection } from './CampaignSubscribedStoresSection.jsx'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
 
-export function CampaignDetailModal({ campaign, open, onClose }) {
+export function CampaignDetailModal({
+  campaign,
+  open,
+  onClose,
+  subscribedStores = [],
+  storesLoading = false,
+  storesError = '',
+}) {
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -44,7 +52,7 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="campaign-detail-title"
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80"
         dir="rtl"
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200 px-5 py-4">
@@ -144,6 +152,12 @@ export function CampaignDetailModal({ campaign, open, onClose }) {
               </div>
             </div>
           </div>
+
+          <CampaignSubscribedStoresSection
+            stores={subscribedStores}
+            loading={storesLoading}
+            error={storesError}
+          />
         </div>
       </div>
     </div>

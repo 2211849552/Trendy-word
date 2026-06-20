@@ -40,6 +40,7 @@ import {
   emptyDriverEditForm,
   buildUpdateDriverPayload,
 } from '../api/adminDrivers.js'
+import { canMessageDrivers } from '../api/user.js'
 import { fetchAvailableZones } from '../api/zones.js'
 import { DriverChatModal } from '../components/drivers/DriverChatModal.jsx'
 import { DriverCustodyViewSection } from '../components/drivers/DriverCustodyViewSection.jsx'
@@ -167,7 +168,9 @@ function DriverCreateField({
   )
 }
 
-export function DriversPage({ params, setParams }) {
+export function DriversPage({ params, setParams, currentUser }) {
+  const showDriverMessages = canMessageDrivers(currentUser)
+  const tableColSpan = showDriverMessages ? 7 : 6
   const [drivers, setDrivers] = useState([])
   const [paginationMeta, setPaginationMeta] = useState({})
   const [loading, setLoading] = useState(true)
@@ -201,6 +204,7 @@ export function DriversPage({ params, setParams }) {
   const [chatOpen, setChatOpen] = useState(false)
 
   useEffect(() => {
+    if (!showDriverMessages) return
     if (params?.driver_id) {
       const driverId = Number(params.driver_id)
       
@@ -218,7 +222,7 @@ export function DriversPage({ params, setParams }) {
       fetchAndOpenChat()
       setParams?.(null)
     }
-  }, [params, setParams])
+  }, [params, setParams, showDriverMessages])
 
   const loadSeq = useRef(0)
 
@@ -547,14 +551,16 @@ export function DriversPage({ params, setParams }) {
                 <th className="px-3 py-3 font-medium">المركبة</th>
                 <th className="px-3 py-3 font-medium text-center">التوصيلات</th>
                 <th className="px-3 py-3 font-medium text-center">الحالة</th>
-                <th className="px-3 py-3 font-medium text-center">رسالة</th>
+                {showDriverMessages ? (
+                  <th className="px-3 py-3 font-medium text-center">رسالة</th>
+                ) : null}
                 <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-3 py-12 text-center text-white/60">
+                  <td colSpan={tableColSpan} className="px-3 py-12 text-center text-white/60">
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-5 animate-spin" />
                       جاري تحميل السائقين...
@@ -577,18 +583,20 @@ export function DriversPage({ params, setParams }) {
                       {d.status}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-center">
-                    <PrimaryButton
-                      type="button"
-                      onClick={() => openChat(d)}
-                      className="px-3 py-1.5 text-xs"
-                      title="رسالة للسائق"
-                      aria-label={`رسالة إلى ${d.name}`}
-                    >
-                      <MessageCircle className="size-3.5 shrink-0" />
-                      رسالة
-                    </PrimaryButton>
-                  </td>
+                  {showDriverMessages ? (
+                    <td className="px-3 py-3 text-center">
+                      <PrimaryButton
+                        type="button"
+                        onClick={() => openChat(d)}
+                        className="px-3 py-1.5 text-xs"
+                        title="رسالة للسائق"
+                        aria-label={`رسالة إلى ${d.name}`}
+                      >
+                        <MessageCircle className="size-3.5 shrink-0" />
+                        رسالة
+                      </PrimaryButton>
+                    </td>
+                  ) : null}
                   <td className="px-3 py-3 text-center">
                     <button
                       type="button"
@@ -603,7 +611,7 @@ export function DriversPage({ params, setParams }) {
               ))}
               {!loading && drivers.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-white/60">
+                  <td colSpan={tableColSpan} className="px-6 py-12 text-center text-white/60">
                     {loadError || 'لا يوجد سائقين مطابقين للبحث أو الفلتر.'}
                   </td>
                 </tr>
@@ -642,14 +650,16 @@ export function DriversPage({ params, setParams }) {
                   <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${getStatusStyle(selectedDriver.status)}`}>
                     {selectedDriver.status}
                   </span>
-                  <PrimaryButton
-                    type="button"
-                    onClick={() => openChat(selectedDriver)}
-                    className="px-3 py-1.5 text-xs"
-                  >
-                    <MessageCircle className="size-3.5" />
-                    رسالة
-                  </PrimaryButton>
+                  {showDriverMessages ? (
+                    <PrimaryButton
+                      type="button"
+                      onClick={() => openChat(selectedDriver)}
+                      className="px-3 py-1.5 text-xs"
+                    >
+                      <MessageCircle className="size-3.5" />
+                      رسالة
+                    </PrimaryButton>
+                  ) : null}
                 </div>
                 <div className="text-left">
                   <h3 className="text-2xl font-bold text-white">{selectedDriver.name}</h3>
@@ -959,11 +969,13 @@ export function DriversPage({ params, setParams }) {
         </div>
       ) : null}
 
-      <DriverChatModal
-        driver={chatDriver}
-        open={chatOpen}
-        onClose={closeChat}
-      />
+      {showDriverMessages ? (
+        <DriverChatModal
+          driver={chatDriver}
+          open={chatOpen}
+          onClose={closeChat}
+        />
+      ) : null}
 
     </div>
   )

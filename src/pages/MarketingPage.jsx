@@ -2,6 +2,9 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X, Loader2 } from 'lucide-react'
 import {
   getAdminCampaign,
+  getPublicCampaign,
+  extractCampaignSubscribedStores,
+  mapCampaignSubscriptionStore,
   createAdminCampaign,
   updateAdminCampaign,
   deleteAdminCampaign,
@@ -44,6 +47,9 @@ export function MarketingPage() {
   const [loadError, setLoadError] = useState('')
   const [detailCampaign, setDetailCampaign] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [subscribedStores, setSubscribedStores] = useState([])
+  const [storesLoading, setStoresLoading] = useState(false)
+  const [storesError, setStoresError] = useState('')
   const [editCampaign, setEditCampaign] = useState(null)
   const [deleteCampaign, setDeleteCampaign] = useState(null)
   const [deleting, setDeleting] = useState(false)
@@ -95,15 +101,35 @@ export function MarketingPage() {
   async function openViewModal(camp) {
     setDetailCampaign(camp)
     setDetailLoading(true)
-    try {
-      const data = await getAdminCampaign(camp.id)
-      setDetailCampaign(mapCampaignDetail(data))
-    } catch (err) {
-      triggerToast(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الحملة.'))
+    setStoresLoading(true)
+    setSubscribedStores([])
+    setStoresError('')
+
+    const [adminResult, publicResult] = await Promise.allSettled([
+      getAdminCampaign(camp.id),
+      getPublicCampaign(camp.id),
+    ])
+
+    if (adminResult.status === 'fulfilled') {
+      setDetailCampaign(mapCampaignDetail(adminResult.value))
+    } else {
+      triggerToast(apiErrorMessage(adminResult.reason, 'تعذّر تحميل تفاصيل الحملة.'))
       setDetailCampaign(null)
-    } finally {
       setDetailLoading(false)
+      setStoresLoading(false)
+      return
     }
+    setDetailLoading(false)
+
+    if (publicResult.status === 'fulfilled') {
+      const stores = extractCampaignSubscribedStores(publicResult.value).map(
+        mapCampaignSubscriptionStore,
+      )
+      setSubscribedStores(stores)
+    } else {
+      setStoresError(apiErrorMessage(publicResult.reason, 'تعذّر تحميل المتاجر المشتركة.'))
+    }
+    setStoresLoading(false)
   }
 
   async function handleCreate(form) {
@@ -201,9 +227,14 @@ export function MarketingPage() {
       <CampaignDetailModal
         campaign={detailLoading ? null : detailCampaign}
         open={Boolean(detailCampaign) || detailLoading}
+        subscribedStores={subscribedStores}
+        storesLoading={storesLoading}
+        storesError={storesError}
         onClose={() => {
           if (detailLoading) return
           setDetailCampaign(null)
+          setSubscribedStores([])
+          setStoresError('')
         }}
       />
 

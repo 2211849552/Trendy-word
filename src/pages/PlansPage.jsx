@@ -18,14 +18,21 @@ import { StatCard } from '../components/StatCard.jsx'
 import {
   getAdminPlans,
   getAdminPlan,
+  getAdminPlanSubscriptions,
   createAdminPlan,
   updateAdminPlan,
   deleteAdminPlan,
   extractPlanList,
+  mergePlansWithSubscriberCounts,
+  mergePlansWithFinanceCounts,
   mapPlan,
   mapPlanDetail,
   toPlanPayload,
 } from '../api/adminPlans.js'
+import { getPlans } from '../api/plans.js'
+import { getTotalStores, extractDashboardCount } from '../api/adminDashboard.js'
+import { getSubscriptionProfits } from '../api/adminFinance.js'
+import { canManagePlans } from '../api/user.js'
 
 import { CHART_BRAND_SCALE } from '../theme/chartColors.js'
 
@@ -120,7 +127,9 @@ function SubscriptionSummaryCard({ plans }) {
               key={row.label}
               className="flex items-center justify-between gap-3 rounded-xl bg-brand-300 px-4 py-3"
             >
-              <span className="text-lg font-bold tabular-nums text-white">{row.count}</span>
+              <span className="text-lg font-bold tabular-nums text-white">
+                {row.count.toLocaleString('ar-LY')}
+              </span>
               <span className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden />
                 {row.label}
@@ -133,7 +142,7 @@ function SubscriptionSummaryCard({ plans }) {
   )
 }
 
-function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () => {} }) {
+function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () => {}, canManage = true }) {
   const active = plan.status !== 'paused'
   const periodLabel = `${plan.durationDays ?? 30} يوم`
 
@@ -173,22 +182,26 @@ function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () =>
           <Eye className="size-4 shrink-0" strokeWidth={2} aria-hidden />
           عرض
         </button>
-        <button
-          type="button"
-          onClick={() => onEdit?.(plan)}
-          className="btn-action-solid py-2.5"
-        >
-          <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-          تعديل
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete?.(plan)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
-        >
-          <Trash2 className="size-4" strokeWidth={2} />
-          حذف
-        </button>
+        {canManage ? (
+          <>
+            <button
+              type="button"
+              onClick={() => onEdit?.(plan)}
+              className="btn-action-solid py-2.5"
+            >
+              <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+              تعديل
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete?.(plan)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
+            >
+              <Trash2 className="size-4" strokeWidth={2} />
+              حذف
+            </button>
+          </>
+        ) : null}
       </div>
     </article>
   )
@@ -201,9 +214,11 @@ function apiErrorMessage(err, fallback) {
   return err?.message || fallback
 }
 
-export function PlansPage() {
+export function PlansPage({ currentUser }) {
+  const canManage = canManagePlans(currentUser)
   const [query, setQuery] = useState('')
   const [plans, setPlans] = useState([])
+  const [totalSubscribedStores, setTotalSubscribedStores] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [modal, setModal] = useState({ open: false, mode: 'add', planId: null })
@@ -224,12 +239,62 @@ export function PlansPage() {
 
   const loadPlans = useCallback(async (searchQuery = query.trim()) => {
     const seq = ++loadSeq.current
-    const params = { per_page: 100 }
-    if (searchQuery) params.name = searchQuery
-    const data = await getAdminPlans(params)
-    if (seq !== loadSeq.current) return
-    setPlans(extractPlanList(data).map(mapPlan))
-  }, [query])
+    let list
+    let resolvedTotalSubscribers = null
+
+    if (canManage) {
+      const params = { per_page: 100 }
+      if (searchQuery) params.name = searchQuery
+      const data = await getAdminPlans(params)
+      if (seq !== loadSeq.current) return
+      list = extractPlanList(data).map(mapPlan)
+      setTotalSubscribedStores(null)
+    } else {
+      const [plansResult, subscriptionsResult, totalStoresResult, subscriptionProfitsResult] =
+        await Promise.allSettled([
+          getPlans({ per_page: 100 }),
+          getAdminPlanSubscriptions(),
+          getTotalStores(),
+          getSubscriptionProfits(),
+        ])
+
+      if (seq !== loadSeq.current) return
+
+      if (plansResult.status !== 'fulfilled') {
+        throw plansResult.reason
+      }
+
+      list = extractPlanList(plansResult.value).map(mapPlan)
+
+      if (subscriptionsResult.status === 'fulfilled') {
+        list = mergePlansWithSubscriberCounts(list, subscriptionsResult.value)
+      } else if (subscriptionProfitsResult.status === 'fulfilled') {
+        list = mergePlansWithFinanceCounts(list, subscriptionProfitsResult.value)
+      }
+
+      if (totalStoresResult.status === 'fulfilled') {
+        resolvedTotalSubscribers = extractDashboardCount(totalStoresResult.value, [
+          'total_stores',
+          'stores_count',
+          'stores',
+          'total',
+        ])
+      }
+
+      if (resolvedTotalSubscribers == null) {
+        resolvedTotalSubscribers = list.reduce((sum, plan) => sum + (plan.subscribers || 0), 0)
+      }
+
+      if (searchQuery) {
+        const normalizedQuery = searchQuery.toLowerCase()
+        list = list.filter((plan) => plan.name.toLowerCase().includes(normalizedQuery))
+      }
+
+      setTotalSubscribedStores(resolvedTotalSubscribers)
+    }
+
+    setPlans(list)
+  }, [query, canManage])
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -256,7 +321,9 @@ export function PlansPage() {
   const modalPlan = modal.mode === 'view' ? viewPlan : editingPlan
 
   const stats = useMemo(() => {
-    const totalSubscribers = plans.reduce((sum, p) => sum + (p.subscribers || 0), 0)
+    const totalSubscribers =
+      totalSubscribedStores ??
+      plans.reduce((sum, p) => sum + (p.subscribers || 0), 0)
     const activePlans = plans.filter((p) => p.status !== 'paused')
     const avgPrice =
       activePlans.length > 0
@@ -264,14 +331,16 @@ export function PlansPage() {
         : 0
     const estimatedRevenue = plans.reduce((sum, p) => sum + p.price * (p.subscribers || 0), 0)
     return { totalSubscribers, avgPrice, estimatedRevenue }
-  }, [plans])
+  }, [plans, totalSubscribedStores])
 
   function openAddModal() {
+    if (!canManage) return
     setViewPlan(null)
     setModal({ open: true, mode: 'add', planId: null })
   }
 
   function openEditModal(plan) {
+    if (!canManage) return
     setViewPlan(null)
     setModal({ open: true, mode: 'edit', planId: plan.id })
   }
@@ -279,6 +348,10 @@ export function PlansPage() {
   async function openViewModal(plan) {
     setViewPlan(null)
     setModal({ open: true, mode: 'view', planId: plan.id })
+    if (!canManage) {
+      setViewPlan(plan)
+      return
+    }
     setViewLoading(true)
     try {
       const data = await getAdminPlan(plan.id)
@@ -297,6 +370,7 @@ export function PlansPage() {
   }
 
   async function handleSave(payload) {
+    if (!canManage) return
     setSaving(true)
     try {
       const body = toPlanPayload(payload)
@@ -317,6 +391,7 @@ export function PlansPage() {
   }
 
   function handleDeletePlan(plan) {
+    if (!canManage) return
     setDeletePlan(plan)
   }
 
@@ -408,6 +483,7 @@ export function PlansPage() {
         onClose={closeModal}
         onSave={handleSave}
         saving={saving}
+        loadSubscriptions={canManage}
       />
 
       {modal.open && modal.mode === 'view' && viewLoading && (
@@ -424,20 +500,22 @@ export function PlansPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">إدارة الخطط</h1>
           <p className="mt-1 text-white/60">إدارة خطط الاشتراك وتسعير المنصة</p>
         </div>
-        <PrimaryButton
-          onClick={openAddModal}
-          disabled={saving}
-          className="shrink-0 self-start disabled:opacity-60"
-        >
-          <Plus className="size-5" strokeWidth={2.25} aria-hidden />
-          إضافة خطة اشتراك
-        </PrimaryButton>
+        {canManage ? (
+          <PrimaryButton
+            onClick={openAddModal}
+            disabled={saving}
+            className="shrink-0 self-start disabled:opacity-60"
+          >
+            <Plus className="size-5" strokeWidth={2.25} aria-hidden />
+            إضافة خطة اشتراك
+          </PrimaryButton>
+        ) : null}
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="rtl">
         <StatCard
           label="المتاجر المشتركة"
-          value={String(stats.totalSubscribers)}
+          value={stats.totalSubscribers.toLocaleString('ar-LY')}
           change="—"
           trend="up"
           icon={Users}
@@ -453,9 +531,9 @@ export function PlansPage() {
         />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className={`mt-8 grid gap-6 ${canManage ? 'lg:grid-cols-2' : ''}`}>
         <SubscriptionSummaryCard plans={plans} />
-        <PlansDistributionChart plans={plans} />
+        {canManage ? <PlansDistributionChart plans={plans} /> : null}
       </div>
 
       <div className="relative mt-8" dir="rtl">
@@ -492,6 +570,7 @@ export function PlansPage() {
                 onView={openViewModal}
                 onEdit={openEditModal}
                 onDelete={handleDeletePlan}
+                canManage={canManage}
               />
             ))}
           </div>

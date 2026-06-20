@@ -1,6 +1,12 @@
 import { useEffect, useId, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { PrimaryButton } from '../PrimaryButton.jsx'
+import { PlanSubscribedStoresSection } from './PlanSubscribedStoresSection.jsx'
+import {
+  findPlanSubscriptions,
+  getAdminPlanSubscriptions,
+  mapPlanSubscriptionStore,
+} from '../../api/adminPlans.js'
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'نشط' },
@@ -16,9 +22,12 @@ function emptyForm() {
   }
 }
 
-export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving = false }) {
+export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving = false, loadSubscriptions = true }) {
   const titleId = useId()
   const [form, setForm] = useState(emptyForm)
+  const [subscribedStores, setSubscribedStores] = useState([])
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false)
+  const [subscriptionsError, setSubscriptionsError] = useState('')
 
   useEffect(() => {
     if (!open) return
@@ -51,6 +60,39 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open, onClose])
+
+  useEffect(() => {
+    if (!open || mode !== 'view' || !initialPlan?.id || !loadSubscriptions) {
+      setSubscribedStores([])
+      setSubscriptionsLoading(false)
+      setSubscriptionsError('')
+      return
+    }
+
+    let cancelled = false
+    setSubscriptionsLoading(true)
+    setSubscriptionsError('')
+    setSubscribedStores([])
+
+    getAdminPlanSubscriptions()
+      .then((data) => {
+        if (cancelled) return
+        const stores = findPlanSubscriptions(data, initialPlan.id).map(mapPlanSubscriptionStore)
+        setSubscribedStores(stores)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setSubscribedStores([])
+        setSubscriptionsError(err?.message || 'تعذّر تحميل المتاجر المشتركة.')
+      })
+      .finally(() => {
+        if (!cancelled) setSubscriptionsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, mode, initialPlan?.id, loadSubscriptions])
 
   if (!open) return null
 
@@ -94,12 +136,14 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80 animate-in zoom-in-95 duration-200"
+        className={`flex w-full flex-col overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200/80 animate-in zoom-in-95 duration-200 ${
+          isView ? 'max-h-[85vh] max-w-md' : 'max-w-lg'
+        }`}
         dir="rtl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between gap-3 border-b border-white/5 bg-brand-300/50 px-6 py-5">
-          <h2 id={titleId} className="text-xl font-bold text-white">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/5 bg-brand-300/50 px-5 py-4">
+          <h2 id={titleId} className={`font-bold text-white ${isView ? 'text-lg' : 'text-xl'}`}>
             {isView ? 'تفاصيل خطة الاشتراك' : isEdit ? 'تعديل بيانات الخطة' : 'إنشاء خطة اشتراك جديدة'}
           </h2>
           <button
@@ -112,8 +156,8 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className={`space-y-5 ${isView ? 'flex-1 overflow-y-auto px-5 py-4' : 'p-6'}`}>
             <div className="group">
               <label htmlFor="plan-name" className="mb-2 block text-sm font-bold text-white/80">
                 اسم الخطة <span className="text-rose-500">*</span>
@@ -186,13 +230,27 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
                 ))}
               </select>
             </div>
+
+            {isView && loadSubscriptions ? (
+              <PlanSubscribedStoresSection
+                stores={subscribedStores}
+                loading={subscriptionsLoading}
+                error={subscriptionsError}
+              />
+            ) : null}
           </div>
 
-          <footer className="mt-8 flex flex-col-reverse gap-3 border-t border-white/5 pt-6 sm:flex-row sm:justify-end">
+          <footer
+            className={`flex shrink-0 flex-col-reverse gap-2 border-t border-white/5 bg-brand-200 ${
+              isView ? 'px-5 py-3 sm:flex-row sm:justify-end' : 'mt-8 px-6 pb-6 pt-6 sm:flex-row sm:justify-end'
+            }`}
+          >
             <button
               type="button"
               onClick={() => onClose?.()}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-8 text-sm font-bold text-white/80 shadow-premium transition-all hover:bg-brand-300 hover:border-white/20"
+              className={`inline-flex items-center justify-center rounded-xl border border-white/10 bg-brand-200 text-sm font-bold text-white/80 shadow-premium transition-all hover:bg-brand-300 hover:border-white/20 ${
+                isView ? 'min-h-10 px-6' : 'min-h-[48px] px-8'
+              }`}
             >
               {isView ? 'إغلاق' : 'إلغاء الإجراء'}
             </button>

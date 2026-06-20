@@ -15,6 +15,12 @@ import {
   Phone,
 } from 'lucide-react'
 import {
+  canSearchOrders,
+  canFilterOrders,
+  canViewOrderDetails,
+  canUpdateOrderStatus,
+} from '../api/user.js'
+import {
   getOrders,
   getOrder,
   updateOrderStatus,
@@ -48,7 +54,11 @@ function getStatusStyle(status) {
   }
 }
 
-export function OrdersPage() {
+export function OrdersPage({ currentUser }) {
+  const canSearch = canSearchOrders(currentUser)
+  const canFilter = canFilterOrders(currentUser)
+  const canViewDetails = canViewOrderDetails(currentUser)
+  const canUpdateStatus = canUpdateOrderStatus(currentUser)
   const [orders, setOrders] = useState([])
   const [paginationMeta, setPaginationMeta] = useState({})
   const [loading, setLoading] = useState(true)
@@ -136,6 +146,7 @@ export function OrdersPage() {
   }
 
   const openDetails = async (order) => {
+    if (!canViewDetails) return
     setSelectedOrder(order)
     setDetailsModalOpen(true)
     setDetailLoading(true)
@@ -149,7 +160,9 @@ export function OrdersPage() {
       const mapped = mapOrderDetail(data)
       setSelectedOrder(mapped)
       setStatusForm({ status: mapped.rawStatus, comment: '' })
-      await fetchDriversForReassign()
+      if (canUpdateStatus) {
+        await fetchDriversForReassign()
+      }
     } catch (err) {
       setLoadError(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الطلب.'))
       setTimeout(() => setLoadError(''), 3000)
@@ -248,7 +261,11 @@ export function OrdersPage() {
 
       <div className="flex flex-col items-start gap-1 border-b border-white/10 pb-5">
         <h1 className="text-2xl font-bold text-white">إدارة الطلبات</h1>
-        <p className="text-sm text-white/60">إدارة شاملة لجميع الطلبات في المنصة</p>
+        <p className="text-sm text-white/60">
+          {canUpdateStatus
+            ? 'إدارة شاملة لجميع الطلبات في المنصة'
+            : 'عرض ومتابعة الطلبات — البحث والفلترة وتفاصيل الطلب فقط'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -286,28 +303,34 @@ export function OrdersPage() {
       </div>
 
       <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-xl border border-white/10 bg-brand-200 p-4 shadow-premium">
-        <select
-          value={activeStatus}
-          onChange={(e) => setActiveStatus(e.target.value)}
-          className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
-        >
-          <option>جميع الحالات</option>
-          <option>قيد التنفيذ</option>
-          <option>قيد الشحن</option>
-          <option>تم التسليم</option>
-          <option>ملغي</option>
-        </select>
+        {canFilter ? (
+          <select
+            value={activeStatus}
+            onChange={(e) => setActiveStatus(e.target.value)}
+            className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
+            aria-label="فلترة قائمة الطلبات"
+          >
+            <option>جميع الحالات</option>
+            <option>قيد التنفيذ</option>
+            <option>قيد الشحن</option>
+            <option>تم التسليم</option>
+            <option>ملغي</option>
+          </select>
+        ) : null}
 
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
-          <input
-            type="text"
-            placeholder="البحث برقم الطلب أو هاتف الزبون..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-brand-300 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-brand-200 focus:border-brand-500"
-          />
-        </div>
+        {canSearch ? (
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+            <input
+              type="text"
+              placeholder="البحث برقم الطلب أو هاتف الزبون..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="بحث عن طلب"
+              className="w-full rounded-lg border border-white/10 bg-brand-300 py-2.5 pl-4 pr-10 text-sm outline-none transition-colors focus:bg-brand-200 focus:border-brand-500"
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-xl border border-white/10 bg-brand-200 shadow-premium overflow-hidden">
@@ -322,13 +345,15 @@ export function OrdersPage() {
                 <th className="px-3 py-3 font-medium text-center">الدفع</th>
                 <th className="px-3 py-3 font-medium">التاريخ</th>
                 <th className="px-3 py-3 font-medium">الحالة</th>
-                <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
+                {canViewDetails ? (
+                  <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
+                ) : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-3 py-12 text-center text-white/60">
+                  <td colSpan={canViewDetails ? 8 : 7} className="px-3 py-12 text-center text-white/60">
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-5 animate-spin" />
                       جاري تحميل الطلبات...
@@ -357,21 +382,23 @@ export function OrdersPage() {
                       {order.status}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-center">
-                    <button
-                      type="button"
-                      onClick={() => openDetails(order)}
-                      className="icon-btn-view"
-                      title="عرض التفاصيل"
-                    >
-                      <Eye className="size-4" />
-                    </button>
-                  </td>
+                  {canViewDetails ? (
+                    <td className="px-3 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => openDetails(order)}
+                        className="icon-btn-view"
+                        title="عرض التفاصيل"
+                      >
+                        <Eye className="size-4" />
+                      </button>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
               {!loading && filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-white/60">
+                  <td colSpan={canViewDetails ? 8 : 7} className="px-6 py-12 text-center text-white/60">
                     {loadError || 'لا توجد طلبات مطابقة للبحث أو الفلتر.'}
                   </td>
                 </tr>
@@ -505,7 +532,7 @@ export function OrdersPage() {
                 </p>
               ) : null}
 
-              {selectedOrder.rawStatus !== 'cancelled' && selectedOrder.rawStatus !== 'returned' ? (
+              {selectedOrder.rawStatus !== 'cancelled' && selectedOrder.rawStatus !== 'returned' && canUpdateStatus ? (
                 <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-5">
                   <h3 className="text-sm font-bold text-white/80">إجراءات الطلب</h3>
 

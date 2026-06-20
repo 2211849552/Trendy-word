@@ -1,7 +1,23 @@
 import { useState, useEffect } from 'react'
 import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
-import { getCurrentUser, mapCurrentUser, mergeCurrentUser, clearPersistedUserRoles, hasStoreManagementAccess } from './api/user.js'
+import {
+  getCurrentUser,
+  mapCurrentUser,
+  mergeCurrentUser,
+  clearPersistedUserRoles,
+  hasStoreManagementAccess,
+  canAccessOrderList,
+  canAccessDisputes,
+  canAccessCustomers,
+  canAccessFinance,
+  canAccessStaff,
+  canAccessCatalog,
+  canAccessPlans,
+  canAccessMarketing,
+  canAccessDrivers,
+  canAccessZones,
+} from './api/user.js'
 import { extractLoginUser } from './api/auth.js'
 import { getNotifications, extractUnreadCount, markNotificationAsRead } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
@@ -36,17 +52,147 @@ function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, 
       )
     }
   }
-  if (activeNav === 'plans') return <PlansPage />
-  if (activeNav === 'marketing') return <MarketingPage />
-  if (activeNav === 'catalog') return <CategoriesPage />
-  if (activeNav === 'disputes') return <DisputesPage params={activeNavParams} setParams={setActiveNavParams} />
-  if (activeNav === 'finance') return <FinancePage />
-  if (activeNav === 'customers') return <CustomersPage />
-  if (activeNav === 'staff') return <StaffPage />
+  if (activeNav === 'plans') {
+    if (canAccessPlans(currentUser)) {
+      return <PlansPage currentUser={currentUser} />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة الخطط غير متاحة لدورك الحالي.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'marketing') {
+    if (canAccessMarketing(currentUser)) {
+      return <MarketingPage />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة التسويق والمحتوى مخصصة لمدير النظام ومسؤول العمليات فقط.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'catalog') {
+    if (canAccessCatalog(currentUser)) {
+      return <CategoriesPage />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">هذه الصفحة مخصصة لمدير النظام ومسؤول المتاجر فقط.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'disputes') {
+    if (canAccessDisputes(currentUser)) {
+      return <DisputesPage params={activeNavParams} setParams={setActiveNavParams} />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة الشكاوى والنزاعات غير متاحة لدورك الحالي.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'finance') {
+    if (canAccessFinance(currentUser)) {
+      return <FinancePage />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة الإدارة المالية غير متاحة لدورك الحالي.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'customers') {
+    if (canAccessCustomers(currentUser)) {
+      return <CustomersPage />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة الزبائن غير متاحة لدورك الحالي.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'staff') {
+    if (canAccessStaff(currentUser)) {
+      return <StaffPage />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة الموظفين غير متاحة لدورك الحالي.</p>
+      </div>
+    )
+  }
   if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} setUnreadCount={setUnreadCount} />
-  if (activeNav === 'orders') return <OrdersPage />
-  if (activeNav === 'drivers') return <DriversPage params={activeNavParams} setParams={setActiveNavParams} />
-  if (activeNav === 'zones') return <ZonesPage />
+  if (activeNav === 'orders') {
+    if (canAccessOrderList(currentUser)) {
+      return <OrdersPage currentUser={currentUser} />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة الطلبات غير متاحة لدورك الحالي.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'drivers') {
+    if (canAccessDrivers(currentUser)) {
+      return <DriversPage params={activeNavParams} setParams={setActiveNavParams} currentUser={currentUser} />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة السائقين مخصصة لمدير النظام ومسؤول العمليات فقط.</p>
+      </div>
+    )
+  }
+  if (activeNav === 'zones') {
+    if (canAccessZones(currentUser)) {
+      return <ZonesPage />
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة المناطق مخصصة لمدير النظام ومسؤول المتاجر فقط.</p>
+      </div>
+    )
+  }
   return <OverviewPage />
 }
 

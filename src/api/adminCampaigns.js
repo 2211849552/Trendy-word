@@ -22,6 +22,11 @@ export function getAdminCampaign(campaign) {
   return apiRequest(`/api/admin/campaigns/${encodeURIComponent(String(campaign))}`)
 }
 
+// GET /api/campaigns/{campaign} — تفاصيل الحملة مع المتاجر المشتركة
+export function getPublicCampaign(campaign) {
+  return apiRequest(`/api/campaigns/${encodeURIComponent(String(campaign))}`)
+}
+
 // PUT /api/admin/campaigns/{campaign} — يدعم JSON أو multipart/form-data (banner_image)
 export function updateAdminCampaign(campaign, body) {
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
@@ -352,6 +357,62 @@ export function mapCampaign(item) {
 
 export function mapCampaignDetail(data) {
   return mapCampaign(data?.data ?? data)
+}
+
+const CAMPAIGN_SUBSCRIPTION_STATUS_LABELS = {
+  active: 'نشط',
+  scheduled: 'مجدول',
+  expired: 'منتهي',
+  cancelled: 'ملغى',
+  inactive: 'غير نشط',
+}
+
+const CAMPAIGN_STORE_STATUS_LABELS = {
+  active: 'نشط',
+  inactive: 'بانتظار الاشتراك',
+  deactivated: 'معطّل',
+}
+
+/** استخراج قائمة المتاجر المشتركة من استجابة GET /api/campaigns/{id} */
+export function extractCampaignSubscribedStores(data) {
+  const root = data?.data ?? data
+  if (Array.isArray(root?.stores)) return root.stores
+  if (Array.isArray(root?.store_subscriptions)) return root.store_subscriptions
+  if (Array.isArray(root?.subscribed_stores)) return root.subscribed_stores
+  return []
+}
+
+export function mapCampaignSubscriptionStore(item) {
+  const store = item?.store ?? item
+  const subscription = item?.subscription ?? item
+
+  const status = subscription?.status ?? item?.status ?? ''
+  const storeStatus = store?.status ?? item?.store_status ?? ''
+
+  return {
+    id: Number(store?.id ?? item?.store_id ?? item?.id),
+    name: store?.name ?? item?.store_name ?? item?.name ?? '',
+    status: storeStatus,
+    statusLabel: CAMPAIGN_STORE_STATUS_LABELS[storeStatus] ?? storeStatus ?? '—',
+    subscription: {
+      startsAt:
+        subscription?.starts_at ??
+        subscription?.start_date ??
+        item?.starts_at ??
+        item?.subscribed_at ??
+        null,
+      endsAt:
+        subscription?.ends_at ?? subscription?.end_date ?? item?.ends_at ?? null,
+      pricePaid:
+        subscription?.price_paid != null
+          ? Number(subscription.price_paid)
+          : item?.price_paid != null
+            ? Number(item.price_paid)
+            : null,
+      status,
+      statusLabel: CAMPAIGN_SUBSCRIPTION_STATUS_LABELS[status] ?? status ?? '—',
+    },
+  }
 }
 
 export const CAMPAIGN_IMAGE_MAX_BYTES = 2 * 1024 * 1024
