@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
-import { getCurrentUser } from './api/user.js'
+import { getCurrentUser, mapCurrentUser, hasStoreManagementAccess } from './api/user.js'
 import { getNotifications, extractUnreadCount, markNotificationAsRead } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { LoginPage } from './pages/LoginPage.jsx'
@@ -19,8 +19,22 @@ import { OrdersPage } from './pages/OrdersPage.jsx'
 import { DriversPage } from './pages/DriversPage.jsx'
 import { ZonesPage } from './pages/ZonesPage.jsx'
 
-function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, setUnreadCount) {
-  if (activeNav === 'stores') return <StoreManagementPage params={activeNavParams} setParams={setActiveNavParams} />
+function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, setUnreadCount, currentUser) {
+  if (activeNav === 'stores') {
+    if (hasStoreManagementAccess(currentUser)) {
+      return <StoreManagementPage params={activeNavParams} setParams={setActiveNavParams} />
+    } else {
+      return (
+        <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+            <AlertCircle className="size-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+          <p className="text-sm text-white/60">هذه الصفحة مخصصة لمدير النظام ومسؤول المتاجر فقط.</p>
+        </div>
+      )
+    }
+  }
   if (activeNav === 'plans') return <PlansPage />
   if (activeNav === 'marketing') return <MarketingPage />
   if (activeNav === 'catalog') return <CategoriesPage />
@@ -111,6 +125,27 @@ export default function App() {
   const [toasts, setToasts] = useState([])
   const [activeNavParams, setActiveNavParams] = useState(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [currentUser, setCurrentUser] = useState(null)
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCurrentUser(null)
+      return
+    }
+
+    if (currentUser) return
+
+    async function fetchUser() {
+      try {
+        const data = await getCurrentUser()
+        setCurrentUser(mapCurrentUser(data))
+      } catch (err) {
+        console.error('Failed to fetch current user profile:', err)
+      }
+    }
+
+    fetchUser()
+  }, [isAuthenticated, currentUser])
 
   const handlePageNavigate = (page, params = null) => {
     setActiveNav(page)
@@ -229,13 +264,16 @@ export default function App() {
       }
 
       try {
-        await Promise.race([
+        const userData = await Promise.race([
           getCurrentUser(),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('timeout')), 8000),
           ),
         ])
-        if (!cancelled) setIsAuthenticated(true)
+        if (!cancelled) {
+          setIsAuthenticated(true)
+          setCurrentUser(mapCurrentUser(userData))
+        }
       } catch {
         localStorage.removeItem('auth_token')
         if (!cancelled) setIsAuthenticated(false)
@@ -279,7 +317,7 @@ export default function App() {
         className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <div className="mx-auto max-w-[1600px]">
-          {renderPage(activeNav, activeNavParams, setActiveNavParams, handlePageNavigate, setUnreadCount)}
+          {renderPage(activeNav, activeNavParams, setActiveNavParams, handlePageNavigate, setUnreadCount, currentUser)}
         </div>
       </main>
 
@@ -290,6 +328,7 @@ export default function App() {
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         onLogout={handleLogout}
         unreadNotificationsCount={unreadCount}
+        currentUser={currentUser}
       />
 
       {/* حاوية الإشعارات الفورية المنبثقة (Toast Banners) */}

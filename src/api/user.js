@@ -47,3 +47,11 @@ export function canManageStoreDeliveryPrices(user) {
   // لوحة الإدارة العليا: إن لم تُرجَع الأدوار من /api/user نفترض صلاحية التعديل
   return slugs.length === 0
 }
+
+/** مدير نظام (super_admin) ومسؤول متاجر (stores_admin) فقط */
+export function hasStoreManagementAccess(user) {
+  const slugs = user?.roleSlugs ?? []
+  if (slugs.length === 0) return true
+  return slugs.some((slug) => slug === 'super_admin' || slug === 'stores_admin')
+}
+

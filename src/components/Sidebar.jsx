@@ -18,6 +18,7 @@ import {
   Sun,
   LogOut,
 } from 'lucide-react'
+import { hasStoreManagementAccess } from '../api/user.js'
 
 const navItems = [
   { id: 'overview', label: 'نظرة عامة', icon: LayoutDashboard },
@@ -35,12 +36,27 @@ const navItems = [
   { id: 'zones', label: 'إدارة المناطق', icon: MapPin },
 ]
 
-export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, onToggleDarkMode, onLogout, unreadNotificationsCount = 0 }) {
+export function Sidebar({
+  activeId = 'overview',
+  onNavigate,
+  isDarkMode = true,
+  onToggleDarkMode,
+  onLogout,
+  unreadNotificationsCount = 0,
+  currentUser,
+}) {
   const [openMenus, setOpenMenus] = useState({})
 
   const toggleMenu = (id) => {
     setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }))
   }
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.id === 'stores') {
+      return hasStoreManagementAccess(currentUser)
+    }
+    return true
+  })
 
   return (
     <aside
@@ -60,7 +76,7 @@ export function Sidebar({ activeId = 'overview', onNavigate, isDarkMode = true, 
         className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         aria-label="القائمة الرئيسية"
       >
-        {navItems.map(({ id, label, icon: Icon, items }) => {
+        {filteredNavItems.map(({ id, label, icon: Icon, items }) => {
           const isActive = id === activeId || items?.some((sub) => sub.id === activeId)
           const isOpen = openMenus[id]
           const isLeafActive = isActive && !items

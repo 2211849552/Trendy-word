@@ -36,10 +36,10 @@ export function toggleEmployeeStatus(id) {
 }
 
 export const PLATFORM_ROLES = [
-  { id: 1, slug: 'super_admin', label: 'مدير نظام' },
-  { id: 2, slug: 'stores_admin', label: 'مسؤول متاجر' },
-  { id: 3, slug: 'operations_admin', label: 'مسؤول عمليات' },
-  { id: 4, slug: 'accountant', label: 'محاسب' },
+  { id: 1855, slug: 'super_admin', label: 'مدير نظام' },
+  { id: 1856, slug: 'stores_admin', label: 'مسؤول متاجر' },
+  { id: 1858, slug: 'operations_admin', label: 'مسؤول عمليات' },
+  { id: 1857, slug: 'accountant', label: 'محاسب' },
 ]
 
 /** أدوار يمكن تعيينها عند إضافة/تعديل موظف — لا يشمل مدير النظام */
@@ -237,7 +237,7 @@ export function mapEmployee(item) {
     status: mapEmployeeStatus(item.status),
     rawStatus: item.status ?? '',
     department: item.staff_profile?.department ?? '—',
-    jobTitle: item.staff_profile?.job_title ?? '—',
+    jobTitle: item.staff_profile?.job_title ?? mapRoleLabel(item.roles),
     employeeIdNumber: item.staff_profile?.employee_id_number ?? '—',
     raw: item,
   }

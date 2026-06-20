@@ -344,7 +344,6 @@ export function StaffPage() {
                 <th className="px-3 py-3 font-medium">الهاتف</th>
                 <th className="px-3 py-3 font-medium">الدور</th>
                 <th className="px-3 py-3 font-medium">تاريخ التوظيف</th>
-                <th className="px-3 py-3 font-medium">آخر دخول</th>
                 <th className="px-3 py-3 font-medium">الحالة</th>
                 <th className="px-3 py-3 font-medium text-center">الإجراءات</th>
               </tr>
@@ -352,7 +351,7 @@ export function StaffPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-3 py-12 text-center text-white/60">
+                  <td colSpan="7" className="px-3 py-12 text-center text-white/60">
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-5 animate-spin" />
                       جاري تحميل الموظفين...
@@ -370,7 +369,6 @@ export function StaffPage() {
                     </span>
                   </td>
                   <td className="px-3 py-3 text-white/60">{s.hireDate}</td>
-                  <td className="px-3 py-3 text-white/60 text-xs">{s.lastLogin}</td>
                   <td className="px-3 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                       s.status === 'نشط' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
@@ -392,7 +390,7 @@ export function StaffPage() {
               ))}
               {!loading && staff.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-white/60">
+                  <td colSpan="7" className="px-6 py-12 text-center text-white/60">
                     {loadError || 'لا يوجد موظفين مطابقين للبحث أو الفلتر.'}
                   </td>
                 </tr>
@@ -450,10 +448,6 @@ export function StaffPage() {
                 <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right">
                   <p className="text-sm text-white/60 mb-1">تاريخ التوظيف</p>
                   <p className="font-bold text-white text-lg">{selectedStaff.hireDate}</p>
-                </div>
-                <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right">
-                  <p className="text-sm text-white/60 mb-1">آخر دخول</p>
-                  <p className="font-bold text-white text-sm">{selectedStaff.lastLogin}</p>
                 </div>
                 <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right">
                   <p className="text-sm text-white/60 mb-1">القسم</p>
