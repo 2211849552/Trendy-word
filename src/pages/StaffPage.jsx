@@ -35,6 +35,10 @@ import {
 } from '../api/adminEmployees.js'
 
 function apiErrorMessage(err, fallback) {
+  const msg = String(err?.message ?? '')
+  if (/selected role id is invalid/i.test(msg)) {
+    return 'الدور الوظيفي غير صالح. اختاري دوراً من القائمة.'
+  }
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
   if (err?.status === 403) return 'ليس لديك صلاحية إدارة الموظفين.'
   if (err?.status === 422 || err?.status === 500) return err.message || fallback

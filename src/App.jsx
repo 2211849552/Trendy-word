@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
 import {
-  getCurrentUser,
+  fetchCurrentUserProfile,
   mapCurrentUser,
   mergeCurrentUser,
   clearPersistedUserRoles,
@@ -282,8 +282,8 @@ export default function App() {
 
     async function fetchUser() {
       try {
-        const data = await getCurrentUser()
-        setCurrentUser((previous) => mergeCurrentUser(previous, mapCurrentUser(data)))
+        const user = await fetchCurrentUserProfile()
+        setCurrentUser((previous) => mergeCurrentUser(previous, user))
       } catch (err) {
         console.error('Failed to fetch current user profile:', err)
       }
@@ -409,15 +409,15 @@ export default function App() {
       }
 
       try {
-        const userData = await Promise.race([
-          getCurrentUser(),
+        const user = await Promise.race([
+          fetchCurrentUserProfile(),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('timeout')), 8000),
           ),
         ])
         if (!cancelled) {
           setIsAuthenticated(true)
-          setCurrentUser(mapCurrentUser(userData))
+          setCurrentUser(user)
         }
       } catch {
         localStorage.removeItem('auth_token')

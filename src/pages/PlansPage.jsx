@@ -3,7 +3,6 @@ import {
   CreditCard,
   Eye,
   Loader2,
-  Pencil,
   Plus,
   Search,
   Trash2,
@@ -142,7 +141,7 @@ function SubscriptionSummaryCard({ plans }) {
   )
 }
 
-function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () => {}, canManage = true }) {
+function PlanCard({ plan, onView = () => {}, onDelete = () => {}, canManage = true }) {
   const active = plan.status !== 'paused'
   const periodLabel = `${plan.durationDays ?? 30} يوم`
 
@@ -173,34 +172,24 @@ function PlanCard({ plan, onView = () => {}, onEdit = () => {}, onDelete = () =>
         <span>{plan.subscribers} متجر مشترك</span>
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-2">
+      <div className="mt-6 flex flex-col gap-2">
         <button
           type="button"
           onClick={() => onView?.(plan)}
-          className="btn-action-solid col-span-2 py-2.5"
+          className="btn-action-solid py-2.5"
         >
           <Eye className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-          عرض
+          عرض تفاصيل الخطة
         </button>
         {canManage ? (
-          <>
-            <button
-              type="button"
-              onClick={() => onEdit?.(plan)}
-              className="btn-action-solid py-2.5"
-            >
-              <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              تعديل
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete?.(plan)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
-            >
-              <Trash2 className="size-4" strokeWidth={2} />
-              حذف
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => onDelete?.(plan)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-100 py-2.5 text-sm font-bold shadow-premium transition-colors hover:bg-red-100"
+          >
+            <Trash2 className="size-4" strokeWidth={2} />
+            حذف
+          </button>
         ) : null}
       </div>
     </article>
@@ -318,7 +307,12 @@ export function PlansPage({ currentUser }) {
     [modal.planId, plans],
   )
 
-  const modalPlan = modal.mode === 'view' ? viewPlan : editingPlan
+  const modalPlan =
+    modal.mode === 'view'
+      ? viewPlan
+      : viewPlan?.id === modal.planId
+        ? viewPlan
+        : editingPlan
 
   const stats = useMemo(() => {
     const totalSubscribers =
@@ -339,9 +333,8 @@ export function PlansPage({ currentUser }) {
     setModal({ open: true, mode: 'add', planId: null })
   }
 
-  function openEditModal(plan) {
-    if (!canManage) return
-    setViewPlan(null)
+  function switchToEditFromView(plan) {
+    if (!canManage || !plan?.id) return
     setModal({ open: true, mode: 'edit', planId: plan.id })
   }
 
@@ -482,8 +475,10 @@ export function PlansPage({ currentUser }) {
         initialPlan={modalPlan}
         onClose={closeModal}
         onSave={handleSave}
+        onEdit={switchToEditFromView}
         saving={saving}
         loadSubscriptions={canManage}
+        canManage={canManage}
       />
 
       {modal.open && modal.mode === 'view' && viewLoading && (
@@ -568,7 +563,6 @@ export function PlansPage({ currentUser }) {
                 key={plan.id}
                 plan={plan}
                 onView={openViewModal}
-                onEdit={openEditModal}
                 onDelete={handleDeletePlan}
                 canManage={canManage}
               />

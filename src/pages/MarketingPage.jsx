@@ -132,6 +132,14 @@ export function MarketingPage() {
     setStoresLoading(false)
   }
 
+  function openEditFromDetail(campaign) {
+    if (!campaign) return
+    setDetailCampaign(null)
+    setSubscribedStores([])
+    setStoresError('')
+    setEditCampaign(campaign)
+  }
+
   async function handleCreate(form) {
     setSaving(true)
     try {
@@ -230,6 +238,7 @@ export function MarketingPage() {
         subscribedStores={subscribedStores}
         storesLoading={storesLoading}
         storesError={storesError}
+        onEdit={openEditFromDetail}
         onClose={() => {
           if (detailLoading) return
           setDetailCampaign(null)
@@ -345,7 +354,6 @@ export function MarketingPage() {
                 key={c.id}
                 campaign={c}
                 onView={openViewModal}
-                onEdit={(camp) => setEditCampaign(camp)}
                 onToggle={handleToggleCampaign}
                 onDelete={(camp) => setDeleteCampaign(camp)}
               />

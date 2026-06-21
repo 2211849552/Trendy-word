@@ -1,4 +1,5 @@
 import { apiRequest } from './client.js'
+import { getEmployee } from './adminEmployees.js'
 
 const DELIVERY_PRICE_MANAGER_ROLES = new Set(['super_admin', 'stores_admin'])
 const STORE_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
@@ -145,7 +146,7 @@ export function getCurrentUser() {
 }
 
 export function mapCurrentUser(data) {
-  const item = data?.data ?? data?.user ?? data
+  const item = data?.data?.user ?? data?.data ?? data?.user ?? data
   const id = item?.id ?? null
   let roleSlugs = collectRoleSlugs(item)
 
@@ -159,6 +160,27 @@ export function mapCurrentUser(data) {
     email: item?.email ?? '',
     roleSlugs,
   })
+}
+
+/** /api/user لا يُرجع الأدوار — نكمّلها من /api/employees/{id} عند الحاجة */
+export async function fetchCurrentUserProfile() {
+  const data = await getCurrentUser()
+  let user = mapCurrentUser(data)
+
+  if (!user?.roleSlugs?.length && user?.id) {
+    try {
+      const employeeData = await getEmployee(user.id)
+      const item = employeeData?.data ?? employeeData
+      const roleSlugs = collectRoleSlugs(item)
+      if (roleSlugs.length) {
+        user = finalizeUser({ ...user, roleSlugs })
+      }
+    } catch {
+      // قد لا يكون للمستخدم سجل موظف أو لا صلاحية لعرضه
+    }
+  }
+
+  return user
 }
 
 /** super_admin و stores_admin فقط — store_manager ممنوع */

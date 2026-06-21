@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, Pencil, X } from 'lucide-react'
 import { PrimaryButton } from '../PrimaryButton.jsx'
 import { PlanSubscribedStoresSection } from './PlanSubscribedStoresSection.jsx'
 import {
@@ -22,7 +22,17 @@ function emptyForm() {
   }
 }
 
-export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving = false, loadSubscriptions = true }) {
+export function PlanFormModal({
+  open,
+  mode,
+  initialPlan,
+  onClose,
+  onSave,
+  onEdit,
+  saving = false,
+  loadSubscriptions = true,
+  canManage = false,
+}) {
   const titleId = useId()
   const [form, setForm] = useState(emptyForm)
   const [subscribedStores, setSubscribedStores] = useState([])
@@ -254,6 +264,16 @@ export function PlanFormModal({ open, mode, initialPlan, onClose, onSave, saving
             >
               {isView ? 'إغلاق' : 'إلغاء الإجراء'}
             </button>
+            {isView && canManage ? (
+              <button
+                type="button"
+                onClick={() => onEdit?.(initialPlan)}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold text-white btn-primary"
+              >
+                <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                تعديل
+              </button>
+            ) : null}
             {!isView ? (
             <PrimaryButton
               type="submit"

@@ -1,4 +1,4 @@
-import { Eye, ImageIcon, Pencil, Play, Pause, Trash2 } from 'lucide-react'
+import { Eye, ImageIcon, Play, Pause, Trash2 } from 'lucide-react'
 import { formatCampaignDateDisplay, formatCampaignPriceDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
@@ -7,7 +7,7 @@ function fmtNum(n) {
   return n.toLocaleString('ar-LY')
 }
 
-export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
+export function CampaignCard({ campaign, onView, onToggle, onDelete }) {
   const badge = statusBadgeClass[campaign.status] ?? statusBadgeClass.finished
   
   // Custom display for status if paused
@@ -105,14 +105,6 @@ export function CampaignCard({ campaign, onView, onEdit, onToggle, onDelete }) {
         >
           <Eye className="size-4 shrink-0" aria-hidden />
           عرض
-        </button>
-        <button
-          type="button"
-          onClick={() => onEdit?.(campaign)}
-          className="btn-action-solid flex-1 min-[420px]:flex-none"
-        >
-          <Pencil className="size-4 shrink-0" aria-hidden />
-          تعديل
         </button>
         <button
           type="button"

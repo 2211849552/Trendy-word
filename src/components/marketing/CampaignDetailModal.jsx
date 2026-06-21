@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { Pencil, X } from 'lucide-react'
 import { formatCampaignDateDisplay } from '../../api/adminCampaigns.js'
 import { CampaignSubscribedStoresSection } from './CampaignSubscribedStoresSection.jsx'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
@@ -10,6 +10,7 @@ export function CampaignDetailModal({
   campaign,
   open,
   onClose,
+  onEdit,
   subscribedStores = [],
   storesLoading = false,
   storesError = '',
@@ -158,6 +159,26 @@ export function CampaignDetailModal({
             loading={storesLoading}
             error={storesError}
           />
+        </div>
+
+        <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-white/5 bg-brand-200 px-5 py-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-6 text-sm font-bold text-white/80 shadow-premium transition-all hover:bg-brand-300"
+          >
+            إغلاق
+          </button>
+          {onEdit ? (
+            <button
+              type="button"
+              onClick={() => onEdit?.(campaign)}
+              className="btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-6 text-sm font-bold"
+            >
+              <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+              تعديل
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
