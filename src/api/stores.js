@@ -65,12 +65,50 @@ export function getStoreCustodyLogs(params = {}) {
   return apiRequest(withQuery('/api/stores/custody/logs', params))
 }
 
-export function getStoreCustodySummaryForStore(storeId) {
-  return getStoreCustodySummary({ store_id: storeId })
+async function loadAdminStoreCustodySummary(storeId) {
+  const data = await getAdminStore(storeId)
+  const item = data?.data ?? data
+  const totalOwed = Number(
+    item?.total_custody_owed ??
+    item?.custody_balance ??
+    item?.custody_owed ??
+    0,
+  )
+  const pending = totalOwed > 0
+
+  return {
+    data: {
+      total_custody_owed: totalOwed,
+      total_owed: totalOwed,
+      custody_orders_count: item?.custody_orders_count ?? item?.pending_custody_orders_count ?? null,
+      last_settled_at: item?.last_settled_at ?? item?.custody_last_settled_at ?? null,
+      status: item?.custody_status ?? (pending ? 'pending_settlement' : 'settled'),
+      status_text: item?.custody_status_text ?? (pending ? 'بانتظار التسوية' : 'لا توجد عهدة مستحقة'),
+      currency: item?.currency ?? 'LYD',
+    },
+  }
 }
 
-export function getStoreCustodyLogsForStore(storeId, params = {}) {
-  return getStoreCustodyLogs({ store_id: storeId, per_page: 10, ...params })
+/**
+ * مسار /api/stores/custody/* لا يشمل stores_admin في الباك اند —
+ * عند 403 نكمّل من GET /api/admin/stores/{store} (مسموح لمسؤول المتاجر).
+ */
+export async function getStoreCustodySummaryForStore(storeId) {
+  try {
+    return await getStoreCustodySummary({ store_id: storeId })
+  } catch (err) {
+    if (err?.status !== 403) throw err
+    return loadAdminStoreCustodySummary(storeId)
+  }
+}
+
+export async function getStoreCustodyLogsForStore(storeId, params = {}) {
+  try {
+    return await getStoreCustodyLogs({ store_id: storeId, per_page: 10, ...params })
+  } catch (err) {
+    if (err?.status !== 403) throw err
+    return { data: [] }
+  }
 }
 
 export function extractCustodyLogs(data) {

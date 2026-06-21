@@ -17,6 +17,7 @@ import {
   canAccessDrivers,
   canAccessZones,
   canViewStoreJoinRequestNotifications,
+  hasStoreManagementAccess,
 } from './api/user.js'
 import { getNotifications, extractUnreadCountForUser, markNotificationAsRead, shouldShowNotificationToUser } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
@@ -37,7 +38,24 @@ import { ZonesPage } from './pages/ZonesPage.jsx'
 
 function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, setUnreadCount, currentUser) {
   if (activeNav === 'stores') {
-    return <StoreManagementPage params={activeNavParams} setParams={setActiveNavParams} />
+    if (hasStoreManagementAccess(currentUser)) {
+      return (
+        <StoreManagementPage
+          params={activeNavParams}
+          setParams={setActiveNavParams}
+          currentUser={currentUser}
+        />
+      )
+    }
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center p-6 bg-brand-200 rounded-2xl shadow-premium ring-1 ring-slate-100/80" dir="rtl">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 animate-bounce">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
+        <p className="text-sm text-white/60">صفحة إدارة المتاجر مخصصة لمدير النظام ومسؤول المتاجر فقط.</p>
+      </div>
+    )
   }
   if (activeNav === 'plans') {
     if (canAccessPlans(currentUser)) {

@@ -1,7 +1,6 @@
 import { apiRequest } from './client.js'
 import { getEmployee } from './adminEmployees.js'
 
-const DELIVERY_PRICE_MANAGER_ROLES = new Set(['super_admin', 'stores_admin'])
 const STORE_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
 const ORDER_VIEW_ROLES = new Set(['super_admin', 'operations_admin'])
 const ORDER_STATUS_UPDATE_ROLES = new Set(['super_admin', 'operations_admin'])
@@ -15,7 +14,6 @@ const MARKETING_MANAGEMENT_ROLES = new Set(['super_admin', 'operations_admin'])
 const DRIVER_MANAGEMENT_ROLES = new Set(['super_admin', 'operations_admin'])
 const ZONES_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
 const DRIVER_MESSAGE_ROLES = new Set(['super_admin', 'operations_admin', 'stores_admin'])
-const STORE_PROMOTIONS_VIEW_ROLES = new Set(['stores_admin'])
 
 const ROLE_ID_TO_SLUG = {
   1: 'super_admin',
@@ -38,6 +36,7 @@ const ROLE_LABEL_TO_SLUG = {
   'مدير نظام': 'super_admin',
   'مدير النظام': 'super_admin',
   'مسؤول متاجر': 'stores_admin',
+  'مسؤول المتاجر': 'stores_admin',
   'مسؤول عمليات': 'operations_admin',
   محاسب: 'accountant',
 }
@@ -233,20 +232,27 @@ export async function fetchCurrentUserProfile() {
   return user
 }
 
+function isPlatformStoreManager(user) {
+  if (!user) return false
+  const slugs = user.roleSlugs ?? []
+  return slugs.some((slug) => slug === 'store_manager' || slug === 'store_staff')
+}
+
+/** صلاحية تامة في إدارة المتاجر — مدير النظام ومسؤول المتاجر فقط */
+export function hasFullStoreManagementAccess(user) {
+  if (!user) return false
+  if (isPlatformStoreManager(user)) return false
+  return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
+}
+
 /** super_admin و stores_admin فقط — store_manager ممنوع */
 export function canManageStoreDeliveryPrices(user) {
-  if (!user) return false
-  const slugs = user?.roleSlugs ?? []
-  if (slugs.some((slug) => slug === 'store_manager' || slug === 'store_staff')) {
-    return false
-  }
-  if (slugs.length === 0) return true
-  return slugs.some((slug) => DELIVERY_PRICE_MANAGER_ROLES.has(slug))
+  return hasFullStoreManagementAccess(user)
 }
 
 /** ميزات متقدمة للمتاجر (منتجات، عهدة، إلخ) — super_admin و stores_admin فقط */
 export function hasStoreManagementAccess(user) {
-  return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
+  return hasFullStoreManagementAccess(user)
 }
 
 /** إشعارات طلبات انضمام المتاجر — مدير النظام ومسؤول المتاجر فقط */
@@ -264,9 +270,9 @@ export function canViewComplaintNotifications(user) {
   return hasAnyRole(user, ORDER_VIEW_ROLES)
 }
 
-/** عرض خصومات المتجر — مسؤول المتاجر (stores_admin) فقط */
+/** عرض خصومات المتجر — مدير النظام ومسؤول المتاجر */
 export function canViewStorePromotions(user) {
-  return hasAnyRole(user, STORE_PROMOTIONS_VIEW_ROLES)
+  return hasFullStoreManagementAccess(user)
 }
 
 /** واجهة الشكاوى والنزاعات — مدير النظام (مدير المتاجر) ومسؤول العمليات فقط */

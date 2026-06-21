@@ -25,11 +25,7 @@ import {
 import { getStoreProducts, extractProductList } from '../api/products.js'
 import { fetchStoreOrdersCount } from '../api/stores.js'
 import {
-  getCurrentUser,
-  mapCurrentUser,
-  hasStoreManagementAccess,
-  canManageStoreDeliveryPrices,
-  canViewStorePromotions,
+  hasFullStoreManagementAccess,
 } from '../api/user.js'
 
 function extractList(data) {
@@ -149,7 +145,7 @@ async function enrichMissingMerchantData(stores, setStores) {
   })
 }
 
-export function StoreManagementPage({ params, setParams }) {
+export function StoreManagementPage({ params, setParams, currentUser }) {
   const [view, setView] = useState('join')
   const [joinRequests, setJoinRequests] = useState([])
   const [registeredStores, setRegisteredStores] = useState([])
@@ -158,9 +154,9 @@ export function StoreManagementPage({ params, setParams }) {
   const [storesError, setStoresError] = useState('')
   const [storeQuery, setStoreQuery] = useState('')
   const [storeStatus, setStoreStatus] = useState('all')
-  const [canAccessAdvancedStoreFeatures, setCanAccessAdvancedStoreFeatures] = useState(false)
-  const [canEditDeliveryPrices, setCanEditDeliveryPrices] = useState(false)
-  const [canViewStorePromotionsAccess, setCanViewStorePromotionsAccess] = useState(false)
+  const canAccessAdvancedStoreFeatures = hasFullStoreManagementAccess(currentUser)
+  const canEditDeliveryPrices = hasFullStoreManagementAccess(currentUser)
+  const canViewStorePromotionsAccess = hasFullStoreManagementAccess(currentUser)
 
   useEffect(() => {
     if (params?.store_join_request_id) {
@@ -221,19 +217,6 @@ export function StoreManagementPage({ params, setParams }) {
         enrichMissingMerchantData(mappedStores, setRegisteredStores)
       })
       .catch(() => {})
-
-    getCurrentUser()
-      .then((data) => {
-        const user = mapCurrentUser(data)
-        setCanAccessAdvancedStoreFeatures(hasStoreManagementAccess(user))
-        setCanEditDeliveryPrices(canManageStoreDeliveryPrices(user))
-        setCanViewStorePromotionsAccess(canViewStorePromotions(user))
-      })
-      .catch(() => {
-        setCanAccessAdvancedStoreFeatures(false)
-        setCanEditDeliveryPrices(false)
-        setCanViewStorePromotionsAccess(false)
-      })
   }, [loadRequests])
 
   useEffect(() => {
