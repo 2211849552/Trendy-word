@@ -14,6 +14,7 @@ const MARKETING_MANAGEMENT_ROLES = new Set(['super_admin', 'operations_admin'])
 const DRIVER_MANAGEMENT_ROLES = new Set(['super_admin', 'operations_admin'])
 const ZONES_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
 const DRIVER_MESSAGE_ROLES = new Set(['super_admin', 'operations_admin', 'stores_admin'])
+const STORE_PROMOTIONS_VIEW_ROLES = new Set(['stores_admin'])
 
 function hasAnyRole(user, roles) {
   if (!user) return false
@@ -173,6 +174,11 @@ export function canManageStoreDeliveryPrices(user) {
 /** مدير نظام (super_admin) ومسؤول متاجر (stores_admin) فقط — يُستبعد مسؤول العمليات والمحاسب */
 export function hasStoreManagementAccess(user) {
   return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
+}
+
+/** عرض خصومات المتجر — مسؤول المتاجر (stores_admin) فقط */
+export function canViewStorePromotions(user) {
+  return hasAnyRole(user, STORE_PROMOTIONS_VIEW_ROLES)
 }
 
 /** واجهة الشكاوى والنزاعات — مدير النظام (مدير المتاجر) ومسؤول العمليات فقط */

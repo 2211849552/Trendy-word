@@ -28,6 +28,7 @@ import { mapSettleCustodyResponse } from '../../api/adminStores.js'
 import { ConfirmDeleteModal } from '../catalog/ConfirmDeleteModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
 import { StoreDeliveryPricesSection, formatDeliveryPrice } from './StoreDeliveryPricesSection.jsx'
+import { StorePromotionsSection } from './StorePromotionsSection.jsx'
 
 const STATUS_LABELS = {
   active: 'نشط',
@@ -78,6 +79,7 @@ export function StoreDetailModal({
   onStoreUpdated,
   canEditDeliveryPrices = false,
   canViewStoreProducts = false,
+  canViewStorePromotions = false,
 }) {
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(false)
@@ -441,6 +443,10 @@ export function StoreDetailModal({
                       ) : null}
                   </div>
                 </div>
+              ) : null}
+
+              {canViewStorePromotions && !loading && store?.id ? (
+                <StorePromotionsSection storeId={store.id} enabled={canViewStorePromotions} />
               ) : null}
 
               {canViewStoreProducts ? (

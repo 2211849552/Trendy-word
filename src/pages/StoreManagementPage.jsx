@@ -23,7 +23,7 @@ import {
   toApiStoreStatus,
 } from '../api/adminStores.js'
 import { getStoreProducts, extractProductList } from '../api/products.js'
-import { getCurrentUser, mapCurrentUser, hasStoreManagementAccess } from '../api/user.js'
+import { getCurrentUser, mapCurrentUser, hasStoreManagementAccess, canViewStorePromotions } from '../api/user.js'
 
 function extractList(data) {
   if (Array.isArray(data)) return data
@@ -123,6 +123,7 @@ export function StoreManagementPage({ params, setParams }) {
   const [storeQuery, setStoreQuery] = useState('')
   const [storeStatus, setStoreStatus] = useState('all')
   const [canAccessStoreFeatures, setCanAccessStoreFeatures] = useState(false)
+  const [canViewStorePromotionsAccess, setCanViewStorePromotionsAccess] = useState(false)
 
   useEffect(() => {
     if (params?.store_join_request_id) {
@@ -185,9 +186,14 @@ export function StoreManagementPage({ params, setParams }) {
 
     getCurrentUser()
       .then((data) => {
-        setCanAccessStoreFeatures(hasStoreManagementAccess(mapCurrentUser(data)))
+        const user = mapCurrentUser(data)
+        setCanAccessStoreFeatures(hasStoreManagementAccess(user))
+        setCanViewStorePromotionsAccess(canViewStorePromotions(user))
       })
-      .catch(() => setCanAccessStoreFeatures(false))
+      .catch(() => {
+        setCanAccessStoreFeatures(false)
+        setCanViewStorePromotionsAccess(false)
+      })
   }, [loadRequests])
 
   useEffect(() => {
@@ -307,6 +313,7 @@ export function StoreManagementPage({ params, setParams }) {
         onPrintStores={handlePrintStores}
         canEditDeliveryPrices={canAccessStoreFeatures}
         canViewStoreProducts={canAccessStoreFeatures}
+        canViewStorePromotions={canViewStorePromotionsAccess}
         onBackToJoin={() => setView('join')}
       />
     )
