@@ -249,6 +249,21 @@ export function hasStoreManagementAccess(user) {
   return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
 }
 
+/** إشعارات طلبات انضمام المتاجر — مدير النظام ومسؤول المتاجر فقط */
+export function canViewStoreJoinRequestNotifications(user) {
+  return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
+}
+
+/** إشعارات طلبات الزبائن الجديدة — مدير النظام ومسؤول العمليات فقط */
+export function canViewNewCustomerOrderNotifications(user) {
+  return hasAnyRole(user, ORDER_VIEW_ROLES)
+}
+
+/** إشعارات تذاكر الشكاوى الجديدة — مدير النظام ومسؤول العمليات فقط */
+export function canViewComplaintNotifications(user) {
+  return hasAnyRole(user, ORDER_VIEW_ROLES)
+}
+
 /** عرض خصومات المتجر — مسؤول المتاجر (stores_admin) فقط */
 export function canViewStorePromotions(user) {
   return hasAnyRole(user, STORE_PROMOTIONS_VIEW_ROLES)

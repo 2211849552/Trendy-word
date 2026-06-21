@@ -1,4 +1,9 @@
 import { apiRequest } from './client.js'
+import {
+  canViewStoreJoinRequestNotifications,
+  canViewNewCustomerOrderNotifications,
+  canViewComplaintNotifications,
+} from './user.js'
 
 // [20] إدارة الإشعارات
 // GET /api/notifications
@@ -37,6 +42,77 @@ export function extractNotificationList(data) {
 export function extractUnreadCount(data) {
   if (data?.unread_count != null) return Number(data.unread_count)
   return extractNotificationList(data).filter((item) => !item.read).length
+}
+
+export function isStoreJoinRequestNotification(item) {
+  const data = item?.data ?? item?.raw?.data ?? null
+  const eventType = data?.event ?? ''
+  const title = item?.title ?? item?.raw?.title ?? ''
+  return eventType === 'new_store_join_request' || title === 'طلب انضمام متجر جديد'
+}
+
+const NEW_CUSTOMER_ORDER_EVENTS = new Set([
+  'new_order',
+  'new_customer_order',
+  'customer_new_order',
+])
+
+const NEW_CUSTOMER_ORDER_TITLES = new Set([
+  'طلب جديد',
+  'طلب زبون جديد',
+  'طلبات الزبائن',
+  'طلبات جديدة',
+])
+
+export function isNewCustomerOrderNotification(item) {
+  const data = item?.data ?? item?.raw?.data ?? null
+  const eventType = data?.event ?? ''
+  const title = (item?.title ?? item?.raw?.title ?? '').trim()
+  const type = item?.type ?? item?.raw?.type ?? ''
+
+  if (NEW_CUSTOMER_ORDER_EVENTS.has(eventType)) return true
+  if (NEW_CUSTOMER_ORDER_TITLES.has(title)) return true
+  if (type === 'order' && data?.order_id != null) return true
+
+  return false
+}
+
+export function isNewComplaintNotification(item) {
+  const data = item?.data ?? item?.raw?.data ?? null
+  const eventType = data?.event ?? ''
+  const title = (item?.title ?? item?.raw?.title ?? '').trim()
+
+  return eventType === 'new_complaint' || title === 'تذكرة شكوى جديدة'
+}
+
+export function shouldShowNotificationToUser(item, user) {
+  if (isStoreJoinRequestNotification(item)) {
+    return canViewStoreJoinRequestNotifications(user)
+  }
+  if (isNewCustomerOrderNotification(item)) {
+    return canViewNewCustomerOrderNotifications(user)
+  }
+  if (isNewComplaintNotification(item)) {
+    return canViewComplaintNotifications(user)
+  }
+  return true
+}
+
+export function filterNotificationsForUser(items, user) {
+  if (!user) {
+    return items.filter(
+      (item) =>
+        !isStoreJoinRequestNotification(item) &&
+        !isNewCustomerOrderNotification(item) &&
+        !isNewComplaintNotification(item),
+    )
+  }
+  return items.filter((item) => shouldShowNotificationToUser(item, user))
+}
+
+export function extractUnreadCountForUser(data, user) {
+  const list = extractNotificationList(data).map(mapNotification)
+  return filterNotificationsForUser(list, user).filter((item) => !item.isRead).length
 }
 
 const TYPE_LABELS = {
