@@ -18,7 +18,6 @@ import {
   canAccessDrivers,
   canAccessZones,
 } from './api/user.js'
-import { extractLoginUser } from './api/auth.js'
 import { getNotifications, extractUnreadCount, markNotificationAsRead } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { LoginPage } from './pages/LoginPage.jsx'
@@ -454,10 +453,7 @@ export default function App() {
 
   const handleLoginSuccess = (loginData) => {
     setIsAuthenticated(true)
-    const loginUser = extractLoginUser(loginData)
-    if (loginUser?.id || loginUser?.email) {
-      setCurrentUser(mapCurrentUser(loginUser))
-    }
+    setCurrentUser(mapCurrentUser(loginData))
   }
 
   if (!isAuthenticated) {

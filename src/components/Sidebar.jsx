@@ -64,6 +64,7 @@ export function Sidebar({
   }
 
   const filteredNavItems = navItems.filter((item) => {
+    if (!currentUser) return true
     if (item.id === 'stores') {
       return hasStoreManagementAccess(currentUser)
     }

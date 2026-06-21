@@ -16,10 +16,20 @@ const ZONES_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
 const DRIVER_MESSAGE_ROLES = new Set(['super_admin', 'operations_admin', 'stores_admin'])
 const STORE_PROMOTIONS_VIEW_ROLES = new Set(['stores_admin'])
 
+const ROLE_ID_TO_SLUG = {
+  1855: 'super_admin',
+  1856: 'stores_admin',
+  1857: 'accountant',
+  1858: 'operations_admin',
+}
+
 function hasAnyRole(user, roles) {
   if (!user) return false
   const slugs = user.roleSlugs ?? []
-  if (slugs.length === 0) return false
+  if (slugs.length === 0) {
+    // لوحة الإدارة: إن لم تُرجَع الأدوار من API نفترض مدير النظام (كالسلوك السابق)
+    return roles.has('super_admin')
+  }
   return slugs.some((slug) => roles.has(slug))
 }
 
@@ -43,6 +53,12 @@ function toRoleSlug(value) {
   if (value == null || value === '') return ''
   const raw = String(value).trim()
   if (!raw) return ''
+
+  const asNumber = Number(raw)
+  if (Number.isFinite(asNumber) && ROLE_ID_TO_SLUG[asNumber]) {
+    return ROLE_ID_TO_SLUG[asNumber]
+  }
+
   if (ROLE_LABEL_TO_SLUG[raw]) return ROLE_LABEL_TO_SLUG[raw]
 
   const normalized = raw.toLowerCase().replace(/[\s-]+/g, '_')
@@ -65,7 +81,11 @@ function collectRoleSlugs(item) {
     if (slug) slugs.add(slug)
   }
 
-  const roles = item?.roles
+  let roles = item?.roles
+  if (roles?.data && Array.isArray(roles.data)) {
+    roles = roles.data
+  }
+
   if (Array.isArray(roles)) {
     roles.forEach(pushRole)
   } else if (roles != null && roles !== '') {
@@ -76,8 +96,20 @@ function collectRoleSlugs(item) {
     item.role_names.forEach(pushRole)
   }
 
+  if (Array.isArray(item?.role_slugs)) {
+    item.role_slugs.forEach(pushRole)
+  }
+
   if (item?.role_slug != null && item?.role_slug !== '') {
     pushRole(item.role_slug)
+  }
+
+  if (item?.role_id != null && item?.role_id !== '') {
+    pushRole(item.role_id)
+  }
+
+  if (Array.isArray(item?.role_ids)) {
+    item.role_ids.forEach(pushRole)
   }
 
   if (item?.role != null && item?.role !== '') {
@@ -85,6 +117,20 @@ function collectRoleSlugs(item) {
   }
 
   return [...slugs]
+}
+
+function unwrapUserPayload(data) {
+  if (!data || typeof data !== 'object') return data
+
+  const nestedUser = data?.data?.user ?? data?.user
+  if (nestedUser && typeof nestedUser === 'object') return nestedUser
+
+  const payload = data?.data ?? data
+  if (payload && typeof payload === 'object' && (payload.id != null || payload.email)) {
+    return payload
+  }
+
+  return data
 }
 
 const ADMIN_USER_ROLES_KEY = 'admin_user_roles'
@@ -145,9 +191,13 @@ export function getCurrentUser() {
 }
 
 export function mapCurrentUser(data) {
-  const item = data?.data ?? data?.user ?? data
+  const item = unwrapUserPayload(data)
   const id = item?.id ?? null
   let roleSlugs = collectRoleSlugs(item)
+
+  if (roleSlugs.length === 0 && data && data !== item) {
+    roleSlugs = collectRoleSlugs(data)
+  }
 
   if (roleSlugs.length === 0 && id) {
     roleSlugs = loadPersistedUserRoles(id)
@@ -168,6 +218,7 @@ export function canManageStoreDeliveryPrices(user) {
   if (slugs.some((slug) => slug === 'store_manager' || slug === 'store_staff')) {
     return false
   }
+  if (slugs.length === 0) return true
   return slugs.some((slug) => DELIVERY_PRICE_MANAGER_ROLES.has(slug))
 }
 
