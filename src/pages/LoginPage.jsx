@@ -49,6 +49,14 @@ function LoginForm({ onForgotPassword, onSuccess }) {
   const [error, setError] = useState('')
   const [unauthorizedError, setUnauthorizedError] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [fieldsReady, setFieldsReady] = useState(false)
+
+  useEffect(() => {
+    setEmail('')
+    setPassword('')
+    const timer = window.setTimeout(() => setFieldsReady(true), 100)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -85,17 +93,19 @@ function LoginForm({ onForgotPassword, onSuccess }) {
         <p className="mt-2 text-sm text-white/55">أدخل بياناتك للوصول إلى حسابك</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" autoComplete="off">
         <div>
           <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-white/80">
             البريد الإلكتروني
           </label>
           <input
             id="login-email"
+            name="trendy-admin-email"
             type="email"
-            autoComplete="email"
+            autoComplete="off"
+            readOnly={!fieldsReady}
             dir="ltr"
-            placeholder="example@email.com"
+            placeholder="أدخل البريد الإلكتروني"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-brand"
@@ -108,8 +118,10 @@ function LoginForm({ onForgotPassword, onSuccess }) {
           </label>
           <input
             id="login-password"
+            name="trendy-admin-password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
+            readOnly={!fieldsReady}
             dir="ltr"
             placeholder="••••••••"
             value={password}

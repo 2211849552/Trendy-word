@@ -1,11 +1,11 @@
-import { apiRequest } from './client.js'
+import { apiRequest, resolveApiBase, sanitizeApiErrorMessage } from './client.js'
 
 const AUTH_BASE = '/api/v1/auth'
 
 let passwordResetSessionReady = false
 
 async function ensureCsrfCookie() {
-  const base = import.meta.env.VITE_API_BASE_URL ?? ''
+  const base = resolveApiBase()
   await fetch(`${base}/sanctum/csrf-cookie`, { credentials: 'include' })
 }
 
@@ -18,6 +18,11 @@ export async function beginPasswordResetSession() {
 
 export function endPasswordResetSession() {
   passwordResetSessionReady = false
+}
+
+function sanitizeDbConnectionMessage(message) {
+  const sanitized = sanitizeApiErrorMessage(message)
+  return sanitized !== message ? sanitized : null
 }
 
 function toFormBody(body) {
@@ -132,9 +137,14 @@ export function loginErrorMessage(err, fallback = 'تحقق من البريد ا
     return msg || 'البيانات المدخلة غير صالحة.'
   }
   if (err?.status === 401) return fallback
-  if (err?.status === 500) return 'خطأ في الخادم (500). جرب لاحقاً.'
+  if (err?.status === 500) {
+    const dbHint = sanitizeDbConnectionMessage(msg)
+    if (dbHint) return dbHint
+    if (msg && !msg.startsWith('API error')) return msg
+    return 'خطأ في الخادم (500). جرب لاحقاً.'
+  }
   if (err?.status === 0 || err?.status == null) {
-    return 'تعذّر الاتصال بالخادم. تأكد أن Backend شغال على http://127.0.0.1:8000'
+    return 'تعذّر الاتصال بالخادم. تأكد أن Laravel Backend يعمل على http://127.0.0.1:8000 (php artisan serve) وأن MySQL شغّال.'
   }
   return msg || fallback
 }

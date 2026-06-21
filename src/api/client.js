@@ -1,4 +1,24 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const LOCAL_VITE_PORTS = new Set(['5173', '5174', '4173'])
+
+/** في التطوير/preview المحلي نستخدم مسارات نسبية عبر proxy Vite — لا اتصال مباشر بـ :8000 */
+export function resolveApiBase() {
+  const configured = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? ''
+
+  if (typeof window !== 'undefined') {
+    const { hostname, port } = window.location
+    const isLocalHost =
+      hostname === '127.0.0.1' || hostname === 'localhost' || hostname === '[::1]'
+    if (isLocalHost && LOCAL_VITE_PORTS.has(port)) {
+      return ''
+    }
+  }
+
+  if (import.meta.env.DEV) return ''
+
+  return configured
+}
+
+const API_BASE = resolveApiBase()
 const REQUEST_TIMEOUT_MS = 20000
 
 /** تحويل أخطاء SQL/قاعدة البيانات إلى رسائل مفهومة للمستخدم */
@@ -15,6 +35,15 @@ export function sanitizeApiErrorMessage(message) {
   }
   if (lower.includes('sqlstate') || lower.includes('integrity constraint')) {
     return 'تعذّر إتمام العملية. تحققي من البيانات المدخلة (قد يكون الهاتف أو البريد مستخدماً مسبقاً).'
+  }
+
+  if (
+    lower.includes('connection: mysql')
+    || lower.includes('sqlstate[hy000] [2002]')
+    || (lower.includes('mysql') && lower.includes('actively refused'))
+    || (lower.includes('target machine actively refused') && lower.includes('3306'))
+  ) {
+    return 'تعذّر الاتصال بقاعدة البيانات. شغّل MySQL من XAMPP ثم أعد المحاولة.'
   }
 
   return message

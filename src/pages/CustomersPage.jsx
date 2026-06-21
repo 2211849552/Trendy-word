@@ -242,7 +242,7 @@ export function CustomersPage() {
           type="button"
           onClick={handlePrint}
           disabled={exporting}
-          className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-premium disabled:opacity-60"
+          className="btn-primary shrink-0 disabled:opacity-60"
         >
           {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
           طباعة قائمة الزبائن

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Bell, AlertCircle, AlertTriangle, X } from 'lucide-react'
 import { adminLogout } from './api/auth.js'
+import { resolveApiBase } from './api/client.js'
 import {
   fetchCurrentUserProfile,
   mapCurrentUser,
@@ -353,7 +354,7 @@ export default function App() {
     const token = localStorage.getItem('auth_token')
     if (!token) return
 
-    const apiBase = import.meta.env.VITE_API_BASE_URL ?? ''
+    const apiBase = resolveApiBase()
     const streamUrl = `${apiBase}/api/notifications/stream?token=${encodeURIComponent(token)}`
 
     const eventSource = new EventSource(streamUrl)
