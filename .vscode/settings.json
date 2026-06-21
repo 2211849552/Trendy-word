@@ -1,0 +1,14 @@
+{
+  "git-graph.graph.colours": [
+    "#0085d9",
+    "#6366f1",
+    "#a300d9",
+    "#7c3aed",
+    "#d9008f",
+    "#3b82f6",
+    "#8b5cf6",
+    "#6f24d6"
+  ],
+  "git-graph.referenceLabels.combineLocalAndRemoteBranchLabels": true,
+  "git-graph.repository.showRemoteBranches": false
+}
