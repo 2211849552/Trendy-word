@@ -63,12 +63,8 @@ export function Sidebar({
     setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
-<<<<<<< HEAD
-  const filteredNavItems = (currentUser == null ? navItems : navItems.filter((item) => {
-=======
   const filteredNavItems = navItems.filter((item) => {
     if (!currentUser) return true
->>>>>>> 84a50c1e91c5e2b7a7dff82a5a0f4d033577e6b8
     if (item.id === 'stores') {
       return hasStoreManagementAccess(currentUser)
     }
@@ -103,7 +99,7 @@ export function Sidebar({
       return canAccessZones(currentUser)
     }
     return true
-  }))
+  })
 
   const mainNavItems = filteredNavItems
 

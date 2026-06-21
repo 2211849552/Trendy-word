@@ -18,10 +18,10 @@ const DRIVER_MESSAGE_ROLES = new Set(['super_admin', 'operations_admin', 'stores
 const STORE_PROMOTIONS_VIEW_ROLES = new Set(['stores_admin'])
 
 const ROLE_ID_TO_SLUG = {
-  1855: 'super_admin',
-  1856: 'stores_admin',
-  1857: 'accountant',
-  1858: 'operations_admin',
+  1: 'super_admin',
+  2: 'stores_admin',
+  3: 'operations_admin',
+  4: 'accountant',
 }
 
 function hasAnyRole(user, roles) {
@@ -192,11 +192,7 @@ export function getCurrentUser() {
 }
 
 export function mapCurrentUser(data) {
-<<<<<<< HEAD
-  const item = data?.data?.user ?? data?.data ?? data?.user ?? data
-=======
   const item = unwrapUserPayload(data)
->>>>>>> 84a50c1e91c5e2b7a7dff82a5a0f4d033577e6b8
   const id = item?.id ?? null
   let roleSlugs = collectRoleSlugs(item)
 
