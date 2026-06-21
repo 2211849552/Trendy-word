@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { AlertCircle } from 'lucide-react'
 import {
   adminLogin,
   authErrorMessage,
@@ -7,20 +8,52 @@ import {
   extractAuthToken,
   extractLoginUser,
   forgotPassword,
+  isUnauthorizedRoleError,
   loginErrorMessage,
   resetPassword,
   verifyResetOtp,
 } from '../api/auth.js'
 
+function LoginErrorAlert({ error, isUnauthorized, onRetry }) {
+  if (!error) return null
+
+  if (isUnauthorized) {
+    return (
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-center">
+        <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300">
+          <AlertCircle className="size-5" />
+        </div>
+        <h2 className="text-sm font-bold text-amber-100">عذراً، لا يمكنك الدخول</h2>
+        <p className="mt-2 text-sm leading-relaxed text-amber-100/80">{error}</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/20"
+        >
+          حاول مجدداً
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+      {error}
+    </p>
+  )
+}
+
 function LoginForm({ onForgotPassword, onSuccess }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [unauthorizedError, setUnauthorizedError] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setUnauthorizedError(false)
 
     if (!email.trim() || !password) {
       setError('يرجى إدخال البريد الإلكتروني وكلمة المرور.')
@@ -38,6 +71,7 @@ function LoginForm({ onForgotPassword, onSuccess }) {
         setError('لم يتم استلام التوكن من الخادم.')
       }
     } catch (err) {
+      setUnauthorizedError(isUnauthorizedRoleError(err))
       setError(loginErrorMessage(err))
     } finally {
       setLoading(false)
@@ -94,11 +128,14 @@ function LoginForm({ onForgotPassword, onSuccess }) {
           </button>
         </div>
 
-        {error ? (
-          <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-            {error}
-          </p>
-        ) : null}
+        <LoginErrorAlert
+          error={error}
+          isUnauthorized={unauthorizedError}
+          onRetry={() => {
+            setError('')
+            setUnauthorizedError(false)
+          }}
+        />
 
         <button type="submit" disabled={loading} className="btn-primary-lg w-full disabled:opacity-60">
           {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}

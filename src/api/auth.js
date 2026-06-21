@@ -94,11 +94,44 @@ export async function resetPassword(body) {
   })
 }
 
-export function loginErrorMessage(err, fallback = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.') {
+export function isUnauthorizedRoleError(err) {
+  const msg = String(err?.message ?? '').toLowerCase()
+  return (
+    err?.status === 403
+    || msg.includes('unauthorized_role')
+    || msg.includes('auth.unauthorized_role')
+    || msg.includes('غير مخول')
+    || msg.includes('غير مصر')
+  )
+}
+
+export function isInvalidCredentialsError(err) {
+  const msg = String(err?.message ?? '').toLowerCase()
+  return (
+    err?.status === 401
+    || msg.includes('credentials do not match')
+    || msg.includes('بيانات الدخول غير صحيحة')
+    || msg.includes('invalid credentials')
+    || msg.includes('incorrect email or password')
+  )
+}
+
+export function loginErrorMessage(err, fallback = 'تحقق من البريد الالكتروني او كلمة المرور واعد المحاولة مجددا') {
   const msg = err?.message ?? ''
+  if (isUnauthorizedRoleError(err)) {
+    return 'عذراً، حسابك غير مخوّل للوصول إلى لوحة الإدارة. يرجى التحقق من بياناتك أو التواصل مع الإدارة.'
+  }
+  if (isInvalidCredentialsError(err)) {
+    return 'تحقق من البريد الالكتروني او كلمة المرور واعد المحاولة مجددا'
+  }
   if (err?.status === 404) return 'رابط تسجيل الدخول غير موجود (404). تأكد من API.'
-  if (err?.status === 422) return msg || 'البيانات المدخلة غير صالحة.'
-  if (err?.status === 401) return msg || fallback
+  if (err?.status === 422) {
+    if (isInvalidCredentialsError(err)) {
+      return 'تحقق من البريد الالكتروني او كلمة المرور واعد المحاولة مجددا'
+    }
+    return msg || 'البيانات المدخلة غير صالحة.'
+  }
+  if (err?.status === 401) return fallback
   if (err?.status === 500) return 'خطأ في الخادم (500). جرب لاحقاً.'
   if (err?.status === 0 || err?.status == null) {
     return 'تعذّر الاتصال بالخادم. تأكد أن Backend شغال على http://127.0.0.1:8000'
