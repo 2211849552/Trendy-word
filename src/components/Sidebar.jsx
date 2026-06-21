@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import trendyLogo from '../assets/vite.svg'
 import {
   LayoutDashboard,
   Store,
@@ -184,9 +185,9 @@ export function Sidebar({
     >
       <div className="flex shrink-0 flex-col items-center gap-1.5 border-b border-white/10 px-4 py-5 text-center">
         <img
-          src="/trendy-logo.png"
+          src={trendyLogo}
           alt="Trendy"
-          className="block h-auto w-[168px] max-w-full object-contain"
+          className="block h-auto w-[110px] max-w-full object-contain"
         />
         <p className="text-[15px] font-bold text-white">لوحة تحكم الإدارة العليا</p>
       </div>
