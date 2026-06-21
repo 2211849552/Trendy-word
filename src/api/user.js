@@ -171,7 +171,7 @@ export function canManageStoreDeliveryPrices(user) {
   return slugs.some((slug) => DELIVERY_PRICE_MANAGER_ROLES.has(slug))
 }
 
-/** مدير نظام (super_admin) ومسؤول متاجر (stores_admin) فقط — يُستبعد مسؤول العمليات والمحاسب */
+/** ميزات متقدمة للمتاجر (منتجات، عهدة، إلخ) — super_admin و stores_admin فقط */
 export function hasStoreManagementAccess(user) {
   return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
 }
