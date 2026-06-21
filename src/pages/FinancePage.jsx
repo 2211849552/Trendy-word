@@ -23,8 +23,8 @@ import {
   fetchMonthlyRevenueSeries,
   paymentMethodsChartHasData,
   filterPaymentMethodsChartForDisplay,
-  transactionsToCsv,
 } from '../api/adminFinance.js'
+import { downloadFinanceReportPdf } from '../utils/printFinance.js'
 import {
   getBankCards,
   createBankCard,
@@ -317,27 +317,41 @@ export function FinancePage() {
     const params = buildFinanceQueryParams({
       search: searchQuery,
     })
+
+    let list = filteredTransactions
     try {
-      const result = await exportFinanceReport(params)
-      const message = result?.message || 'تم طلب تصدير التقرير بنجاح.'
-      setExportMessage(message)
-      if (result?.download_link && result.download_link !== '#') {
-        window.open(result.download_link, '_blank', 'noopener')
+      const exportData = await exportFinanceReport(params)
+      const exported = extractTransactionList(exportData).map(mapTransaction)
+      if (exported.length) {
+        const enriched = await enrichTransactionsWithParties(exported)
+        list = filterTransactionsClient(enriched, { type: activeType })
       }
-    } catch (err) {
-      setExportMessage(apiErrorMessage(err, 'تعذّر تصدير التقرير من الخادم.'))
+    } catch {
+      // fallback to loaded transactions
     }
 
-    const csv = transactionsToCsv(filteredTransactions)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'financial_report.csv'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    const summary = {
+      totalRevenue: formatAmount(
+        pickFinanceAmount(revenueOverview, 'total_platform_revenue')
+          ?? pickFinanceAmount(platformEarnings, 'total_platform_earnings', 'total', 'amount')
+          ?? list.reduce((sum, tx) => sum + (tx.amount || 0), 0),
+        '0 د.ل',
+      ),
+      subscriptionAndAdProfits: formatAmount(subscriptionAndAdProfits, '0 د.ل'),
+      deliveryProfits: formatAmount(
+        pickFinanceAmount(deliveryProfits, 'delivery_profits', 'total', 'amount'),
+        '0 د.ل',
+      ),
+      typeFilter: activeType,
+      searchQuery,
+    }
+
+    const downloaded = await downloadFinanceReportPdf(list, summary)
+    if (downloaded) {
+      setExportMessage('تم تحميل التقرير المالي بصيغة PDF.')
+    } else {
+      setExportMessage('تعذّر تحميل التقرير. حاولي مجدداً.')
+    }
 
     setExporting(false)
     setTimeout(() => setExportMessage(''), 5000)
