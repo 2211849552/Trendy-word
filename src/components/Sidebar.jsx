@@ -110,7 +110,7 @@ export function Sidebar({
     const isLeafActive = isActive && !items
 
     return (
-      <div key={id} className="mb-0.5">
+      <div key={id} className="mb-1">
         <button
           type="button"
           onClick={() => {
@@ -121,12 +121,12 @@ export function Sidebar({
             }
           }}
           className={[
-            'group flex w-full items-center justify-between rounded-xl px-4 py-3 text-start text-sm font-semibold transition-all duration-200',
+            'group relative flex w-full items-center justify-between px-4 py-3 text-start text-sm font-semibold transition-all duration-200',
             isLeafActive
-              ? 'nav-item-active'
+              ? 'nav-item-active z-10'
               : isActive && items
-                ? 'bg-brand-200/10 text-white'
-                : 'text-white/70 hover:bg-brand-200/10 hover:text-white',
+                ? 'ms-3 rounded-s-xl rounded-e-none bg-brand-200/10 text-white'
+                : 'ms-3 rounded-s-xl rounded-e-none text-white/70 hover:bg-brand-200/10 hover:text-white',
           ].join(' ')}
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -164,8 +164,10 @@ export function Sidebar({
                   type="button"
                   onClick={() => onNavigate?.(subItem.id)}
                   className={[
-                    'flex w-full items-center rounded-lg px-4 py-2 text-start text-[13px] font-medium transition-all',
-                    isSubActive ? 'nav-item-active' : 'text-white/55 hover:bg-brand-200/10 hover:text-white',
+                    'relative flex w-full items-center px-4 py-2 text-start text-[13px] font-medium transition-all',
+                    isSubActive
+                      ? 'nav-item-active nav-item-active-sub z-10'
+                      : 'ms-3 rounded-s-lg rounded-e-none text-white/55 hover:bg-brand-200/10 hover:text-white',
                   ].join(' ')}
                 >
                   {subItem.label}
@@ -181,7 +183,7 @@ export function Sidebar({
   return (
     <aside
       dir="rtl"
-      className="sticky top-0 flex h-dvh w-72 shrink-0 flex-col overflow-hidden bg-brand-950 text-white shadow-xl"
+      className="sticky top-0 flex h-dvh w-72 shrink-0 flex-col overflow-y-hidden overflow-x-visible bg-brand-950 text-white shadow-[-8px_0_32px_rgba(0,0,0,0.12)]"
     >
       <div className="flex shrink-0 flex-col items-center gap-1.5 border-b border-white/10 px-4 py-5 text-center">
         <img
@@ -193,7 +195,7 @@ export function Sidebar({
       </div>
 
       <nav
-        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-visible py-4 ps-3 pe-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         aria-label="القائمة الرئيسية"
       >
         {mainNavItems.map(renderNavItem)}

@@ -475,7 +475,7 @@ export default function App() {
     <div className="flex h-dvh overflow-hidden flex-row bg-brand-50" dir="ltr">
       <main
         dir="rtl"
-        className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-brand-50 px-6 py-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <div className="mx-auto max-w-[1600px]">
           {renderPage(activeNav, activeNavParams, setActiveNavParams, handlePageNavigate, setUnreadCount, currentUser)}
