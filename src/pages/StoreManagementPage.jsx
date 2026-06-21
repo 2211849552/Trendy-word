@@ -23,6 +23,7 @@ import {
   toApiStoreStatus,
 } from '../api/adminStores.js'
 import { getStoreProducts, extractProductList } from '../api/products.js'
+import { fetchStoreOrdersCount } from '../api/stores.js'
 import { getCurrentUser, mapCurrentUser, hasStoreManagementAccess, canViewStorePromotions } from '../api/user.js'
 
 function extractList(data) {
@@ -65,6 +66,35 @@ async function enrichMissingProductCounts(stores, setStores) {
     return prev.map((s) => {
       const count = map.get(String(s.id))
       return count == null ? s : { ...s, products: count }
+    })
+  })
+}
+
+async function enrichMissingOrderCounts(stores, setStores) {
+  if (!stores?.length || typeof setStores !== 'function') return
+  const needsCount = stores.filter((s) => s.orders == null && s.id != null && String(s.id) !== '')
+  if (!needsCount.length) return
+
+  const updates = await Promise.all(
+    needsCount.map(async (store) => {
+      try {
+        const count = await fetchStoreOrdersCount(store.id, { storeName: store.name })
+        return { id: store.id, orders: count }
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  setStores((prev) => {
+    const map = new Map()
+    updates.forEach((u) => {
+      if (u) map.set(String(u.id), u.orders)
+    })
+    if (map.size === 0) return prev
+    return prev.map((s) => {
+      const count = map.get(String(s.id))
+      return count == null ? s : { ...s, orders: count }
     })
   })
 }
@@ -158,6 +188,7 @@ export function StoreManagementPage({ params, setParams }) {
       setRegisteredStores(mappedStores)
       if (canAccessStoreFeatures) {
         enrichMissingProductCounts(mappedStores, setRegisteredStores)
+        enrichMissingOrderCounts(mappedStores, setRegisteredStores)
       }
       enrichMissingMerchantData(mappedStores, setRegisteredStores)
     } catch (err) {

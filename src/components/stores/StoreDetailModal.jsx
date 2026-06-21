@@ -21,6 +21,7 @@ import {
   extractCustodyLogs,
   mapCustodySummary,
   mapCustodyLog,
+  fetchStoreOrdersCount,
   formatCustodyDate,
   formatCustodyAmount,
 } from '../../api/stores.js'
@@ -93,6 +94,7 @@ export function StoreDetailModal({
   const [settleCustodyOpen, setSettleCustodyOpen] = useState(false)
   const [custodySummary, setCustodySummary] = useState(null)
   const [custodyLogs, setCustodyLogs] = useState([])
+  const [storeOrdersCount, setStoreOrdersCount] = useState(null)
   const [custodyLoading, setCustodyLoading] = useState(false)
   const [custodyError, setCustodyError] = useState('')
 
@@ -141,20 +143,31 @@ export function StoreDetailModal({
     loadProducts(store.id, { searchName: appliedProductSearch, status })
   }, [store?.id, appliedProductSearch, loadProducts])
 
-  const loadCustody = useCallback(async (storeId) => {
+  const loadCustody = useCallback(async (storeId, storeInfo = {}) => {
     if (!storeId) return
     setCustodyLoading(true)
     setCustodyError('')
+    setStoreOrdersCount(
+      storeInfo.orders != null && Number.isFinite(Number(storeInfo.orders))
+        ? Number(storeInfo.orders)
+        : null,
+    )
     try {
-      const [summaryData, logsData] = await Promise.all([
+      const [summaryData, logsData, ordersCount] = await Promise.all([
         getStoreCustodySummaryForStore(storeId),
         getStoreCustodyLogsForStore(storeId),
+        fetchStoreOrdersCount(storeId, {
+          storeName: storeInfo.name,
+          knownCount: storeInfo.orders,
+        }),
       ])
       setCustodySummary(mapCustodySummary(summaryData))
       setCustodyLogs(extractCustodyLogs(logsData).map(mapCustodyLog))
+      setStoreOrdersCount(ordersCount)
     } catch (err) {
       setCustodySummary(null)
       setCustodyLogs([])
+      setStoreOrdersCount(null)
       if (err?.status === 403) {
         setCustodyError('ليس لديك صلاحية عرض بيانات العهدة لهذا المتجر.')
       } else {
@@ -168,7 +181,7 @@ export function StoreDetailModal({
   useEffect(() => {
     if (!open || !store?.id || loading) return
     if (canViewStoreProducts) loadProducts(store.id)
-    if (onSettleCustody) loadCustody(store.id)
+    if (onSettleCustody) loadCustody(store.id, store)
   }, [open, store?.id, loading, loadProducts, loadCustody, onSettleCustody, canViewStoreProducts])
 
   useEffect(() => {
@@ -183,6 +196,7 @@ export function StoreDetailModal({
       setSettleCustodyOpen(false)
       setCustodySummary(null)
       setCustodyLogs([])
+      setStoreOrdersCount(null)
       setCustodyError('')
     }
   }, [open])
@@ -372,9 +386,9 @@ export function StoreDetailModal({
                               </p>
                             </div>
                             <div className="rounded-xl border border-white/10 bg-brand-300 p-3">
-                              <p className="text-xs text-white/60">عدد الطلبات</p>
+                              <p className="text-xs text-white/60">إجمالي الطلبات</p>
                               <p className="mt-1 text-lg font-bold text-white tabular-nums">
-                                {custodySummary.numberOfOrders}
+                                {storeOrdersCount ?? '—'}
                               </p>
                             </div>
                             <div className="rounded-xl border border-white/10 bg-brand-300 p-3">

@@ -11,7 +11,6 @@ function emptyForm() {
   return {
     name: '',
     description: '',
-    link: '',
     price: '',
     dateFrom: getTodayIsoDate(),
     dateTo: '',
@@ -188,21 +187,6 @@ export function CreateCampaignModal({ open, onClose, onSubmit, saving = false })
             {errors.description ? (
               <p className="mt-1 text-xs text-rose-600">{errors.description}</p>
             ) : null}
-          </div>
-
-          <div>
-            <label htmlFor="camp-link" className="mb-1.5 block text-sm font-semibold text-white/90">
-              رابط الحملة
-            </label>
-            <input
-              id="camp-link"
-              value={form.link}
-              onChange={(e) => set('link', e.target.value)}
-              placeholder="/offers/summer/"
-              className={fieldClass}
-              dir="ltr"
-              disabled={saving}
-            />
           </div>
 
           <div>
