@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Eye, ImageIcon, Play, Pause, Trash2 } from 'lucide-react'
+=======
+import { Eye, ImageIcon, Pencil, Play, Pause } from 'lucide-react'
+>>>>>>> 84a50c1e91c5e2b7a7dff82a5a0f4d033577e6b8
 import { formatCampaignDateDisplay, formatCampaignPriceDisplay } from '../../api/adminCampaigns.js'
 import { statusLabels, statusBadgeClass } from '../../data/campaigns.js'
 import { CAMPAIGN_METRICS } from '../../theme/chartColors.js'
@@ -7,7 +11,11 @@ function fmtNum(n) {
   return n.toLocaleString('ar-LY')
 }
 
+<<<<<<< HEAD
 export function CampaignCard({ campaign, onView, onToggle, onDelete }) {
+=======
+export function CampaignCard({ campaign, onView, onEdit, onToggle }) {
+>>>>>>> 84a50c1e91c5e2b7a7dff82a5a0f4d033577e6b8
   const badge = statusBadgeClass[campaign.status] ?? statusBadgeClass.finished
   
   // Custom display for status if paused
@@ -78,12 +86,6 @@ export function CampaignCard({ campaign, onView, onToggle, onDelete }) {
           </span>
           <span className="text-white/60">عدد المنتجات</span>
         </li>
-        <li className="flex justify-between gap-2">
-          <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.views.value}`}>
-            {fmtNum(campaign.views)}
-          </span>
-          <span className="text-white/60">المشاهدات</span>
-        </li>
       </ul>
 
       <p className="mt-3 text-xs text-white/60">
@@ -122,14 +124,6 @@ export function CampaignCard({ campaign, onView, onToggle, onDelete }) {
           ) : (
             <Pause className="size-4" aria-hidden />
           )}
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete?.(campaign)}
-          className="flex size-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-600 shadow-premium hover:bg-rose-100"
-          aria-label="حذف"
-        >
-          <Trash2 className="size-4" aria-hidden />
         </button>
       </div>
       </div>

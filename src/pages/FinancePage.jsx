@@ -45,7 +45,6 @@ function apiErrorMessage(err, fallback) {
 
 export function FinancePage() {
   const [activeType, setActiveType] = useState('جميع الأنواع')
-  const [activeStatus, setActiveStatus] = useState('جميع الحالات')
   const [searchQuery, setSearchQuery] = useState('')
   
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
@@ -142,7 +141,6 @@ export function FinancePage() {
     const seq = ++loadSeq.current
     const params = buildFinanceQueryParams({
       search: searchQuery,
-      status: activeStatus,
     })
     const data = await getFinanceTransactions(params)
     if (seq !== loadSeq.current) return
@@ -150,7 +148,7 @@ export function FinancePage() {
     const enriched = await enrichTransactionsWithParties(mapped)
     if (seq !== loadSeq.current) return
     setTransactions(enriched)
-  }, [searchQuery, activeStatus])
+  }, [searchQuery])
 
   const loadBankCards = async () => {
     setCardsLoading(true)
@@ -318,7 +316,6 @@ export function FinancePage() {
     setExportMessage('')
     const params = buildFinanceQueryParams({
       search: searchQuery,
-      status: activeStatus,
     })
     try {
       const result = await exportFinanceReport(params)
@@ -347,8 +344,8 @@ export function FinancePage() {
   }
 
   const filteredTransactions = useMemo(
-    () => filterTransactionsClient(transactions, { type: activeType, status: activeStatus }),
-    [transactions, activeType, activeStatus],
+    () => filterTransactionsClient(transactions, { type: activeType }),
+    [transactions, activeType],
   )
 
   const totalRevenue = useMemo(
@@ -565,17 +562,6 @@ export function FinancePage() {
       {/* Filters & Search */}
       <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-xl border border-white/10 bg-brand-200 p-4 shadow-premium">
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <select 
-            value={activeStatus}
-            onChange={e => setActiveStatus(e.target.value)}
-            className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
-          >
-            <option>جميع الحالات</option>
-            <option>ناجحة</option>
-            <option>معلقة</option>
-            <option>فاشلة</option>
-          </select>
-
           <select 
             value={activeType}
             onChange={e => setActiveType(e.target.value)}

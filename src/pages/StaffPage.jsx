@@ -63,6 +63,7 @@ export function StaffPage() {
   const [loadError, setLoadError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeRole, setActiveRole] = useState('جميع الأدوار')
+  const [activeStatus, setActiveStatus] = useState('جميع الحالات')
 
   const [selectedStaff, setSelectedStaff] = useState(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
@@ -86,6 +87,7 @@ export function StaffPage() {
     const params = buildEmployeeQueryParams({
       search: searchQuery,
       role: activeRole,
+      status: activeStatus,
     })
     if (showLoading) {
       setLoading(true)
@@ -105,7 +107,7 @@ export function StaffPage() {
     } finally {
       if (seq === loadSeq.current && showLoading) setLoading(false)
     }
-  }, [searchQuery, activeRole])
+  }, [searchQuery, activeRole, activeStatus])
 
   useEffect(() => {
     if (loadDebounceRef.current) clearTimeout(loadDebounceRef.current)
@@ -324,6 +326,16 @@ export function StaffPage() {
           {PLATFORM_ROLES.map((role) => (
             <option key={role.slug}>{role.label}</option>
           ))}
+        </select>
+
+        <select
+          value={activeStatus}
+          onChange={(e) => setActiveStatus(e.target.value)}
+          className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
+        >
+          <option>جميع الحالات</option>
+          <option>نشط</option>
+          <option>معطل</option>
         </select>
 
         <div className="relative flex-1 min-w-[200px]">

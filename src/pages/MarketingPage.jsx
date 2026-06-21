@@ -1,24 +1,21 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, TrendingUp, Archive, CircleCheck, CheckCircle, Trash2, X, Loader2 } from 'lucide-react'
+import { Plus, TrendingUp, Archive, CircleCheck, CheckCircle, Loader2 } from 'lucide-react'
 import {
-  getAdminCampaign,
   getPublicCampaign,
   extractCampaignSubscribedStores,
   mapCampaignSubscriptionStore,
   createAdminCampaign,
   updateAdminCampaign,
-  deleteAdminCampaign,
   activateCampaign,
   deactivateCampaign,
   fetchAdminCampaignsWithMetrics,
+  fetchCampaignWithMetrics,
   mapCampaign,
-  mapCampaignDetail,
   toCampaignRequestBody,
   getCampaignActivationHint,
   buildMarketingStats,
   filterCampaignsByUiStatus,
   saveCampaignPrice,
-  removeCampaignPrice,
   extractCreatedCampaign,
 } from '../api/adminCampaigns.js'
 import { StatCard } from '../components/StatCard.jsx'
@@ -51,8 +48,6 @@ export function MarketingPage() {
   const [storesLoading, setStoresLoading] = useState(false)
   const [storesError, setStoresError] = useState('')
   const [editCampaign, setEditCampaign] = useState(null)
-  const [deleteCampaign, setDeleteCampaign] = useState(null)
-  const [deleting, setDeleting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -105,15 +100,15 @@ export function MarketingPage() {
     setSubscribedStores([])
     setStoresError('')
 
-    const [adminResult, publicResult] = await Promise.allSettled([
-      getAdminCampaign(camp.id),
+    const [detailResult, publicResult] = await Promise.allSettled([
+      fetchCampaignWithMetrics(camp.id, camp),
       getPublicCampaign(camp.id),
     ])
 
-    if (adminResult.status === 'fulfilled') {
-      setDetailCampaign(mapCampaignDetail(adminResult.value))
+    if (detailResult.status === 'fulfilled') {
+      setDetailCampaign(detailResult.value)
     } else {
-      triggerToast(apiErrorMessage(adminResult.reason, 'تعذّر تحميل تفاصيل الحملة.'))
+      triggerToast(apiErrorMessage(detailResult.reason, 'تعذّر تحميل تفاصيل الحملة.'))
       setDetailCampaign(null)
       setDetailLoading(false)
       setStoresLoading(false)
@@ -175,30 +170,6 @@ export function MarketingPage() {
     }
   }
 
-  async function confirmDelete() {
-    if (!deleteCampaign) return
-    const idToDelete = Number(deleteCampaign.id)
-    if (!Number.isFinite(idToDelete)) {
-      triggerToast('معرّف الحملة غير صالح.')
-      return
-    }
-
-    setDeleting(true)
-    try {
-      const result = await deleteAdminCampaign(idToDelete)
-      removeCampaignPrice(idToDelete)
-      loadSeq.current += 1
-      setList((prev) => prev.filter((c) => Number(c.id) !== idToDelete))
-      setDeleteCampaign(null)
-      triggerToast(result?.message || 'تم حذف الحملة بنجاح')
-      await loadCampaigns()
-    } catch (err) {
-      triggerToast(apiErrorMessage(err, 'تعذّر حذف الحملة. حاول مرة أخرى.'))
-    } finally {
-      setDeleting(false)
-    }
-  }
-
   async function handleToggleCampaign(camp) {
     const isActive = camp.status === 'active' && !camp.paused
 
@@ -217,10 +188,9 @@ export function MarketingPage() {
 
       let updated = mapCampaign(result?.data ?? result)
       try {
-        const detail = await getAdminCampaign(camp.id)
-        updated = mapCampaignDetail(detail)
+        updated = await fetchCampaignWithMetrics(camp.id, { ...camp, ...updated })
       } catch {
-        updated = { ...camp, ...updated, stores: camp.stores, products: camp.products, views: camp.views }
+        updated = { ...camp, ...updated, stores: camp.stores, products: camp.products }
       }
 
       setList((prev) => prev.map((x) => (x.id === camp.id ? updated : x)))
@@ -355,66 +325,11 @@ export function MarketingPage() {
                 campaign={c}
                 onView={openViewModal}
                 onToggle={handleToggleCampaign}
-                onDelete={(camp) => setDeleteCampaign(camp)}
               />
             ))}
           </div>
         )}
       </div>
-
-      {deleteCampaign && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-          <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            onClick={() => !deleting && setDeleteCampaign(null)}
-          />
-          <div
-            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-brand-200 shadow-2xl ring-1 ring-slate-200 animate-in zoom-in-95 duration-200"
-            dir="rtl"
-          >
-            <div className="flex items-center justify-between border-b border-white/5 bg-brand-300/50 px-5 py-4">
-              <h2 className="text-lg font-bold text-white">تأكيد حذف الحملة</h2>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => setDeleteCampaign(null)}
-                className="rounded-lg p-1.5 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors disabled:opacity-50"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-            <div className="p-6 text-center">
-              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-                <Trash2 className="size-8" />
-              </div>
-              <h3 className="text-xl font-bold text-white">هل أنت متأكد؟</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
-                أنت على وشك حذف الحملة{' '}
-                <span className="font-bold text-white">«{deleteCampaign.title}»</span> نهائياً.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 p-5 bg-brand-300 border-t border-white/5 sm:flex-row-reverse sm:gap-3">
-              <button
-                type="button"
-                onClick={confirmDelete}
-                disabled={deleting}
-                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-premium hover:bg-rose-700 transition-colors disabled:opacity-60"
-              >
-                {deleting ? <Loader2 className="size-4 animate-spin" /> : null}
-                تأكيد الحذف
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => setDeleteCampaign(null)}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-4 text-sm font-bold text-white/80 shadow-premium hover:bg-brand-300 transition-colors disabled:opacity-50"
-              >
-                إلغاء
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showToast && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300">
