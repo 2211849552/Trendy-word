@@ -370,15 +370,13 @@ export function StoreListView({
                 <th className="px-3 py-2 font-semibold">التاجر</th>
                 <th className="px-3 py-2 font-semibold">البريد الإلكتروني</th>
                 <th className="px-3 py-2 font-semibold">الهاتف</th>
-                <th className="px-3 py-2 font-semibold">المنتجات</th>
-                <th className="px-3 py-2 font-semibold">الطلبات</th>
                 <th className="px-3 py-2 font-semibold print:hidden">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-12 text-center text-sm text-white/55">
+                  <td colSpan={5} className="px-3 py-12 text-center text-sm text-white/55">
                     جاري تحميل المتاجر...
                   </td>
                 </tr>
@@ -415,14 +413,6 @@ export function StoreListView({
                     </td>
                     <td className="px-3 py-3 tabular-nums text-white/80" dir="ltr">
                       {row.phone}
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="inline-flex items-center gap-1.5 font-medium text-white/90 tabular-nums">
-                        {row.products ?? '—'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 font-medium tabular-nums text-white">
-                      {row.orders ?? '—'}
                     </td>
                     <td className="px-3 py-3 print:hidden">
                       <div className="flex items-center justify-end gap-1">
