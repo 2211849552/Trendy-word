@@ -17,8 +17,9 @@ import {
   canAccessMarketing,
   canAccessDrivers,
   canAccessZones,
+  canViewStoreJoinRequestNotifications,
 } from './api/user.js'
-import { getNotifications, extractUnreadCount, markNotificationAsRead } from './api/adminNotifications.js'
+import { getNotifications, extractUnreadCountForUser, markNotificationAsRead, shouldShowNotificationToUser } from './api/adminNotifications.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { LoginPage } from './pages/LoginPage.jsx'
 import { MarketingPage } from './pages/MarketingPage.jsx'
@@ -137,7 +138,7 @@ function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, 
       </div>
     )
   }
-  if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} setUnreadCount={setUnreadCount} />
+  if (activeNav === 'notifications') return <NotificationsPage onNavigate={onNavigate} setUnreadCount={setUnreadCount} currentUser={currentUser} />
   if (activeNav === 'orders') {
     if (canAccessOrderList(currentUser)) {
       return <OrdersPage currentUser={currentUser} />
@@ -301,7 +302,7 @@ export default function App() {
         handlePageNavigate('disputes', { ticket_id: data.ticket_id })
       }
     } else if (eventType === 'new_store_join_request' || toast.title === 'طلب انضمام متجر جديد') {
-      if (data.store_join_request_id) {
+      if (data.store_join_request_id && canViewStoreJoinRequestNotifications(currentUser)) {
         handlePageNavigate('stores', { store_join_request_id: data.store_join_request_id })
       }
     } else if (eventType === 'driver_support_message' || toast.title === 'رسالة جديدة من السائق في شات الدعم') {
@@ -319,15 +320,15 @@ export default function App() {
 
     async function fetchUnread() {
       try {
-        const data = await getNotifications({ per_page: 1 })
-        setUnreadCount(extractUnreadCount(data))
+        const data = await getNotifications({ per_page: 100 })
+        setUnreadCount(extractUnreadCountForUser(data, currentUser))
       } catch (err) {
         console.error('Failed to load initial unread notifications count:', err)
       }
     }
 
     fetchUnread()
-  }, [isAuthenticated])
+  }, [isAuthenticated, currentUser])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -343,6 +344,10 @@ export default function App() {
     eventSource.onmessage = (event) => {
       try {
         const notif = JSON.parse(event.data)
+
+        if (!shouldShowNotificationToUser(notif, currentUser)) {
+          return
+        }
         
         setToasts((prev) => [
           ...prev,
@@ -371,7 +376,7 @@ export default function App() {
     return () => {
       eventSource.close()
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, currentUser])
 
   useEffect(() => {
     if (isDarkMode) {

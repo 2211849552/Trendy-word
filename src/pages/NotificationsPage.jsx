@@ -20,8 +20,11 @@ import {
   mapNotification,
   mapNotificationDetail,
   buildNotificationStats,
-  extractUnreadCount,
+  extractUnreadCountForUser,
+  filterNotificationsForUser,
+  shouldShowNotificationToUser,
 } from '../api/adminNotifications.js'
+import { canViewStoreJoinRequestNotifications } from '../api/user.js'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 404) {
@@ -43,7 +46,7 @@ function getIcon(type) {
   }
 }
 
-export function NotificationsPage({ onNavigate, setUnreadCount }) {
+export function NotificationsPage({ onNavigate, setUnreadCount, currentUser }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -54,13 +57,16 @@ export function NotificationsPage({ onNavigate, setUnreadCount }) {
 
   const loadNotifications = useCallback(async () => {
     const data = await getNotifications({ per_page: 100 })
-    const list = extractNotificationList(data).map(mapNotification)
+    const list = filterNotificationsForUser(
+      extractNotificationList(data).map(mapNotification),
+      currentUser,
+    )
     setNotifications(list)
     if (typeof setUnreadCount === 'function') {
-      setUnreadCount(extractUnreadCount(data))
+      setUnreadCount(extractUnreadCountForUser(data, currentUser))
     }
     return list
-  }, [setUnreadCount])
+  }, [setUnreadCount, currentUser])
 
   useEffect(() => {
     const load = async () => {
@@ -83,6 +89,10 @@ export function NotificationsPage({ onNavigate, setUnreadCount }) {
       const rawNotif = event.detail
       if (!rawNotif) return
 
+      if (!shouldShowNotificationToUser(rawNotif, currentUser)) {
+        return
+      }
+
       const mapped = mapNotification(rawNotif)
       setNotifications((prev) => {
         // التحقق من عدم تكرار الإشعار
@@ -95,7 +105,7 @@ export function NotificationsPage({ onNavigate, setUnreadCount }) {
     return () => {
       window.removeEventListener('admin_new_notification', handleNewNotification)
     }
-  }, [])
+  }, [currentUser])
 
   const stats = buildNotificationStats(notifications)
 
@@ -160,7 +170,7 @@ export function NotificationsPage({ onNavigate, setUnreadCount }) {
     }
 
     if (eventType === 'new_store_join_request' || notif.title === 'طلب انضمام متجر جديد') {
-      if (onNavigate && data.store_join_request_id) {
+      if (onNavigate && data.store_join_request_id && canViewStoreJoinRequestNotifications(currentUser)) {
         onNavigate('stores', { store_join_request_id: data.store_join_request_id })
         return
       }
