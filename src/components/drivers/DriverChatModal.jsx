@@ -49,7 +49,15 @@ export function DriverChatModal({ driver, open, onClose }) {
     setError('')
     try {
       const data = await getChatMessages(id)
-      setMessages(extractMessageList(data).map((item) => mapMessage(item)))
+      setMessages(
+        extractMessageList(data)
+          .map((item) => mapMessage(item))
+          .sort((a, b) => {
+            const aTime = new Date(a.createdAt ?? 0).getTime()
+            const bTime = new Date(b.createdAt ?? 0).getTime()
+            return aTime - bTime
+          }),
+      )
     } catch (err) {
       if (!silent) {
         setMessages([])
@@ -193,13 +201,13 @@ export function DriverChatModal({ driver, open, onClose }) {
               {messages.map((msg) => (
                 <li
                   key={msg.id}
-                  className={`flex ${msg.isMine ? 'justify-start' : 'justify-end'}`}
+                  className={`flex ${msg.isMine ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
                       msg.isMine
-                        ? 'rounded-br-md bg-gradient-to-r from-[#b533ff] to-[#4285f4] text-white'
-                        : 'rounded-bl-md border border-white/10 bg-brand-200 text-white'
+                        ? 'rounded-bl-md bg-gradient-to-r from-[#b533ff] to-[#4285f4] text-white'
+                        : 'rounded-br-md border border-white/10 bg-brand-200 text-white'
                     }`}
                   >
                     {!msg.isMine ? (

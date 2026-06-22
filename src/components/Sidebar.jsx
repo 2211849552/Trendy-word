@@ -123,7 +123,7 @@ export function Sidebar({
           className={[
             'group relative flex w-full items-center justify-between px-4 py-3 text-start text-sm font-semibold transition-all duration-200',
             isLeafActive
-              ? 'nav-item-active z-10'
+              ? 'nav-item-active z-10 rounded-s-xl rounded-e-none'
               : isActive && items
                 ? 'ms-3 rounded-s-xl rounded-e-none bg-brand-200/10 text-white'
                 : 'ms-3 rounded-s-xl rounded-e-none text-white/70 hover:bg-brand-200/10 hover:text-white',
@@ -166,7 +166,7 @@ export function Sidebar({
                   className={[
                     'relative flex w-full items-center px-4 py-2 text-start text-[13px] font-medium transition-all',
                     isSubActive
-                      ? 'nav-item-active nav-item-active-sub z-10'
+                      ? 'nav-item-active nav-item-active-sub z-10 rounded-s-lg rounded-e-none'
                       : 'ms-3 rounded-s-lg rounded-e-none text-white/55 hover:bg-brand-200/10 hover:text-white',
                   ].join(' ')}
                 >
@@ -195,7 +195,7 @@ export function Sidebar({
       </div>
 
       <nav
-        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-visible py-4 ps-3 pe-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto py-4 ps-3 pe-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         aria-label="القائمة الرئيسية"
       >
         {mainNavItems.map(renderNavItem)}

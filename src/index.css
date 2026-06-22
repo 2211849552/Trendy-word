@@ -272,61 +272,23 @@ html.dark {
   html:not(.dark) aside .nav-item-active {
     position: relative;
     z-index: 1;
+    margin-inline-start: 0.75rem;
+    margin-inline-end: 0;
     background: var(--color-brand-50) !important;
     color: var(--color-brand-700) !important;
     box-shadow: none !important;
     font-weight: 700;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0.75rem;
-    border-bottom-right-radius: 0.75rem;
-  }
-
-  html:not(.dark) aside .nav-item-active::before,
-  html:not(.dark) aside .nav-item-active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    width: 0.75rem;
-    height: 0.75rem;
-    pointer-events: none;
-  }
-
-  html:not(.dark) aside .nav-item-active::before {
-    top: -0.75rem;
-    border-bottom-left-radius: 0.75rem;
-    box-shadow: -0.375rem 0.375rem 0 0.375rem var(--color-brand-50);
-  }
-
-  html:not(.dark) aside .nav-item-active::after {
-    bottom: -0.75rem;
-    border-top-left-radius: 0.75rem;
-    box-shadow: -0.375rem -0.375rem 0 0.375rem var(--color-brand-50);
+    border-start-start-radius: 0.75rem;
+    border-end-start-radius: 0.75rem;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
   }
 
   html:not(.dark) aside .nav-item-active-sub {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-  }
-
-  html:not(.dark) aside .nav-item-active-sub::before,
-  html:not(.dark) aside .nav-item-active-sub::after {
-    width: 0.5rem;
-    height: 0.5rem;
-  }
-
-  html:not(.dark) aside .nav-item-active-sub::before {
-    top: -0.5rem;
-    border-bottom-left-radius: 0.5rem;
-    box-shadow: -0.25rem 0.25rem 0 0.25rem var(--color-brand-50);
-  }
-
-  html:not(.dark) aside .nav-item-active-sub::after {
-    bottom: -0.5rem;
-    border-top-left-radius: 0.5rem;
-    box-shadow: -0.25rem -0.25rem 0 0.25rem var(--color-brand-50);
+    border-start-start-radius: 0.5rem;
+    border-end-start-radius: 0.5rem;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
   }
 
   html:not(.dark) aside .nav-item-active .text-white,
@@ -371,61 +333,23 @@ html.dark {
   html.dark aside .nav-item-active {
     position: relative;
     z-index: 1;
+    margin-inline-start: 0.75rem;
+    margin-inline-end: 0;
     background: var(--color-brand-50) !important;
     color: #ffffff !important;
     box-shadow: none !important;
     font-weight: 700;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0.75rem;
-    border-bottom-right-radius: 0.75rem;
-  }
-
-  html.dark aside .nav-item-active::before,
-  html.dark aside .nav-item-active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    width: 0.75rem;
-    height: 0.75rem;
-    pointer-events: none;
-  }
-
-  html.dark aside .nav-item-active::before {
-    top: -0.75rem;
-    border-bottom-left-radius: 0.75rem;
-    box-shadow: -0.375rem 0.375rem 0 0.375rem var(--color-brand-50);
-  }
-
-  html.dark aside .nav-item-active::after {
-    bottom: -0.75rem;
-    border-top-left-radius: 0.75rem;
-    box-shadow: -0.375rem -0.375rem 0 0.375rem var(--color-brand-50);
+    border-start-start-radius: 0.75rem;
+    border-end-start-radius: 0.75rem;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
   }
 
   html.dark aside .nav-item-active-sub {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-  }
-
-  html.dark aside .nav-item-active-sub::before,
-  html.dark aside .nav-item-active-sub::after {
-    width: 0.5rem;
-    height: 0.5rem;
-  }
-
-  html.dark aside .nav-item-active-sub::before {
-    top: -0.5rem;
-    border-bottom-left-radius: 0.5rem;
-    box-shadow: -0.25rem 0.25rem 0 0.25rem var(--color-brand-50);
-  }
-
-  html.dark aside .nav-item-active-sub::after {
-    bottom: -0.5rem;
-    border-top-left-radius: 0.5rem;
-    box-shadow: -0.25rem -0.25rem 0 0.25rem var(--color-brand-50);
+    border-start-start-radius: 0.5rem;
+    border-end-start-radius: 0.5rem;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
   }
 
   html.dark aside .nav-item-active svg {
