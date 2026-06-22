@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Trash2, Edit, Eye, Archive, Tag, Package, CheckCircle, X, Check } from 'lucide-react'
+import { Plus, Search, Trash2, Eye, Archive, Tag, Package, CheckCircle, X, Check, Pencil } from 'lucide-react'
 import { PrimaryButton } from '../components/PrimaryButton.jsx'
 import {
   searchCatalogCategories,
@@ -28,6 +28,7 @@ export function CategoriesPage() {
   const [showAddAttribute, setShowAddAttribute] = useState(false)
   const [showEditCategory, setShowEditCategory] = useState(false)
   const [showEditAttribute, setShowEditAttribute] = useState(false)
+  const [showCatDetails, setShowCatDetails] = useState(false)
   const [showAttrDetails, setShowAttrDetails] = useState(false)
   
   const [categories, setCategories] = useState([])
@@ -44,6 +45,17 @@ export function CategoriesPage() {
   const [newCatName, setNewCatName] = useState('')
   const [newAttrName, setNewAttrName] = useState('')
   const [attrOptions, setAttrOptions] = useState([])
+  const [editAttrOriginalOptions, setEditAttrOriginalOptions] = useState([])
+
+  const patchCategoryInList = (id, patch) => {
+    setCategories((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)))
+    setSelectedItem((prev) => (prev?.id === id ? { ...prev, ...patch } : prev))
+  }
+
+  const patchAttributeInList = (id, patch) => {
+    setAttributes((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)))
+    setSelectedItem((prev) => (prev?.id === id ? { ...prev, ...patch } : prev))
+  }
 
   const loadCatalogData = async (tab = activeTab, query = searchQuery.trim()) => {
     if (tab === 'categories') {
@@ -118,8 +130,9 @@ export function CategoriesPage() {
     if (!newCatName.trim() || !selectedItem) return
 
     try {
-      await updateAdminCategory(selectedItem.id, { name: newCatName.trim() })
-      await loadCatalogData('categories')
+      const response = await updateAdminCategory(selectedItem.id, { name: newCatName.trim() })
+      const updated = mapCategory(response?.data ?? response)
+      patchCategoryInList(selectedItem.id, { ...updated, name: newCatName.trim() })
       setShowEditCategory(false)
       triggerToast('تم تحديث التصنيف بنجاح')
     } catch (err) {
@@ -186,14 +199,20 @@ export function CategoriesPage() {
       return
     }
 
+    const newValuesOnly = values.filter((value) => !editAttrOriginalOptions.includes(value))
+    const payload = { name: trimmedName }
+    if (newValuesOnly.length > 0) {
+      payload.values = newValuesOnly
+    }
+
     try {
-      await updateAdminAttribute(selectedItem.id, {
+      const response = await updateAdminAttribute(selectedItem.id, payload)
+      const fromApi = mapAttribute(response?.data ?? response)
+      patchAttributeInList(selectedItem.id, {
+        ...fromApi,
         name: trimmedName,
-        type: selectedItem.type || 'list',
-        is_required: selectedItem.isRequired ?? true,
-        values,
+        options: values,
       })
-      await loadCatalogData('attributes')
       setShowEditAttribute(false)
       triggerToast('تم تحديث الخاصية بنجاح')
     } catch (err) {
@@ -217,6 +236,18 @@ export function CategoriesPage() {
     setShowEditCategory(true)
   }
 
+  const openCatDetails = (cat) => {
+    setSelectedItem(cat)
+    setShowCatDetails(true)
+  }
+
+  const openEditCategoryFromDetails = () => {
+    if (!selectedItem) return
+    setShowCatDetails(false)
+    setNewCatName(selectedItem.name)
+    setShowEditCategory(true)
+  }
+
   const openAttrDetails = async (attr) => {
     setSelectedItem(attr)
     setShowAttrDetails(true)
@@ -230,9 +261,31 @@ export function CategoriesPage() {
   }
 
   const openEditAttr = (attr) => {
+    const options = attr.options?.length ? [...attr.options] : ['']
     setSelectedItem(attr)
     setNewAttrName(attr.name)
-    setAttrOptions(attr.options?.length ? [...attr.options] : [''])
+    setAttrOptions(options)
+    setEditAttrOriginalOptions(attr.options?.length ? [...attr.options] : [])
+    setShowEditAttribute(true)
+  }
+
+  const openEditAttrFromDetails = async () => {
+    if (!selectedItem) return
+    setShowAttrDetails(false)
+
+    let attr = selectedItem
+    try {
+      const data = await getAdminAttribute(selectedItem.id)
+      attr = mapAttribute(data?.data ?? data)
+    } catch {
+      // keep list item data if detail fetch fails
+    }
+
+    const options = attr.options?.length ? [...attr.options] : ['']
+    setSelectedItem(attr)
+    setNewAttrName(attr.name)
+    setAttrOptions(options)
+    setEditAttrOriginalOptions(attr.options?.length ? [...attr.options] : [])
     setShowEditAttribute(true)
   }
 
@@ -368,11 +421,11 @@ export function CategoriesPage() {
                           <td className="px-4 py-4">
                             <div className="flex justify-center gap-1.5">
                               <button
-                                onClick={() => openEditCategory(cat)}
-                                className="icon-btn-edit"
-                                title="تعديل"
+                                onClick={() => openCatDetails(cat)}
+                                className="icon-btn-view"
+                                title="عرض التفاصيل"
                               >
-                                <Edit className="size-4" />
+                                <Eye className="size-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteCategory(cat.id)}
@@ -470,13 +523,6 @@ export function CategoriesPage() {
                               title="عرض التفاصيل"
                             >
                               <Eye className="size-4" />
-                            </button>
-                            <button 
-                              onClick={() => openEditAttr(attr)}
-                              className="icon-btn-edit" 
-                              title="تعديل"
-                            >
-                              <Edit className="size-4" />
                             </button>
                             <button 
                               onClick={() => handleDeleteAttribute(attr.id)}
@@ -595,6 +641,54 @@ export function CategoriesPage() {
         </div>
       )}
 
+      {/* Category Details Modal */}
+      {showCatDetails && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center justify-between border-b border-white/5 px-6 py-5 bg-brand-300/50">
+              <h2 className="text-xl font-bold text-white/90">تفاصيل التصنيف</h2>
+              <button onClick={() => setShowCatDetails(false)} className="text-white/50 hover:text-white/70 transition-colors">
+                <X className="size-6" />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="border-b border-white/5 pb-4">
+                <h3 className="text-2xl font-bold text-white">{selectedItem.name}</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-brand-300 p-4 border border-white/5 flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-bold text-white/50 mb-2 uppercase tracking-wider">عدد المنتجات</span>
+                  <span className="text-xl font-bold text-white tabular-nums">{selectedItem.count}</span>
+                </div>
+                <div className="rounded-2xl bg-brand-300 p-4 border border-white/5 flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-bold text-white/50 mb-2 uppercase tracking-wider">الحالة</span>
+                  <span className={`text-sm font-bold ${selectedItem.isActive ? 'text-emerald-400' : 'text-white/50'}`}>
+                    {selectedItem.isActive ? 'نشط' : 'غير نشط'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-2 border-t border-white/5 bg-brand-300 p-6 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCatDetails(false)}
+                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-6 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors"
+              >
+                إغلاق
+              </button>
+              <button
+                type="button"
+                onClick={openEditCategoryFromDetails}
+                className="btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-6 text-sm font-bold"
+              >
+                <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                تعديل
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Category Modal (Matching Image 1) */}
       {showEditCategory && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
@@ -677,10 +771,22 @@ export function CategoriesPage() {
                   </div>
                </div>
             </div>
-            <div className="p-6 bg-brand-300 border-t border-white/5 flex justify-end">
-               <button onClick={() => setShowAttrDetails(false)} className="w-full rounded-xl bg-slate-900 py-3.5 text-sm font-bold text-white hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
-                  إغلاق
-               </button>
+            <div className="flex flex-col-reverse gap-2 border-t border-white/5 bg-brand-300 p-6 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowAttrDetails(false)}
+                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/10 bg-brand-200 px-6 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors"
+              >
+                إغلاق
+              </button>
+              <button
+                type="button"
+                onClick={openEditAttrFromDetails}
+                className="btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-6 text-sm font-bold"
+              >
+                <Pencil className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                تعديل
+              </button>
             </div>
           </div>
         </div>
