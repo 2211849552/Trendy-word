@@ -20,18 +20,43 @@ function rewriteSessionCookies(proxy) {
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    // يضمن الوصول عبر localhost و 127.0.0.1 (Windows أحياناً يربط Vite على IPv6 فقط)
-    host: '127.0.0.1',
+    host: true,
     port: 5173,
+    strictPort: false,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
+        timeout: 60000,
         configure: rewriteSessionCookies,
       },
       '/sanctum': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
+        timeout: 60000,
+        configure: rewriteSessionCookies,
+      },
+      '/storage': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    host: true,
+    port: 5174,
+    strictPort: false,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 60000,
+        configure: rewriteSessionCookies,
+      },
+      '/sanctum': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 60000,
         configure: rewriteSessionCookies,
       },
       '/storage': {
