@@ -9,6 +9,8 @@ import {
   Store,
   User,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   X,
   Send,
   DollarSign,
@@ -76,6 +78,16 @@ function buildAccountActionWarning(dispute, actionType, targetType) {
 
 const MAX_MERCHANT_WARNING_TEXT_LENGTH = 2000
 
+function getComplaintAttachments(dispute) {
+  if (Array.isArray(dispute?.attachments) && dispute.attachments.length > 0) {
+    return dispute.attachments
+  }
+  if (dispute?.imageUrl) {
+    return [{ url: dispute.imageUrl }]
+  }
+  return []
+}
+
 export function DisputesPage({ params, setParams }) {
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -87,7 +99,8 @@ export function DisputesPage({ params, setParams }) {
   const [selectedDispute, setSelectedDispute] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
-  const [imageUrl, setImageUrl] = useState('')
+  const [galleryImages, setGalleryImages] = useState([])
+  const [galleryIndex, setGalleryIndex] = useState(0)
   const [replyText, setReplyText] = useState('')
   const [financialAmount, setFinancialAmount] = useState('')
   const [adminAccountAction, setAdminAccountAction] = useState('')
@@ -181,24 +194,34 @@ export function DisputesPage({ params, setParams }) {
     }
   }
 
+  function openImageGallery(dispute, startIndex = 0) {
+    const attachments = getComplaintAttachments(dispute)
+    if (!attachments.length) {
+      triggerToast('لا توجد صورة مرفقة لهذه الشكوى.')
+      return
+    }
+    setGalleryImages(attachments.map((attachment) => attachment.url))
+    setGalleryIndex(Math.min(startIndex, attachments.length - 1))
+    setShowImageModal(true)
+  }
+
   async function openProductImage(dispute) {
     setActionLoading(true)
     try {
       let detail = dispute
-      if (!detail.imageUrl) {
+      if (!getComplaintAttachments(detail).length) {
         detail = await fetchComplaintDetail(dispute.id)
         setDisputes((prev) => prev.map((d) => (d.id === detail.id ? { ...d, ...detail } : d)))
         if (selectedDispute?.id === detail.id) setSelectedDispute(detail)
       }
-      if (!detail.imageUrl) {
+      if (!getComplaintAttachments(detail).length) {
         triggerToast('لا توجد صورة مرفقة لهذه الشكوى.')
         return
       }
-      setImageUrl(detail.imageUrl)
       setSelectedDispute(detail)
-      setShowImageModal(true)
+      openImageGallery(detail, 0)
     } catch (err) {
-      triggerToast(apiErrorMessage(err, 'تعذّر تحميل صورة المنتج.'))
+      triggerToast(apiErrorMessage(err, 'تعذّر تحميل صور المنتج.'))
     } finally {
       setActionLoading(false)
     }
@@ -660,30 +683,44 @@ export function DisputesPage({ params, setParams }) {
                   <p className="font-bold text-white text-lg">{selectedDispute.description}</p>
                 </div>
 
-                {selectedDispute.hasImage && selectedDispute.imageUrl ? (
+                {(() => {
+                  const selectedAttachments = getComplaintAttachments(selectedDispute)
+                  if (!selectedAttachments.length) return null
+                  return (
                   <div className="rounded-xl border border-brand-200 bg-brand-200 overflow-hidden text-right" dir="rtl">
                     <div className="p-3 bg-brand-100/50 border-b border-brand-100">
-                      <p className="text-sm font-bold text-white/70">صورة المنتج المرفقة من الزبون</p>
+                      <p className="text-sm font-bold text-white/70">
+                        {selectedAttachments.length === 1
+                          ? 'صورة المنتج المرفقة من الزبون'
+                          : `صور المنتج المرفقة من الزبون (${selectedAttachments.length})`}
+                      </p>
                     </div>
-                    <div className="p-6 flex flex-col items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageUrl(selectedDispute.imageUrl)
-                          setShowImageModal(true)
-                        }}
-                        className="w-full max-w-md h-64 rounded-2xl bg-brand-300 border-2 border-white/5 shadow-inner overflow-hidden cursor-pointer hover:ring-2 ring-brand-400 transition-all mb-4"
-                      >
-                        <img
-                          src={selectedDispute.imageUrl}
-                          alt="Product Detail"
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                      <p className="text-sm font-medium text-white/80">صورة توضيحية للمنتج موضوع الشكوى</p>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {selectedAttachments.map((attachment, index) => (
+                          <button
+                            key={attachment.id ?? `${attachment.url}-${index}`}
+                            type="button"
+                            onClick={() => openImageGallery(selectedDispute, index)}
+                            className="aspect-square w-full rounded-2xl bg-brand-300 border-2 border-white/5 shadow-inner overflow-hidden cursor-pointer hover:ring-2 ring-brand-400 transition-all"
+                          >
+                            <img
+                              src={attachment.url}
+                              alt={`صورة مرفقة ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-sm font-medium text-white/80 text-center">
+                        {selectedAttachments.length === 1
+                          ? 'صورة توضيحية للمنتج موضوع الشكوى — اضغط للتكبير'
+                          : 'صور توضيحية للمنتج موضوع الشكوى — اضغط على أي صورة للتكبير'}
+                      </p>
                     </div>
                   </div>
-                ) : null}
+                  )
+                })()}
 
                 {selectedDispute.rawStatus !== 'closed' && (
                   <div className="mt-6 space-y-4" dir="rtl">
@@ -939,7 +976,7 @@ export function DisputesPage({ params, setParams }) {
         </div>
       )}
 
-      {showImageModal && imageUrl && (
+      {showImageModal && galleryImages.length > 0 && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
           <button
             type="button"
@@ -948,12 +985,40 @@ export function DisputesPage({ params, setParams }) {
           >
             <X className="size-6" />
           </button>
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setGalleryIndex((index) => (index - 1 + galleryImages.length) % galleryImages.length)
+                }
+                className="absolute right-6 top-1/2 z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-brand-200/10 text-white hover:bg-brand-200/20 transition-colors"
+                aria-label="الصورة السابقة"
+              >
+                <ChevronRight className="size-6" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setGalleryIndex((index) => (index + 1) % galleryImages.length)}
+                className="absolute left-6 top-1/2 z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-brand-200/10 text-white hover:bg-brand-200/20 transition-colors"
+                aria-label="الصورة التالية"
+              >
+                <ChevronLeft className="size-6" />
+              </button>
+            </>
+          )}
           <div className="relative max-w-4xl w-full max-h-[85vh] overflow-hidden rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
-            <img src={imageUrl} alt="صورة المنتج المرفقة" className="w-full h-full object-contain bg-slate-800" />
+            <img
+              src={galleryImages[galleryIndex]}
+              alt={`صورة المنتج المرفقة ${galleryIndex + 1}`}
+              className="w-full h-full object-contain bg-slate-800"
+            />
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white text-right" dir="rtl">
               <h3 className="text-xl font-bold">معاينة الصورة المرفقة</h3>
               <p className="text-sm text-slate-300 mt-1">
-                صورة المنتج من الزبون — شكوى {selectedDispute?.displayId}
+                {galleryImages.length > 1
+                  ? `صورة ${galleryIndex + 1} من ${galleryImages.length} — شكوى ${selectedDispute?.displayId}`
+                  : `صورة المنتج من الزبون — شكوى ${selectedDispute?.displayId}`}
               </p>
             </div>
           </div>
