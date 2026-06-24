@@ -68,7 +68,7 @@ export function CampaignCard({ campaign, onView, onToggle }) {
         </li>
         <li className="flex justify-between gap-2">
           <span className={`font-bold tabular-nums ${CAMPAIGN_METRICS.stores.value}`}>
-            {fmtNum(campaign.stores)}
+            {fmtNum(campaign.subscribedStores ?? 0)}
           </span>
           <span className="text-white/60">عدد المتاجر</span>
         </li>

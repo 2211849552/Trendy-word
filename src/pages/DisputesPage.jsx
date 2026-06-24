@@ -11,6 +11,7 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
   Send,
   DollarSign,
@@ -31,6 +32,9 @@ import {
   uiStatusFilterToApi,
   uiCategoryFilterToApi,
   uiStatusToApi,
+  mapStatusToDetailUi,
+  COMPLAINT_EDITABLE_STATUS_OPTIONS,
+  COMPLAINT_CATEGORY_FILTER_OPTIONS,
   buildComplaintStats,
 } from '../api/adminComplaints.js'
 
@@ -86,6 +90,74 @@ function getComplaintAttachments(dispute) {
     return [{ url: dispute.imageUrl }]
   }
   return []
+}
+
+function ComplaintStatusDropdown({ rawStatus, onChange, disabled, statusBadgeClass }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
+  const currentLabel = mapStatusToDetailUi(rawStatus)
+  const isClosed = rawStatus === 'closed'
+
+  useEffect(() => {
+    if (!open) return undefined
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  function handleSelect(option) {
+    setOpen(false)
+    if (option !== currentLabel) onChange(option)
+  }
+
+  if (isClosed) {
+    return (
+      <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${statusBadgeClass(currentLabel)}`}>
+        {currentLabel}
+      </span>
+    )
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((prev) => !prev)}
+        className={`px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 transition-opacity disabled:opacity-60 ${statusBadgeClass(currentLabel)}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {currentLabel}
+        <ChevronDown className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open ? (
+        <div
+          className="absolute top-full left-0 z-20 mt-1 min-w-[10rem] overflow-hidden rounded-xl border border-white/10 bg-brand-300 py-1 shadow-2xl"
+          role="listbox"
+        >
+          {COMPLAINT_EDITABLE_STATUS_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="option"
+              aria-selected={option === currentLabel}
+              onClick={() => handleSelect(option)}
+              className={`block w-full px-4 py-2 text-right text-sm font-medium transition-colors hover:bg-brand-100 ${
+                option === currentLabel ? 'text-brand-400 bg-brand-100/50' : 'text-white'
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 export function DisputesPage({ params, setParams }) {
@@ -259,7 +331,7 @@ export function DisputesPage({ params, setParams }) {
       const updated = mapComplaint(result?.data ?? result)
       setSelectedDispute(updated)
       setDisputes((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
-      triggerToast(`تم تحديث الحالة إلى ${updated.status}`)
+      triggerToast(`تم تحديث الحالة إلى ${mapStatusToDetailUi(updated.rawStatus)}`)
     } catch (err) {
       triggerToast(apiErrorMessage(err, 'تعذّر تحديث حالة الشكوى.'))
     } finally {
@@ -294,11 +366,6 @@ export function DisputesPage({ params, setParams }) {
 
     setActionLoading(true)
     try {
-      if (actionName === 'close') {
-        await handleCloseComplaint(selectedDispute, true)
-        return
-      }
-
       if (actionName === 'refund') {
         if (!amount) {
           triggerToast('يرجى إدخال مبلغ صحيح أكبر من صفر قبل التعويض.')
@@ -411,14 +478,17 @@ export function DisputesPage({ params, setParams }) {
 
   const statusBadgeClass = (status) => {
     if (status === 'مفتوحة') return 'bg-red-100 text-red-700'
-    if (status === 'قيد المراجعة') return 'bg-yellow-100 text-yellow-700'
+    if (status === 'قيد المراجعة' || status === 'بانتظار الرد') return 'bg-yellow-100 text-yellow-700'
     if (status === 'تم الحل') return 'bg-emerald-100 text-emerald-700'
+    if (status === 'ملغاة') return 'bg-slate-200 text-slate-700'
     return 'bg-brand-300 text-white/80'
   }
 
-  const typeBadgeClass = (type) => {
-    if (type === 'استرجاع') return 'bg-brand-300 text-brand-700'
-    if (type === 'نزاع') return 'bg-yellow-100 text-yellow-700'
+  const categoryBadgeClass = (category) => {
+    if (category === 'مشكلة في الطلب') return 'bg-orange-100 text-orange-700'
+    if (category === 'مشكلة مع المتجر') return 'bg-pink-100 text-pink-700'
+    if (category === 'مشكلة تقنية') return 'bg-purple-100 text-purple-700'
+    if (category === 'استفسار عام') return 'bg-yellow-100 text-yellow-700'
     return 'bg-brand-300 text-white/80'
   }
 
@@ -496,19 +566,30 @@ export function DisputesPage({ params, setParams }) {
         </div>
         <div className="w-px h-6 bg-slate-200 hidden md:block" />
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-medium text-white/80">النوع:</span>
-          {['الكل', 'استرجاع', 'بلاغ', 'نزاع'].map((type) => (
+          <span className="text-sm font-medium text-white/80">نوع الشكوى:</span>
+          <button
+            type="button"
+            onClick={() => setActiveTypeFilter('الكل')}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+              activeTypeFilter === 'الكل'
+                ? 'bg-brand-900 text-white'
+                : 'bg-brand-300 text-white/70 hover:bg-slate-200'
+            }`}
+          >
+            الكل
+          </button>
+          {COMPLAINT_CATEGORY_FILTER_OPTIONS.map(({ label }) => (
             <button
-              key={type}
+              key={label}
               type="button"
-              onClick={() => setActiveTypeFilter(type)}
+              onClick={() => setActiveTypeFilter(label)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
-                activeTypeFilter === type
+                activeTypeFilter === label
                   ? 'bg-brand-900 text-white'
                   : 'bg-brand-300 text-white/70 hover:bg-slate-200'
               }`}
             >
-              {type}
+              {label}
             </button>
           ))}
         </div>
@@ -563,9 +644,12 @@ export function DisputesPage({ params, setParams }) {
 
                   <div className="flex flex-col items-start gap-3 w-full md:w-auto order-1 md:order-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${typeBadgeClass(dispute.type)}`}>
-                        {dispute.type}
-                      </span>
+                      <div className="flex items-center gap-2 flex-row-reverse">
+                        <span className="text-xs font-medium text-white/50">نوع الشكوى</span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${categoryBadgeClass(dispute.category)}`}>
+                          {dispute.category}
+                        </span>
+                      </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(dispute.status)}`}>
                         {dispute.status}
                       </span>
@@ -589,9 +673,9 @@ export function DisputesPage({ params, setParams }) {
                           type="button"
                           disabled={actionLoading}
                           onClick={() => handleCloseComplaint(dispute)}
-                          className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-brand-300 hover:bg-brand-100 transition-colors shadow-premium border border-white/10 disabled:opacity-60"
+                          className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-rose-600/90 hover:bg-rose-600 transition-colors shadow-premium border border-rose-500/30 disabled:opacity-60"
                         >
-                          إغلاق
+                          إغلاق الشكوى
                         </button>
                       )}
                     </div>
@@ -649,13 +733,22 @@ export function DisputesPage({ params, setParams }) {
             ) : (
               <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 <div className="flex justify-between items-center text-right border-b border-white/5 pb-4" dir="rtl">
-                  <div className="flex gap-2">
-                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${typeBadgeClass(selectedDispute.type)}`}>
-                      {selectedDispute.type}
-                    </span>
-                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${statusBadgeClass(selectedDispute.status)}`}>
-                      {selectedDispute.status}
-                    </span>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-xs font-medium text-white/50">نوع الشكوى</span>
+                      <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${categoryBadgeClass(selectedDispute.category)}`}>
+                        {selectedDispute.category}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-xs font-medium text-white/50">حالة الشكوى</span>
+                      <ComplaintStatusDropdown
+                        rawStatus={selectedDispute.rawStatus}
+                        onChange={handleStatusChange}
+                        disabled={actionLoading}
+                        statusBadgeClass={statusBadgeClass}
+                      />
+                    </div>
                   </div>
                   <div className="text-right">
                     <h3 className="text-xl font-bold text-white">شكوى {selectedDispute.displayId}</h3>
@@ -724,44 +817,27 @@ export function DisputesPage({ params, setParams }) {
 
                 {selectedDispute.rawStatus !== 'closed' && (
                   <div className="mt-6 space-y-4" dir="rtl">
-                    <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد وتحديث الحالة</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-1">
-                        <label className="block text-sm font-medium text-white/70 mb-2">تعديل حالة الشكوى</label>
-                        <select
-                          value={selectedDispute.status}
+                    <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد على الشكوى</h3>
+                    <div>
+                      <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="اكتب ردك هنا..."
                           disabled={actionLoading}
-                          onChange={(e) => handleStatusChange(e.target.value)}
-                          className="w-full rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                          className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSendReply}
+                          disabled={actionLoading || !replyText.trim()}
+                          className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0 disabled:opacity-60"
                         >
-                          <option value="مفتوحة">مفتوحة</option>
-                          <option value="قيد المراجعة">قيد المراجعة</option>
-                          <option value="بانتظار الرد">بانتظار الرد</option>
-                          <option value="تم الحل">تم الحل</option>
-                          <option value="ملغاة">ملغاة</option>
-                        </select>
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="اكتب ردك هنا..."
-                            disabled={actionLoading}
-                            className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleSendReply}
-                            disabled={actionLoading || !replyText.trim()}
-                            className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0 disabled:opacity-60"
-                          >
-                            <Send className="size-4" />
-                            إرسال
-                          </button>
-                        </div>
+                          <Send className="size-4" />
+                          إرسال
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -959,12 +1035,6 @@ export function DisputesPage({ params, setParams }) {
                           className="w-full rounded-xl bg-brand-100 py-3 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60"
                         >
                           إرسال تحذير للتاجر
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button type="button" disabled={actionLoading} onClick={() => handleAction('close')} className="w-full rounded-xl bg-brand-100 py-4 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60 md:col-span-2">
-                          إغلاق الشكوى
                         </button>
                       </div>
                     </div>

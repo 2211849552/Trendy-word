@@ -35,6 +35,11 @@ export function CampaignDetailModal({
 
   if (!open || !campaign) return null
 
+  const subscribedStoresCount =
+    subscribedStores.length > 0
+      ? subscribedStores.length
+      : (campaign.subscribedStores ?? 0)
+
   const isStopped = campaign.paused || campaign.status === 'stopped'
   const displayStatus = isStopped ? 'متوقف' : statusLabels[campaign.status]
   const statusClass = isStopped
@@ -135,7 +140,7 @@ export function CampaignDetailModal({
                 className={`rounded-xl border px-4 py-5 text-center ${CAMPAIGN_METRICS.stores.card}`}
               >
                 <p className={`text-3xl font-bold tabular-nums ${CAMPAIGN_METRICS.stores.value}`}>
-                  {campaign.stores.toLocaleString('ar-LY')}
+                  {subscribedStoresCount.toLocaleString('ar-LY')}
                 </p>
                 <p className={`mt-1 text-sm font-medium ${CAMPAIGN_METRICS.stores.label}`}>
                   عدد المتاجر

@@ -66,11 +66,22 @@ const STATUS_UI = {
 }
 
 const CATEGORY_UI = {
-  order_issue: 'استرجاع',
-  store_issue: 'بلاغ',
-  technical_issue: 'بلاغ',
-  general_inquiry: 'نزاع',
+  order_issue: 'مشكلة في الطلب',
+  store_issue: 'مشكلة مع المتجر',
+  technical_issue: 'مشكلة تقنية',
+  general_inquiry: 'استفسار عام',
+  'مشكلة في الطلب': 'مشكلة في الطلب',
+  'مشكلة مع المتجر': 'مشكلة مع المتجر',
+  'مشكلة تقنية': 'مشكلة تقنية',
+  'استفسار عام': 'استفسار عام',
 }
+
+export const COMPLAINT_CATEGORY_FILTER_OPTIONS = [
+  { label: 'مشكلة في الطلب', apiValue: 'order_issue' },
+  { label: 'مشكلة مع المتجر', apiValue: 'store_issue' },
+  { label: 'مشكلة تقنية', apiValue: 'technical_issue' },
+  { label: 'استفسار عام', apiValue: 'general_inquiry' },
+]
 
 const STATUS_API = {
   الكل: null,
@@ -82,9 +93,30 @@ const STATUS_API = {
 
 const CATEGORY_API = {
   الكل: null,
-  استرجاع: 'order_issue',
-  بلاغ: 'store_issue',
-  نزاع: 'general_inquiry',
+  'مشكلة في الطلب': 'order_issue',
+  'مشكلة مع المتجر': 'store_issue',
+  'مشكلة تقنية': 'technical_issue',
+  'استفسار عام': 'general_inquiry',
+}
+
+export function resolveComplaintCategoryRaw(item) {
+  const category = item?.category
+  if (typeof category === 'string') return category.trim()
+  if (category && typeof category === 'object') {
+    return String(
+      category.value ?? category.slug ?? category.key ?? category.code ?? category.name ?? '',
+    ).trim()
+  }
+  return ''
+}
+
+const STATUS_DETAIL_UI = {
+  open: 'مفتوحة',
+  under_review: 'قيد المراجعة',
+  awaiting_reply: 'بانتظار الرد',
+  resolved: 'تم الحل',
+  closed: 'مغلقة',
+  cancelled: 'ملغاة',
 }
 
 const STATUS_UPDATE_API = {
@@ -94,6 +126,14 @@ const STATUS_UPDATE_API = {
   'تم الحل': 'resolved',
   ملغاة: 'cancelled',
 }
+
+export const COMPLAINT_EDITABLE_STATUS_OPTIONS = [
+  'مفتوحة',
+  'قيد المراجعة',
+  'بانتظار الرد',
+  'تم الحل',
+  'ملغاة',
+]
 
 export function uiStatusFilterToApi(filter) {
   return STATUS_API[filter] ?? null
@@ -111,8 +151,14 @@ export function mapStatusToUi(status) {
   return STATUS_UI[status] ?? status ?? '—'
 }
 
+export function mapStatusToDetailUi(status) {
+  return STATUS_DETAIL_UI[status] ?? mapStatusToUi(status)
+}
+
 export function mapCategoryToUi(category) {
-  return CATEGORY_UI[category] ?? category ?? '—'
+  const raw = String(category ?? '').trim()
+  if (!raw) return '—'
+  return CATEGORY_UI[raw] ?? raw
 }
 
 function apiOrigin() {
@@ -206,8 +252,9 @@ export function mapComplaint(item) {
     date: String(item.created_at ?? '').slice(0, 10),
     status: mapStatusToUi(item.status),
     rawStatus: item.status ?? '',
-    type: mapCategoryToUi(item.category),
-    rawCategory: item.category ?? '',
+    category: mapCategoryToUi(resolveComplaintCategoryRaw(item)),
+    rawCategory: resolveComplaintCategoryRaw(item),
+    type: mapCategoryToUi(resolveComplaintCategoryRaw(item)),
     priority: item.priority ?? '',
     resolutionSummary: item.resolution_summary ?? '',
     hasImage: attachments.length > 0,

@@ -121,6 +121,9 @@ export function MarketingPage() {
         mapCampaignSubscriptionStore,
       )
       setSubscribedStores(stores)
+      setDetailCampaign((prev) =>
+        prev ? { ...prev, subscribedStores: stores.length } : prev,
+      )
     } else {
       setStoresError(apiErrorMessage(publicResult.reason, 'تعذّر تحميل المتاجر المشتركة.'))
     }

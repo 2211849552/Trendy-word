@@ -2,6 +2,7 @@ import { apiRequest } from './client.js'
 import { getEmployee } from './adminEmployees.js'
 
 const STORE_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
+const STORES_ADMIN_ROLES = new Set(['stores_admin'])
 const ORDER_VIEW_ROLES = new Set(['super_admin', 'operations_admin'])
 const ORDER_STATUS_UPDATE_ROLES = new Set(['super_admin', 'operations_admin'])
 const CUSTOMER_MANAGEMENT_ROLES = new Set(['super_admin', 'operations_admin'])
@@ -270,9 +271,11 @@ export function canViewComplaintNotifications(user) {
   return hasAnyRole(user, ORDER_VIEW_ROLES)
 }
 
-/** عرض خصومات المتجر — مدير النظام ومسؤول المتاجر */
+/** عرض خصومات المتجر — مسؤول المتاجر فقط (يُستبعد مدير النظام) */
 export function canViewStorePromotions(user) {
-  return hasFullStoreManagementAccess(user)
+  if (!user) return false
+  if (isPlatformStoreManager(user)) return false
+  return hasAnyRole(user, STORES_ADMIN_ROLES)
 }
 
 /** واجهة الشكاوى والنزاعات — مدير النظام (مدير المتاجر) ومسؤول العمليات فقط */

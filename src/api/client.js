@@ -46,6 +46,10 @@ export function sanitizeApiErrorMessage(message) {
     return 'تعذّر الاتصال بقاعدة البيانات. شغّل MySQL من XAMPP ثم أعد المحاولة.'
   }
 
+  if (lower.includes('cannot perform actions on a closed complaint ticket')) {
+    return 'لا يمكن تنفيذ إجراءات على تذكرة شكوى مغلقة.'
+  }
+
   return message
 }
 

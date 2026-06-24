@@ -24,6 +24,7 @@ import {
 } from '../api/adminStores.js'
 import {
   hasFullStoreManagementAccess,
+  canViewStorePromotions,
 } from '../api/user.js'
 
 function extractList(data) {
@@ -87,7 +88,7 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
   const [storeStatus, setStoreStatus] = useState('all')
   const canAccessAdvancedStoreFeatures = hasFullStoreManagementAccess(currentUser)
   const canEditDeliveryPrices = hasFullStoreManagementAccess(currentUser)
-  const canViewStorePromotionsAccess = hasFullStoreManagementAccess(currentUser)
+  const canViewStorePromotionsAccess = canViewStorePromotions(currentUser)
 
   useEffect(() => {
     if (params?.store_join_request_id) {

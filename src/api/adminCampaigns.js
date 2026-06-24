@@ -99,20 +99,50 @@ export function pickCampaignCount(item, keys) {
   return null
 }
 
-export function pickCampaignStores(item) {
+/** عدد المتاجر المشتركة في الحملة */
+export function pickCampaignSubscribedStores(item) {
+  const fromCount = pickCampaignCount(item, [
+    'store_subscriptions_count',
+    'subscriptions_count',
+    'subscribers_count',
+    'subscribed_stores_count',
+    'storeSubscriptionsCount',
+  ])
+  if (fromCount != null) return fromCount
+
+  const lists = [
+    item?.store_subscriptions,
+    item?.subscribed_stores,
+    item?.subscribers,
+  ].filter(Array.isArray)
+
+  for (const list of lists) {
+    if (list.length > 0) return list.length
+  }
+
+  if (Array.isArray(item?.stores) && item.stores.length > 0) {
+    const first = item.stores[0]
+    if (first && typeof first === 'object') return item.stores.length
+  }
+
+  return 0
+}
+
+/** إجمالي عدد المتاجر (من استجابة الحملة أو لوحة التحكم) */
+export function pickCampaignTotalStores(item) {
   return (
     pickCampaignCount(item, [
-      'store_subscriptions_count',
+      'total_stores',
       'stores_count',
-      'subscriptions_count',
-      'subscribers_count',
-      'stores',
-      'storeSubscriptionsCount',
+      'total_stores_count',
       'storesCount',
-    ]) ??
-    (Array.isArray(item?.store_subscriptions) ? item.store_subscriptions.length : null) ??
-    0
+    ]) ?? 0
   )
+}
+
+/** @deprecated استخدم pickCampaignSubscribedStores أو pickCampaignTotalStores */
+export function pickCampaignStores(item) {
+  return pickCampaignSubscribedStores(item)
 }
 
 function extractPaginationTotal(data) {
@@ -400,6 +430,11 @@ export function mergeCampaignSources(summary, detail) {
   return {
     ...mapped,
     stores: Math.max(fromSummary.stores, fromDetail.stores, mapped.stores),
+    subscribedStores: Math.max(
+      fromSummary.subscribedStores,
+      fromDetail.subscribedStores,
+      mapped.subscribedStores,
+    ),
     products: Math.max(fromSummary.products, fromDetail.products, mapped.products),
   }
 }
@@ -605,7 +640,8 @@ export function mapCampaign(item) {
     dateTo: normalizeCampaignDate(item.end_date ?? item.date_to ?? item.dateTo),
     status: mapped.status,
     paused: mapped.paused,
-    stores: pickCampaignStores(item),
+    stores: pickCampaignTotalStores(item),
+    subscribedStores: pickCampaignSubscribedStores(item),
     products: pickCampaignProducts(item),
     rawStatus: item.status ?? '',
   }
