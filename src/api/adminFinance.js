@@ -2,6 +2,7 @@ import { apiRequest } from './client.js'
 import { getPaymentMethodsStats } from './adminDashboard.js'
 import { getOrder, getOrders, extractOrderList, mapOrder } from './adminOrders.js'
 import { getAdminStore } from './adminStores.js'
+import { getComplaint } from './adminComplaints.js'
 
 // أرباح المنصة — لوحة الإدارة
 // GET /api/admin/finance/ad-profits
@@ -427,8 +428,10 @@ function parseStoreFromDescription(description) {
   if (!description) return ''
   const text = String(description)
   const patterns = [
-    /رسوم\s+اشتراك\s+متجر\s+(.+?)\s+في/u,
-    /اشتراك\s+(?:المتجر|متجر)\s+(.+?)\s+في/u,
+    /رسوم\s+اشتراك\s+متجر\s+(.+?)(?:\s+في|\s*$)/u,
+    /اشتراك\s+(?:المتجر|متجر)\s+(.+?)(?:\s+في|\s*$)/u,
+    /(?:تحويل|إيداع)\s+مبلغ\s+(?:ل)?(?:حملة|الحملة|إعلان)\s*[:：]?\s*(.+)$/u,
+    /(?:من|إلى)\s+(?:متجر|المتجر)\s*[:：]?\s*(.+)$/u,
     /رسوم\s+اشتراك\s+متجر\s+(.+)$/u,
   ]
   for (const pattern of patterns) {
@@ -436,6 +439,53 @@ function parseStoreFromDescription(description) {
     if (match?.[1]) return match[1].trim()
   }
   return ''
+}
+
+function descriptionLinkKey(description, date) {
+  const normalized = String(description ?? '').replace(/\s+/g, ' ').trim().toLowerCase()
+  if (!normalized) return ''
+  return `${normalized}|${String(date ?? '').slice(0, 10)}`
+}
+
+function isTxTransaction(tx) {
+  return String(tx.id ?? '').startsWith('TX-')
+}
+
+function needsPartyEnrichment(tx) {
+  const hasCustomer = Boolean(tx.customer && tx.customer !== '—')
+  const hasStore = Boolean(tx.store && tx.store !== '—')
+  if (hasCustomer && hasStore) return false
+  return isTxTransaction(tx) || !hasCustomer || !hasStore
+}
+
+function mapOrderToParties(order) {
+  if (!order) return null
+  return {
+    customer: firstFilledString(order.customer_name, order.seller?.name),
+    store: firstFilledString(order.store_name),
+    orderNumber: order.order_number ?? '',
+    totalAmount: Number(order.total_amount ?? 0),
+    createdAt: String(order.created_at ?? ''),
+  }
+}
+
+function findOrderMatchForTransaction(orders, tx) {
+  const txDate = String(tx.date ?? '').slice(0, 10)
+  const txAmount = Number(tx.amount ?? 0)
+  if (!txDate || !txAmount) return null
+
+  const exact = orders.find((order) => {
+    const orderDate = String(order.created_at ?? '').slice(0, 10)
+    return orderDate === txDate && Math.abs(Number(order.total_amount ?? 0) - txAmount) < 0.02
+  })
+  if (exact) return exact
+
+  const orderNumber = parseOrderNumberFromDescription(tx.description)
+  if (orderNumber) {
+    return orders.find((order) => order.order_number === orderNumber) ?? null
+  }
+
+  return null
 }
 
 function parseOrderNumberFromDescription(description) {
@@ -538,11 +588,14 @@ export async function enrichTransactionsWithParties(transactions) {
   const orderIds = new Set()
   const storeIds = new Set()
   const orderNumbers = new Set()
+  const complaintIds = new Set()
+  const needsBulkOrders = transactions.some(needsPartyEnrichment)
 
   transactions.forEach((tx) => {
     const model = referenceModel(tx.referenceType)
     if (model === 'Order' && tx.referenceId) orderIds.add(Number(tx.referenceId))
     if (model === 'Store' && tx.referenceId) storeIds.add(Number(tx.referenceId))
+    if (model === 'ComplaintTicket' && tx.referenceId) complaintIds.add(Number(tx.referenceId))
 
     const orderNumber = tx.referenceDetails?.order_number
       || parseOrderNumberFromDescription(tx.description)
@@ -551,19 +604,16 @@ export async function enrichTransactionsWithParties(transactions) {
 
   const orderCache = new Map()
   const storeCache = new Map()
+  const complaintCache = new Map()
+  let bulkOrders = []
 
   await Promise.all([
     ...[...orderIds].map(async (id) => {
       try {
         const data = await getOrder(id)
         const order = data?.data ?? data
-        orderCache.set(id, {
-          customer: firstFilledString(order.customer_name, order.seller?.name),
-          store: firstFilledString(order.store_name),
-          orderNumber: order.order_number ?? '',
-          totalAmount: Number(order.total_amount ?? 0),
-          createdAt: String(order.created_at ?? ''),
-        })
+        const mapped = mapOrderToParties(order)
+        if (mapped) orderCache.set(id, mapped)
       } catch {
         // ignore lookup failures
       }
@@ -588,33 +638,54 @@ export async function enrichTransactionsWithParties(transactions) {
         const order = extractOrderList(data).find((item) => item.order_number === orderNumber)
           ?? extractOrderList(data)[0]
         if (!order?.id) return
-        orderCache.set(Number(order.id), {
-          customer: firstFilledString(order.customer_name, order.seller?.name),
-          store: firstFilledString(order.store_name),
-          orderNumber: order.order_number ?? '',
-          totalAmount: Number(order.total_amount ?? 0),
-          createdAt: String(order.created_at ?? ''),
+        const mapped = mapOrderToParties(order)
+        if (mapped) orderCache.set(Number(order.id), mapped)
+      } catch {
+        // ignore lookup failures
+      }
+    }),
+    ...[...complaintIds].map(async (id) => {
+      try {
+        const data = await getComplaint(id)
+        const complaint = data?.data ?? data
+        complaintCache.set(id, {
+          customer: firstFilledString(complaint.user?.name, complaint.order?.customer_name),
+          store: firstFilledString(complaint.order?.store_name),
         })
       } catch {
         // ignore lookup failures
       }
     }),
+    ...(needsBulkOrders
+      ? [
+          (async () => {
+            try {
+              const data = await getOrders({ per_page: 100 })
+              bulkOrders = extractOrderList(data)
+            } catch {
+              bulkOrders = []
+            }
+          })(),
+        ]
+      : []),
   ])
 
   const storeByReferenceMoment = new Map()
+
   transactions.forEach((tx) => {
     const storeFromDescription = parseStoreFromDescription(tx.description)
-    if (!storeFromDescription) return
-    const key = `${referenceKey(tx.referenceType, tx.referenceId)}|${transactionMoment(tx.raw)}`
-    storeByReferenceMoment.set(key, storeFromDescription)
+    if (storeFromDescription) {
+      const key = `${referenceKey(tx.referenceType, tx.referenceId)}|${transactionMoment(tx.raw)}`
+      storeByReferenceMoment.set(key, storeFromDescription)
+    }
   })
 
-  return transactions.map((tx) => {
+  const enriched = transactions.map((tx) => {
     let next = { ...tx }
 
     const refMomentKey = `${referenceKey(tx.referenceType, tx.referenceId)}|${transactionMoment(tx.raw)}`
     if (!next.store) {
-      next.store = storeByReferenceMoment.get(refMomentKey) || ''
+      next.store = storeByReferenceMoment.get(refMomentKey) || parseStoreFromDescription(next.description) || ''
     }
 
     const model = referenceModel(tx.referenceType)
@@ -625,6 +696,14 @@ export async function enrichTransactionsWithParties(transactions) {
       const storeInfo = storeCache.get(Number(tx.referenceId))
       if (storeInfo) {
         next.store = next.store || storeInfo.store
+        next.customer = next.customer || storeInfo.owner
+      }
+    }
+    if (model === 'ComplaintTicket' && tx.referenceId) {
+      const complaintInfo = complaintCache.get(Number(tx.referenceId))
+      if (complaintInfo) {
+        next.customer = next.customer || complaintInfo.customer
+        next.store = next.store || complaintInfo.store
       }
     }
 
@@ -635,7 +714,14 @@ export async function enrichTransactionsWithParties(transactions) {
       next = applyOrderInfo(next, order)
     }
 
-    if (!next.customer && tx.rawType === 'order_payment' && !tx.referenceId) {
+    if ((!next.customer || !next.store) && bulkOrders.length) {
+      const matchedOrder = findOrderMatchForTransaction(bulkOrders, next)
+      if (matchedOrder) {
+        next = applyOrderInfo(next, mapOrderToParties(matchedOrder))
+      }
+    }
+
+    if (!next.customer && tx.rawType === 'order_payment') {
       for (const order of orderCache.values()) {
         const orderDate = order.createdAt.slice(0, 10)
         if (orderDate === tx.date && Math.abs(order.totalAmount - tx.amount) < 0.02) {
@@ -643,10 +729,16 @@ export async function enrichTransactionsWithParties(transactions) {
           break
         }
       }
+      if (!next.customer && bulkOrders.length) {
+        const matchedOrder = findOrderMatchForTransaction(bulkOrders, next)
+        if (matchedOrder) {
+          next = applyOrderInfo(next, mapOrderToParties(matchedOrder))
+        }
+      }
     }
 
     if (!next.store && (model === 'Plan' || model === 'MegaCampaign')) {
-      next.store = parseStoreFromDescription(tx.description) || storeByReferenceMoment.get(refMomentKey) || ''
+      next.store = parseStoreFromDescription(next.description) || storeByReferenceMoment.get(refMomentKey) || ''
     }
 
     if (!next.customer && !next.store) {
@@ -657,10 +749,43 @@ export async function enrichTransactionsWithParties(transactions) {
       }
     }
 
+    if (isStoreSideTransaction(next) && !next.customer) {
+      for (const storeInfo of storeCache.values()) {
+        if (storeInfo.store && storeInfo.store === next.store) {
+          next.customer = storeInfo.owner
+          break
+        }
+      }
+    }
+
     return {
       ...next,
       customer: next.customer || '—',
       store: next.store || '—',
+    }
+  })
+
+  const partiesByDescription = new Map()
+  enriched.forEach((tx) => {
+    const linkKey = descriptionLinkKey(tx.description, tx.date)
+    if (!linkKey) return
+    if (tx.store === '—' && tx.customer === '—') return
+    partiesByDescription.set(linkKey, {
+      store: tx.store !== '—' ? tx.store : '',
+      customer: tx.customer !== '—' ? tx.customer : '',
+    })
+  })
+
+  return enriched.map((tx) => {
+    if (tx.customer !== '—' && tx.store !== '—') return tx
+
+    const linked = partiesByDescription.get(descriptionLinkKey(tx.description, tx.date))
+    if (!linked) return tx
+
+    return {
+      ...tx,
+      customer: tx.customer !== '—' ? tx.customer : (linked.customer || '—'),
+      store: tx.store !== '—' ? tx.store : (linked.store || '—'),
     }
   })
 }
