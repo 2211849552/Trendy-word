@@ -3,7 +3,6 @@ import {
   Search,
   CheckCircle2,
   Eye,
-  AlertCircle,
   Calendar,
   Package,
   Store,
@@ -478,7 +477,9 @@ export function DisputesPage({ params, setParams }) {
 
   const statusBadgeClass = (status) => {
     if (status === 'مفتوحة') return 'bg-red-100 text-red-700'
-    if (status === 'قيد المراجعة' || status === 'بانتظار الرد') return 'bg-yellow-100 text-yellow-700'
+    if (status === 'قيد المراجعة' || status === 'بانتظار الرد' || status === 'قيد المعالجة') {
+      return 'bg-yellow-100 text-yellow-700'
+    }
     if (status === 'تم الحل') return 'bg-emerald-100 text-emerald-700'
     if (status === 'ملغاة') return 'bg-slate-200 text-slate-700'
     return 'bg-brand-300 text-white/80'
@@ -524,11 +525,11 @@ export function DisputesPage({ params, setParams }) {
           <p className="mt-1 text-2xl font-bold text-white">{stats.review}</p>
         </div>
         <div className="rounded-xl border border-white/10 bg-brand-200 p-5 shadow-premium text-center flex flex-col items-center justify-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg text-red-500">
-            <AlertCircle className="size-6" />
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg text-slate-400">
+            <X className="size-6" />
           </div>
-          <p className="text-sm font-medium text-white/60">الشكاوى المفتوحة</p>
-          <p className="mt-1 text-2xl font-bold text-white">{stats.open}</p>
+          <p className="text-sm font-medium text-white/60">الشكاوى المغلقة</p>
+          <p className="mt-1 text-2xl font-bold text-white">{stats.closed}</p>
         </div>
       </div>
 

@@ -29,9 +29,13 @@ export function addComplaintReply(id, message) {
   })
 }
 
-// POST /api/complaints/{id}/close — يُحدَّث عبر PATCH status لتجنّب أخطاء الخادم على /close
-export function closeComplaint(id, _body = {}) {
-  return updateComplaintStatus(id, 'closed')
+// POST /api/complaints/{id}/close — POST /api/v1/complaints/{id}/close
+export function closeComplaint(id, body = {}) {
+  const options = { method: 'POST' }
+  if (Object.keys(body).length > 0) {
+    options.body = JSON.stringify(body)
+  }
+  return apiRequest(`/api/complaints/${encodeURIComponent(String(id))}/close`, options)
 }
 
 // POST /api/complaints/{id}/financial-action
@@ -111,28 +115,22 @@ export function resolveComplaintCategoryRaw(item) {
 }
 
 const STATUS_DETAIL_UI = {
-  open: 'مفتوحة',
-  under_review: 'قيد المراجعة',
-  awaiting_reply: 'بانتظار الرد',
+  open: 'قيد المعالجة',
+  under_review: 'قيد المعالجة',
+  awaiting_reply: 'قيد المعالجة',
   resolved: 'تم الحل',
   closed: 'مغلقة',
   cancelled: 'ملغاة',
 }
 
 const STATUS_UPDATE_API = {
-  مفتوحة: 'under_review',
-  'قيد المراجعة': 'under_review',
-  'بانتظار الرد': 'awaiting_reply',
+  'قيد المعالجة': 'under_review',
   'تم الحل': 'resolved',
-  ملغاة: 'cancelled',
 }
 
 export const COMPLAINT_EDITABLE_STATUS_OPTIONS = [
-  'مفتوحة',
-  'قيد المراجعة',
-  'بانتظار الرد',
+  'قيد المعالجة',
   'تم الحل',
-  'ملغاة',
 ]
 
 export function uiStatusFilterToApi(filter) {
@@ -270,10 +268,12 @@ export function mapComplaintDetail(data) {
 }
 
 export function buildComplaintStats(disputes) {
-  const open = disputes.filter((d) => d.rawStatus === 'open').length
+  const closed = disputes.filter((d) =>
+    ['closed', 'cancelled'].includes(d.rawStatus),
+  ).length
   const review = disputes.filter((d) =>
     ['under_review', 'awaiting_reply'].includes(d.rawStatus),
   ).length
   const resolved = disputes.filter((d) => d.rawStatus === 'resolved').length
-  return { open, review, resolved }
+  return { closed, review, resolved }
 }
