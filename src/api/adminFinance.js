@@ -1,5 +1,6 @@
 import { apiRequest } from './client.js'
-import { getOrder, getOrders, extractOrderList } from './adminOrders.js'
+import { getPaymentMethodsStats } from './adminDashboard.js'
+import { getOrder, getOrders, extractOrderList, mapOrder } from './adminOrders.js'
 import { getAdminStore } from './adminStores.js'
 
 // أرباح المنصة — لوحة الإدارة
@@ -28,33 +29,33 @@ export function getPlatformEarnings(params = {}) {
 }
 
 // [8] الإدارة المالية
-// GET /api/v1/finance/revenue-overview
+// GET /api/finance/revenue-overview
 export function getRevenueOverview(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/finance/revenue-overview${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/finance/revenue-overview${query ? `?${query}` : ''}`)
 }
 
-// GET /api/v1/finance/transactions — بحث وفلترة
+// GET /api/finance/transactions — بحث وفلترة
 export function getFinanceTransactions(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/finance/transactions${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/finance/transactions${query ? `?${query}` : ''}`)
 }
 
-// GET /api/v1/finance/transactions/{id}
+// GET /api/finance/transactions/{id}
 export function getFinanceTransaction(id) {
-  return apiRequest(`/api/v1/finance/transactions/${encodeURIComponent(String(id))}`)
+  return apiRequest(`/api/finance/transactions/${encodeURIComponent(String(id))}`)
 }
 
-// GET /api/v1/finance/export — تصدير التقارير
+// GET /api/finance/export — تصدير التقارير
 export function exportFinanceReport(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/finance/export${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/finance/export${query ? `?${query}` : ''}`)
 }
 
-// GET /api/v1/finance/payment-method-percentages — إحصائيات ونسب طرق الدفع
+// GET /api/finance/payment-method-percentages — إحصائيات ونسب طرق الدفع
 export function getPaymentMethodPercentages(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/v1/finance/payment-method-percentages${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/finance/payment-method-percentages${query ? `?${query}` : ''}`)
 }
 
 const PAYMENT_METHOD_COLORS = {
@@ -134,7 +135,32 @@ function mapPaymentMethodEntriesByCount(entries) {
   )
 }
 
+function mapDashboardPaymentMethodEntries(entries) {
+  const totals = { wallet: 0, cash: 0 }
+
+  entries.forEach((entry) => {
+    const label = String(entry.label ?? entry.name ?? entry.payment_method ?? '').toLowerCase()
+    const pct = extractPercentage(entry)
+    if (label.includes('نقد') || label.includes('cash') || label.includes('cod')) {
+      totals.cash += pct
+    } else {
+      totals.wallet += pct
+    }
+  })
+
+  return chartFromWalletAndCash(totals.wallet, totals.cash)
+}
+
 export function mapPaymentMethodPercentages(data) {
+  const root = data?.data ?? data
+
+  if (Array.isArray(root) && root.length) {
+    if (root[0]?.label != null || root[0]?.payment_method != null) {
+      return mapDashboardPaymentMethodEntries(root)
+    }
+    return mapPaymentMethodEntries(root)
+  }
+
   const payload = extractFinancePayload(data)
 
   if (Array.isArray(payload)) {
@@ -144,8 +170,13 @@ export function mapPaymentMethodPercentages(data) {
   const nested = payload.payment_methods ?? payload.methods ?? payload.percentages
   if (Array.isArray(nested) && nested.length) {
     const hasCounts = nested.some((entry) => entry?.count != null || entry?.total != null)
-    if (hasCounts) return mapPaymentMethodEntriesByCount(nested)
-    return mapPaymentMethodEntries(nested)
+    if (hasCounts) {
+      const chart = mapPaymentMethodEntriesByCount(nested)
+      if (paymentMethodsChartHasData(chart)) return chart
+    } else {
+      const chart = mapPaymentMethodEntries(nested)
+      if (paymentMethodsChartHasData(chart)) return chart
+    }
   }
 
   if (payload.wallet_percentage != null || payload.cash_percentage != null) {
@@ -193,23 +224,22 @@ export function filterTransactionsByPeriod(transactions, periodLabel) {
 }
 
 export async function fetchPaymentMethodsDistribution({ period } = {}) {
-  const params = buildFinanceQueryParams({ period, perPage: 100 })
+  const statsParams = buildPaymentStatsQueryParams({ period })
+  const txParams = buildFinanceQueryParams({ period, perPage: 100 })
 
-  const [orderResult, txResult] = await Promise.allSettled([
-    getPaymentMethodPercentages(params),
-    getFinanceTransactions(params),
+  const [statsResult, dashboardResult, txResult, ordersResult] = await Promise.allSettled([
+    getPaymentMethodPercentages(statsParams),
+    getPaymentMethodsStats(statsParams),
+    getFinanceTransactions(txParams),
+    getOrders({ per_page: 100, status: 'delivered' }),
   ])
 
   const orderPayload =
-    orderResult.status === 'fulfilled' ? extractFinancePayload(orderResult.value) : {}
+    statsResult.status === 'fulfilled' ? extractFinancePayload(statsResult.value) : {}
   const totalOrders = Number(orderPayload.total_orders ?? 0)
-  const ordersChart =
-    orderResult.status === 'fulfilled'
-      ? mapPaymentMethodPercentages(orderResult.value)
-      : EMPTY_PAYMENT_METHODS_CHART
 
-  let transactionsChart = EMPTY_PAYMENT_METHODS_CHART
   let transactionCount = 0
+  let transactionsChart = EMPTY_PAYMENT_METHODS_CHART
 
   if (txResult.status === 'fulfilled') {
     const mapped = extractTransactionList(txResult.value).map(mapTransaction)
@@ -218,36 +248,45 @@ export async function fetchPaymentMethodsDistribution({ period } = {}) {
     transactionsChart = buildPaymentMethodsChart(filtered)
   }
 
-  const ordersWalletShare = Number(
-    ordersChart.find((item) => item.name === 'محفظة إلكترونية')?.value ?? 0,
-  )
-  const txHasData = paymentMethodsChartHasData(transactionsChart)
+  const sources = []
 
-  // المعاملات المالية تعكس نشاط المحفظة؛ الطلبات المكتملة قد لا تشملها
-  if (txHasData && (totalOrders === 0 || ordersWalletShare === 0)) {
-    return {
-      chart: transactionsChart,
-      totalOrders,
-      transactionCount,
-      source: 'transactions',
+  if (statsResult.status === 'fulfilled') {
+    const chart = mapPaymentMethodPercentages(statsResult.value)
+    if (paymentMethodsChartHasData(chart)) {
+      sources.push({ chart, source: 'orders', priority: 1 })
     }
   }
 
-  if (paymentMethodsChartHasData(ordersChart)) {
-    return {
-      chart: ordersChart,
-      totalOrders,
-      transactionCount,
-      source: 'orders',
+  if (dashboardResult.status === 'fulfilled') {
+    const chart = mapPaymentMethodPercentages(dashboardResult.value)
+    if (paymentMethodsChartHasData(chart)) {
+      sources.push({ chart, source: 'orders', priority: 2 })
     }
   }
 
-  if (txHasData) {
-    return {
+  if (paymentMethodsChartHasData(transactionsChart)) {
+    sources.push({
       chart: transactionsChart,
+      source: 'transactions',
+      priority: 3,
+    })
+  }
+
+  if (ordersResult.status === 'fulfilled') {
+    const orders = extractOrderList(ordersResult.value).map(mapOrder)
+    const ordersChart = buildPaymentMethodsChartFromOrders(orders)
+    if (paymentMethodsChartHasData(ordersChart)) {
+      sources.push({ chart: ordersChart, source: 'orders', priority: 4 })
+    }
+  }
+
+  if (sources.length) {
+    sources.sort((a, b) => a.priority - b.priority)
+    return {
+      chart: sources[0].chart,
       totalOrders,
       transactionCount,
-      source: 'transactions',
+      source: sources[0].source,
     }
   }
 
@@ -281,6 +320,8 @@ export function sumSubscriptionAndAdProfits(subscriptionPayload, adPayload) {
 export function extractTransactionList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.data?.transactions)) return data.data.transactions
+  if (Array.isArray(data?.transactions)) return data.transactions
   return []
 }
 
@@ -322,6 +363,10 @@ export function buildFinanceQueryParams({ search, status, period, perPage = 100 
   if (trimmed) params.search = trimmed
   if (status && status !== 'جميع الحالات') params.status = status
   return params
+}
+
+export function buildPaymentStatsQueryParams({ period } = {}) {
+  return uiPeriodToDateRange(period)
 }
 
 function mapPaymentType(item) {
@@ -649,6 +694,29 @@ export function buildPaymentMethodsChart(transactions) {
   return chartFromWalletAndCash(
     (totals['محفظة إلكترونية'] / total) * 100,
     (totals['نقدي'] / total) * 100,
+  )
+}
+
+export function buildPaymentMethodsChartFromOrders(orders) {
+  if (!orders.length) return EMPTY_PAYMENT_METHODS_CHART
+
+  const totals = { wallet: 0, cash: 0 }
+  orders.forEach((order) => {
+    const raw = String(order.rawPayment ?? order.payment ?? '').toLowerCase()
+    const label = String(order.payment ?? '')
+    if (raw.includes('cash') || raw.includes('cod') || label.includes('نقد')) {
+      totals.cash += 1
+    } else {
+      totals.wallet += 1
+    }
+  })
+
+  const total = totals.wallet + totals.cash
+  if (!total) return EMPTY_PAYMENT_METHODS_CHART
+
+  return chartFromWalletAndCash(
+    (totals.wallet / total) * 100,
+    (totals.cash / total) * 100,
   )
 }
 

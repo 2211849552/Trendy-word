@@ -23,6 +23,7 @@ import {
   fetchMonthlyRevenueSeries,
   paymentMethodsChartHasData,
   filterPaymentMethodsChartForDisplay,
+  buildPaymentMethodsChart,
 } from '../api/adminFinance.js'
 import { downloadFinanceReportPdf } from '../utils/printFinance.js'
 import {
@@ -194,6 +195,15 @@ export function FinancePage() {
   useEffect(() => {
     if (cardModalOpen) loadBankCards()
   }, [cardModalOpen])
+
+  useEffect(() => {
+    if (paymentMethodsHasData || txLoading || transactions.length === 0) return
+    const chart = buildPaymentMethodsChart(transactions)
+    if (!paymentMethodsChartHasData(chart)) return
+    setPaymentMethodsData(chart)
+    setPaymentMethodsHasData(true)
+    setPaymentMethodsSource('transactions')
+  }, [transactions, txLoading, paymentMethodsHasData])
 
   const formatAmount = (value, fallback) => {
     if (value == null || value === '') return fallback

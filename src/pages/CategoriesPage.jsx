@@ -21,6 +21,13 @@ import {
   updateAdminAttribute,
   deleteAdminAttribute,
 } from '../api/adminAttributes.js'
+
+function formatCategoryProductCount(count) {
+  const n = Number(count) || 0
+  if (n === 0) return 'لا يوجد منتجات'
+  return `${n} منتجات`
+}
+
 export function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('categories')
   const [searchQuery, setSearchQuery] = useState('')
@@ -130,9 +137,8 @@ export function CategoriesPage() {
     if (!newCatName.trim() || !selectedItem) return
 
     try {
-      const response = await updateAdminCategory(selectedItem.id, { name: newCatName.trim() })
-      const updated = mapCategory(response?.data ?? response)
-      patchCategoryInList(selectedItem.id, { ...updated, name: newCatName.trim() })
+      await updateAdminCategory(selectedItem.id, { name: newCatName.trim() })
+      patchCategoryInList(selectedItem.id, { name: newCatName.trim() })
       setShowEditCategory(false)
       triggerToast('تم تحديث التصنيف بنجاح')
     } catch (err) {
@@ -416,7 +422,9 @@ export function CategoriesPage() {
                         <tr key={cat.id} className="hover:bg-brand-300">
                           <td className="px-4 py-4 font-bold text-white">{cat.name}</td>
                           <td className="px-4 py-4 text-white">
-                            {cat.count} <span className="text-white/50">منتج</span>
+                            <span className={cat.count === 0 ? 'text-white/50' : undefined}>
+                              {formatCategoryProductCount(cat.count)}
+                            </span>
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex justify-center gap-1.5">
@@ -658,7 +666,9 @@ export function CategoriesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-brand-300 p-4 border border-white/5 flex flex-col items-center justify-center">
                   <span className="text-[10px] font-bold text-white/50 mb-2 uppercase tracking-wider">عدد المنتجات</span>
-                  <span className="text-xl font-bold text-white tabular-nums">{selectedItem.count}</span>
+                  <span className="text-xl font-bold text-white tabular-nums">
+                    {formatCategoryProductCount(selectedItem.count)}
+                  </span>
                 </div>
                 <div className="rounded-2xl bg-brand-300 p-4 border border-white/5 flex flex-col items-center justify-center">
                   <span className="text-[10px] font-bold text-white/50 mb-2 uppercase tracking-wider">الحالة</span>

@@ -35,6 +35,12 @@ export function getTotalPlatformStaff() {
   return apiRequest('/api/admin/dashboard/total-platform-staff')
 }
 
+// GET /api/admin/dashboard/payment-methods-stats
+export function getPaymentMethodsStats(params = {}) {
+  const query = new URLSearchParams(params).toString()
+  return apiRequest(`/api/admin/dashboard/payment-methods-stats${query ? `?${query}` : ''}`)
+}
+
 export function getStoreTotalNewOrders(params = {}) {
   const query = new URLSearchParams(params).toString()
   return apiRequest(`/api/stores/dashboard/total-new-orders${query ? `?${query}` : ''}`)

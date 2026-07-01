@@ -172,16 +172,44 @@ export function mapVehicleTypeLabel(value) {
   return VEHICLE_TYPE_UI[value] ?? value ?? '—'
 }
 
+function normalizeVehicleInfo(value) {
+  if (value == null || value === '') return ''
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((entry) => {
+        if (entry == null) return ''
+        if (typeof entry === 'string') return entry.trim()
+        if (typeof entry === 'object') {
+          return String(entry.label ?? entry.name ?? entry.value ?? entry.plate_number ?? '').trim()
+        }
+        return String(entry).trim()
+      })
+      .filter(Boolean)
+    return parts.join(' - ')
+  }
+  if (typeof value === 'object') {
+    const label = String(value.label ?? value.name ?? value.value ?? '').trim()
+    if (label) return label
+    const type = value.vehicle_type ?? value.type
+    const plate = value.plate_number ?? value.plate
+    if (type && plate) return `${mapVehicleTypeLabel(type)} - ${plate}`
+    if (type) return mapVehicleTypeLabel(type)
+    if (plate) return String(plate)
+    return ''
+  }
+  return String(value).trim()
+}
+
 function formatVehicle(item) {
   const profile = item.driver_profile ?? item.profile ?? {}
   const type = profile.vehicle_type ?? item.vehicle_type ?? ''
   const plate = profile.plate_number ?? profile.vehicle_plate ?? profile.license_plate ?? item.plate_number ?? item.vehicle_plate ?? item.license_plate ?? ''
-  const info = profile.vehicle_info ?? item.vehicle_info ?? item.vehicle ?? ''
+  const info = normalizeVehicleInfo(profile.vehicle_info ?? item.vehicle_info ?? item.vehicle ?? '')
   const typeLabel = mapVehicleTypeLabel(type)
 
   if (info) return info
-  if (type && plate) return `${typeLabel !== type ? typeLabel : type} - ${plate}`
-  if (typeLabel) return typeLabel
+  if (type && plate) return `${typeLabel} - ${plate}`
+  if (typeLabel && typeLabel !== '—') return typeLabel
   if (plate) return plate
   return '—'
 }

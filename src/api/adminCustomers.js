@@ -1,4 +1,5 @@
 import { apiRequest } from './client.js'
+import { getOrders, extractOrderList } from './adminOrders.js'
 
 // [10] إدارة الزبائن
 // GET /api/customers — عرض القائمة والبحث والفلترة
@@ -106,13 +107,66 @@ export function mapCustomerStatus(status) {
   return STATUS_UI[status] ?? status ?? '—'
 }
 
-function formatAddress(address) {
+function uniqueParts(parts) {
+  const seen = new Set()
+  return parts.filter((part) => {
+    const key = part.toLowerCase()
+    if (!part || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+export function formatAddress(address) {
   if (!address) return '—'
-  if (typeof address === 'string') return address
+  if (typeof address === 'string') return address.trim() || '—'
   if (typeof address === 'object') {
-    return address.city ?? address.area ?? address.label ?? address.street ?? '—'
+    const parts = uniqueParts([
+      address.city,
+      address.address_line_1,
+      address.address_line_2,
+      address.area,
+      address.label,
+      address.street,
+      address.zone?.name,
+      address.zone_name,
+    ].map((value) => String(value ?? '').trim()).filter(Boolean))
+    return parts.length ? parts.join(' - ') : '—'
   }
   return '—'
+}
+
+function formatOrderShippingLocation(order) {
+  const address = order?.shipping_address
+  if (!address) {
+    const zoneName = order?.zone_name
+    return zoneName ? String(zoneName).trim() : ''
+  }
+  const formatted = formatAddress(address)
+  return formatted === '—' ? '' : formatted
+}
+
+export function buildCustomerLocationMap(orders) {
+  const map = new Map()
+
+  orders.forEach((order) => {
+    const location = formatOrderShippingLocation(order)
+    if (!location) return
+
+    const customerId = order.shipping_address?.customer_id ?? order.customer_id
+    if (customerId != null) {
+      map.set(Number(customerId), location)
+    }
+  })
+
+  return map
+}
+
+function applyCustomerLocation(customer, locationMap) {
+  if (!customer || customer.location !== '—') return customer
+  const fromOrders = locationMap.get(Number(customer.id))
+  if (!fromOrders) return customer
+  return { ...customer, location: fromOrders }
 }
 
 function formatDate(value) {
@@ -180,6 +234,54 @@ export function buildCustomerQueryParams({ search, status, perPage = 100 } = {})
   const apiStatus = uiStatusToApi(status)
   if (apiStatus) params.status = apiStatus
   return params
+}
+
+/** جلب الزبائن مع استكمال الموقع من عناوين الشحن في الطلبات عند الحاجة */
+export async function fetchCustomersList(params = {}) {
+  const [customersResult, ordersResult] = await Promise.allSettled([
+    getCustomers(params),
+    getOrders({ per_page: 100 }),
+  ])
+
+  if (customersResult.status !== 'fulfilled') {
+    throw customersResult.reason
+  }
+
+  const locationMap =
+    ordersResult.status === 'fulfilled'
+      ? buildCustomerLocationMap(extractOrderList(ordersResult.value))
+      : new Map()
+
+  const customers = extractCustomerList(customersResult.value)
+    .map(mapCustomer)
+    .map((customer) => applyCustomerLocation(customer, locationMap))
+
+  return {
+    customers,
+    meta: extractPaginationMeta(customersResult.value),
+    locationMap,
+  }
+}
+
+export async function fetchCustomerDetail(id) {
+  const [customerResult, ordersResult] = await Promise.allSettled([
+    getCustomer(id),
+    getOrders({ per_page: 100 }),
+  ])
+
+  if (customerResult.status !== 'fulfilled') {
+    throw customerResult.reason
+  }
+
+  const mapped = mapCustomerDetail(customerResult.value, id)
+  if (mapped.location !== '—') return mapped
+
+  const locationMap =
+    ordersResult.status === 'fulfilled'
+      ? buildCustomerLocationMap(extractOrderList(ordersResult.value))
+      : new Map()
+
+  return applyCustomerLocation(mapped, locationMap)
 }
 
 export function buildCustomerStats(customers, meta = {}) {

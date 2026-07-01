@@ -1,4 +1,5 @@
 import { apiRequest } from './client.js'
+import { getOrders, extractOrderList } from './adminOrders.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // إدارة المناطق — api.md
@@ -51,12 +52,50 @@ export function removeZoneCity(zoneId) {
   writeZoneCityMap(map)
 }
 
-function resolveZoneCity(item) {
-  const fromApi = item?.city ?? item?.zone_city ?? ''
+function resolveZoneCity(item, cityByZone = null) {
+  const fromApi = item?.city ?? item?.zone_city ?? item?.city_name ?? item?.region ?? ''
   if (fromApi) return String(fromApi)
   const id = item?.id ?? item?.zone_id
+  if (id != null && cityByZone?.get(String(id))) {
+    return cityByZone.get(String(id))
+  }
   if (id == null) return ''
   return readZoneCityMap()[String(id)] ?? ''
+}
+
+function buildZoneCityMap(orders) {
+  const countsByZone = new Map()
+
+  orders.forEach((order) => {
+    const zoneId = order.zone_id ?? order.shipping_address?.zone_id ?? order.shipping_address?.zone?.id
+    const city =
+      order.shipping_address?.city ??
+      order.shipping_address?.address_line_2 ??
+      order.zone_name ??
+      order.shipping_address?.zone?.name
+    if (zoneId == null || !city) return
+
+    const key = String(zoneId)
+    if (!countsByZone.has(key)) countsByZone.set(key, new Map())
+    const cityCounts = countsByZone.get(key)
+    const cityLabel = String(city).trim()
+    cityCounts.set(cityLabel, (cityCounts.get(cityLabel) ?? 0) + 1)
+  })
+
+  const result = new Map()
+  countsByZone.forEach((cityCounts, zoneId) => {
+    let bestCity = ''
+    let bestCount = 0
+    cityCounts.forEach((count, city) => {
+      if (count > bestCount) {
+        bestCity = city
+        bestCount = count
+      }
+    })
+    if (bestCity) result.set(zoneId, bestCity)
+  })
+
+  return result
 }
 
 /** DELETE /api/admin/zones/{id} — حذف منطقة */
@@ -76,14 +115,15 @@ export function extractZoneList(data) {
   return []
 }
 
-export function mapZone(item) {
+export function mapZone(item, cityByZone = null) {
   const id = item?.id ?? item?.zone_id ?? item?.current_zone_id
   const name = item?.name ?? item?.zone_name ?? item?.title ?? item?.label
   if (id == null || id === '' || !name) return null
+  const city = resolveZoneCity(item, cityByZone)
   return {
     id: String(id),
     name: String(name),
-    city: resolveZoneCity(item),
+    city,
     status: item.status ?? item.is_active ?? null,
     createdAt: item.created_at ? String(item.created_at).slice(0, 10) : '—',
     raw: item,
@@ -125,5 +165,22 @@ export async function fetchZonesForSelect() {
 
 /** جلب قائمة المناطق لصفحة الإدارة */
 export async function fetchZonesList() {
-  return fetchAvailableZones()
+  const [zonesResult, ordersResult] = await Promise.allSettled([
+    getZones({ per_page: 100 }),
+    getOrders({ per_page: 100 }),
+  ])
+
+  const cityByZone =
+    ordersResult.status === 'fulfilled'
+      ? buildZoneCityMap(extractOrderList(ordersResult.value))
+      : new Map()
+
+  if (zonesResult.status !== 'fulfilled') {
+    throw zonesResult.reason
+  }
+
+  return extractZoneList(zonesResult.value)
+    .map((item) => mapZone(item, cityByZone))
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
 }

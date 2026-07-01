@@ -12,16 +12,13 @@ import {
   Loader2,
 } from 'lucide-react'
 import {
-  getCustomers,
-  getCustomer,
+  fetchCustomersList,
+  fetchCustomerDetail,
   exportCustomers,
   deactivateCustomer,
   reactivateCustomer,
-  extractCustomerList,
   extractExportCustomerList,
-  extractPaginationMeta,
   mapCustomer,
-  mapCustomerDetail,
   resolveCustomerId,
   buildCustomerQueryParams,
   buildCustomerStats,
@@ -66,10 +63,10 @@ export function CustomersPage() {
       search: searchQuery,
       status: activeStatus,
     })
-    const data = await getCustomers(params)
+    const { customers, meta } = await fetchCustomersList(params)
     if (seq !== loadSeq.current) return
-    setCustomers(extractCustomerList(data).map(mapCustomer))
-    setPaginationMeta(extractPaginationMeta(data))
+    setCustomers(customers)
+    setPaginationMeta(meta)
   }, [searchQuery, activeStatus])
 
   useEffect(() => {
@@ -109,8 +106,8 @@ export function CustomersPage() {
     setShowDeactivateForm(false)
     setToggleError('')
     try {
-      const data = await getCustomer(customer.id)
-      setSelectedCustomer(mapCustomerDetail(data, customer.id))
+      const detail = await fetchCustomerDetail(customer.id)
+      setSelectedCustomer(detail)
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الزبون.'))
       setTimeout(() => setActionMessage(''), 3000)
@@ -120,8 +117,8 @@ export function CustomersPage() {
   }
 
   const refreshSelectedCustomer = async (customerId) => {
-    const data = await getCustomer(customerId)
-    setSelectedCustomer(mapCustomerDetail(data, customerId))
+    const detail = await fetchCustomerDetail(customerId)
+    setSelectedCustomer(detail)
   }
 
   const getSelectedCustomerRecordId = () =>
@@ -203,8 +200,8 @@ export function CustomersPage() {
         // fallback below
       }
       if (!list.length) {
-        const data = await getCustomers(params)
-        list = extractCustomerList(data).map(mapCustomer)
+        const { customers: fetched } = await fetchCustomersList(params)
+        list = fetched
       }
       const opened = openCustomersPrintWindow(list)
 
