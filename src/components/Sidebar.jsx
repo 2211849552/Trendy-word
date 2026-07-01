@@ -39,7 +39,7 @@ const navItems = [
   { id: 'plans', label: 'إدارة الخطط', icon: CreditCard },
   { id: 'marketing', label: 'التسويق والمحتوى', icon: Megaphone },
   { id: 'catalog', label: 'إدارة الكتالوج', icon: List },
-  { id: 'disputes', label: 'الشكاوى والنزاعات', icon: MessageCircle },
+  { id: 'disputes', label: 'إدارة الشكاوى', icon: MessageCircle },
   { id: 'finance', label: 'الإدارة المالية', icon: DollarSign },
   { id: 'customers', label: 'إدارة الزبائن', icon: Users },
   { id: 'staff', label: 'إدارة الموظفين', icon: UserPlus },

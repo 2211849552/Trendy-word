@@ -508,7 +508,7 @@ export function DisputesPage({ params, setParams }) {
       )}
 
       <div className="flex flex-col items-start gap-2 border-b border-white/10 pb-5">
-        <h1 className="text-2xl font-bold text-white">الشكاوى والنزاعات</h1>
+        <h1 className="text-2xl font-bold text-white">إدارة الشكاوى</h1>
         <p className="text-sm text-white/60">إدارة شكاوى الزبائن والنزاعات بين الأطراف</p>
       </div>
 

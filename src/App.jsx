@@ -110,7 +110,7 @@ function renderPage(activeNav, activeNavParams, setActiveNavParams, onNavigate, 
           <AlertCircle className="size-8" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة</h2>
-        <p className="text-sm text-white/60">صفحة الشكاوى والنزاعات غير متاحة لدورك الحالي.</p>
+        <p className="text-sm text-white/60">صفحة إدارة الشكاوى غير متاحة لدورك الحالي.</p>
       </div>
     )
   }
