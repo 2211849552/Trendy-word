@@ -22,7 +22,7 @@ export function OrderStatusBarCard({ stats = null }) {
         { name: 'تم التسليم', count: stats.delivered ?? 0 },
         { name: 'ملغي', count: stats.cancelled ?? 0 },
         { name: 'قيد الشحن', count: stats.shipping ?? 0 },
-      ].filter((d) => d.count > 0)
+      ]
     : DEFAULT_DATA
 
   const maxCount = Math.max(...data.map((d) => d.count), 1)
@@ -63,7 +63,11 @@ export function OrderStatusBarCard({ stats = null }) {
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                   fontFamily: 'Cairo, sans-serif',
                   padding: '12px',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
                 }}
+                itemStyle={{ color: '#000000' }}
+                labelStyle={{ color: '#000000', fontWeight: 'bold' }}
                 formatter={(v) => [v, 'عدد الطلبات']}
               />
               <Bar

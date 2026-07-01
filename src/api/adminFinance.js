@@ -28,33 +28,33 @@ export function getPlatformEarnings(params = {}) {
 }
 
 // [8] الإدارة المالية
-// GET /api/finance/revenue-overview
+// GET /api/v1/finance/revenue-overview
 export function getRevenueOverview(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/finance/revenue-overview${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/v1/finance/revenue-overview${query ? `?${query}` : ''}`)
 }
 
-// GET /api/finance/transactions — بحث وفلترة
+// GET /api/v1/finance/transactions — بحث وفلترة
 export function getFinanceTransactions(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/finance/transactions${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/v1/finance/transactions${query ? `?${query}` : ''}`)
 }
 
-// GET /api/finance/transactions/{id}
+// GET /api/v1/finance/transactions/{id}
 export function getFinanceTransaction(id) {
-  return apiRequest(`/api/finance/transactions/${encodeURIComponent(String(id))}`)
+  return apiRequest(`/api/v1/finance/transactions/${encodeURIComponent(String(id))}`)
 }
 
-// GET /api/finance/export — تصدير التقارير
+// GET /api/v1/finance/export — تصدير التقارير
 export function exportFinanceReport(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/finance/export${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/v1/finance/export${query ? `?${query}` : ''}`)
 }
 
-// GET /api/finance/payment-method-percentages — إحصائيات ونسب طرق الدفع
+// GET /api/v1/finance/payment-method-percentages — إحصائيات ونسب طرق الدفع
 export function getPaymentMethodPercentages(params = {}) {
   const query = new URLSearchParams(params).toString()
-  return apiRequest(`/api/finance/payment-method-percentages${query ? `?${query}` : ''}`)
+  return apiRequest(`/api/v1/finance/payment-method-percentages${query ? `?${query}` : ''}`)
 }
 
 const PAYMENT_METHOD_COLORS = {

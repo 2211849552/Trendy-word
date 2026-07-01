@@ -162,7 +162,7 @@ export function buildOrderStats(orders, meta = {}) {
 
   return {
     total: Number(meta.total ?? orders.length),
-    newOrders: countByGroup(['pending', 'pending_admin']),
+    newOrders: countByGroup(['pending', 'pending_admin', 'processing']),
     shipping: countByGroup(['shipped', 'out_for_delivery']),
     delivered: countByGroup(['delivered', 'completed']),
     cancelled: countByGroup(['cancelled', 'returned']),

@@ -6,47 +6,10 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard.jsx'
-import { PieChartCard } from '../components/PieChartCard.jsx'
-import { LineChartCard } from '../components/LineChartCard.jsx'
 import { OrderStatusBarCard } from '../components/OrderStatusBarCard.jsx'
 import { fetchOverviewStats, formatDashboardNumber } from '../api/adminDashboard.js'
-import { getAdminStores, extractStoreList, mapAdminStore } from '../api/adminStores.js'
 import { getOrders, extractOrderList, mapOrder, buildOrderStats } from '../api/adminOrders.js'
 
-function buildMonthlyStats(orders) {
-  const months = [
-    'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
-    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-  ]
-  const now = new Date()
-  const result = []
-
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const monthName = months[d.getMonth()]
-    const year = d.getFullYear()
-
-    const monthOrders = orders.filter((o) => {
-      const rawDate = o.raw?.created_at ?? o.date
-      if (!rawDate) return false
-      const od = new Date(rawDate)
-      return od.getFullYear() === year && od.getMonth() === d.getMonth()
-    })
-
-    const revenue = monthOrders.reduce(
-      (sum, o) => sum + Number(o.raw?.total_amount ?? o.total ?? 0),
-      0,
-    )
-
-    result.push({
-      month: monthName,
-      revenue: Math.round(revenue),
-      orders: monthOrders.length,
-    })
-  }
-
-  return result
-}
 
 export function OverviewPage() {
   const [loading, setLoading] = useState(true)
@@ -58,9 +21,7 @@ export function OverviewPage() {
   })
   const [loadError, setLoadError] = useState('')
 
-  const [stores, setStores] = useState([])
   const [orderStats, setOrderStats] = useState(null)
-  const [monthlyData, setMonthlyData] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -98,19 +59,28 @@ export function OverviewPage() {
 
     async function loadCharts() {
       try {
-        const [storesData, ordersData] = await Promise.all([
-          getAdminStores({ per_page: 1000 }),
-          getOrders({ per_page: 1000 }),
-        ])
+        let page = 1
+        let allOrders = []
+        let hasMore = true
 
-        if (cancelled) return
+        while (hasMore) {
+          const ordersData = await getOrders({ per_page: 100, page })
+          if (cancelled) return
 
-        const mappedStores = extractStoreList(storesData).map(mapAdminStore)
-        setStores(mappedStores)
+          const ordersList = extractOrderList(ordersData)
+          const mapped = ordersList.map(mapOrder)
+          allOrders = [...allOrders, ...mapped]
 
-        const mappedOrders = extractOrderList(ordersData).map(mapOrder)
-        setOrderStats(buildOrderStats(mappedOrders, extractOrderList(ordersData)))
-        setMonthlyData(buildMonthlyStats(mappedOrders))
+          const meta = ordersData?.meta ?? {}
+          const totalPages = meta.total_pages ?? 1
+          if (page >= totalPages || ordersList.length === 0) {
+            hasMore = false
+          } else {
+            page++
+          }
+        }
+
+        setOrderStats(buildOrderStats(allOrders))
       } catch {
         // silently ignore chart errors so main stats still show
       }
@@ -174,10 +144,6 @@ export function OverviewPage() {
         />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <LineChartCard monthlyData={monthlyData} />
-        <PieChartCard stores={stores} />
-      </div>
 
       <div className="mt-8">
         <OrderStatusBarCard stats={orderStats} />

@@ -14,6 +14,18 @@ function rewriteSessionCookies(proxy) {
         .replace(/SameSite=None/gi, 'SameSite=Lax'),
     )
   })
+
+  proxy.on('error', (err, req, res) => {
+    // Suppress expected stack trace when backend is offline, preventing terminal logs spam
+    if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+      if (res && typeof res.writeHead === 'function' && !res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Backend server is offline.' }))
+      }
+      return
+    }
+    console.error('[Vite Proxy Error]:', err.message)
+  })
 }
 
 // https://vite.dev/config/
