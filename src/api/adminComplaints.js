@@ -258,6 +258,7 @@ export function mapComplaint(item) {
     hasImage: attachments.length > 0,
     imageUrl: firstImage,
     attachments,
+    actions: item.actions ?? [],
     raw: item,
   }
 }

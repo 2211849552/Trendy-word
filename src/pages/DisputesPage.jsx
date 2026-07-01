@@ -16,6 +16,7 @@ import {
   DollarSign,
   ShieldAlert,
   Loader2,
+  MessageCircle,
 } from 'lucide-react'
 import {
   getComplaints,
@@ -173,6 +174,7 @@ export function DisputesPage({ params, setParams }) {
   const [galleryImages, setGalleryImages] = useState([])
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [replyText, setReplyText] = useState('')
+  const [showRepliesSection, setShowRepliesSection] = useState(false)
   const [financialAmount, setFinancialAmount] = useState('')
   const [adminAccountAction, setAdminAccountAction] = useState('')
   const [adminTargetType, setAdminTargetType] = useState('')
@@ -251,6 +253,7 @@ export function DisputesPage({ params, setParams }) {
     setReplyText('')
     setMerchantWarningText('')
     resetAdminAccountForm()
+    setShowRepliesSection(false)
     setSelectedDispute(dispute)
     setDetailsModalOpen(true)
     setDetailLoading(true)
@@ -816,31 +819,115 @@ export function DisputesPage({ params, setParams }) {
                   )
                 })()}
 
-                {selectedDispute.rawStatus !== 'closed' && (
-                  <div className="mt-6 space-y-4" dir="rtl">
-                    <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد على الشكوى</h3>
-                    <div>
-                      <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          placeholder="اكتب ردك هنا..."
-                          disabled={actionLoading}
-                          className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleSendReply}
-                          disabled={actionLoading || !replyText.trim()}
-                          className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0 disabled:opacity-60"
-                        >
-                          <Send className="size-4" />
-                          إرسال
-                        </button>
+                {/* Toggle button */}
+                <div className="flex justify-center mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowRepliesSection(!showRepliesSection)}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-brand-100 hover:bg-brand-300 transition-all shadow-premium border border-white/10 cursor-pointer"
+                  >
+                    <MessageCircle className="size-5" />
+                    {showRepliesSection
+                      ? 'إخفاء الردود والمراسلات'
+                      : `عرض الردود والمراسلات (${(selectedDispute.actions ?? []).filter((a) => a.action_type === 'reply').length})`}
+                  </button>
+                </div>
+
+                {showRepliesSection && (
+                  <div className="mt-6 space-y-6 animate-in fade-in duration-200">
+                    {/* Replies List */}
+                    {(() => {
+                      const replies = (selectedDispute.actions ?? []).filter(
+                        (action) => action.action_type === 'reply',
+                      )
+                      return (
+                        <div className="text-right" dir="rtl">
+                          <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
+                            <span>الردود والمراسلات</span>
+                            <span className="text-xs font-normal text-white/50">({replies.length} ردود)</span>
+                          </h3>
+                          
+                          {replies.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-white/10 bg-brand-300/30 p-8 text-center text-white/40">
+                              لا توجد ردود في هذه التذكرة بعد.
+                            </div>
+                          ) : (
+                            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar flex flex-col">
+                              {replies.map((reply) => {
+                                const isCustomer = Number(reply.action_by?.id) === Number(selectedDispute.customerId);
+                                return (
+                                  <div
+                                    key={reply.id}
+                                    className={`flex flex-col max-w-[85%] rounded-2xl p-4 transition-all duration-200 ${
+                                      isCustomer
+                                        ? 'bg-brand-300 border border-brand-100/50 self-start'
+                                        : 'bg-brand-100/50 border border-brand-300 self-end'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-4 mb-2">
+                                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                        isCustomer
+                                          ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/20'
+                                          : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/20'
+                                      }`}>
+                                        {isCustomer ? 'الزبون' : 'الإدارة'}
+                                      </span>
+                                      <span className="text-xs text-white/40">
+                                        {reply.created_at
+                                          ? new Date(reply.created_at).toLocaleString('ar-LY', {
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                              day: '2-digit',
+                                              month: '2-digit',
+                                            })
+                                          : ''}
+                                      </span>
+                                    </div>
+                                    
+                                    <p className="text-sm font-semibold text-white/90 whitespace-pre-wrap leading-relaxed">
+                                      {reply.comment}
+                                    </p>
+                                    
+                                    <span className="text-[11px] text-white/50 mt-2 block self-start">
+                                      بواسطة: {reply.action_by?.name || (isCustomer ? selectedDispute.customer : 'مشرف المنصة')}
+                                    </span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
+
+                    {/* Reply Input Form */}
+                    {selectedDispute.rawStatus !== 'closed' && (
+                      <div className="space-y-4" dir="rtl">
+                        <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد على الشكوى</h3>
+                        <div>
+                          <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="اكتب ردك هنا..."
+                              disabled={actionLoading}
+                              className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSendReply}
+                              disabled={actionLoading || !replyText.trim()}
+                              className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0 disabled:opacity-60 cursor-pointer"
+                            >
+                              <Send className="size-4" />
+                              إرسال
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
