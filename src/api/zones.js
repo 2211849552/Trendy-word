@@ -1,5 +1,6 @@
 import { apiRequest } from './client.js'
 import { getOrders, extractOrderList } from './adminOrders.js'
+import { normalizeCityName } from '../data/libyanCities.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // إدارة المناطق — api.md
@@ -23,6 +24,7 @@ export function createZone(body) {
 }
 
 const ZONE_CITY_STORAGE_KEY = 'trendy_admin_zone_cities'
+const ZONE_CITY_BY_NAME_KEY = 'trendy_admin_zone_cities_by_name'
 
 function readZoneCityMap() {
   try {
@@ -33,62 +35,132 @@ function readZoneCityMap() {
   }
 }
 
+function readZoneCityByNameMap() {
+  try {
+    const raw = localStorage.getItem(ZONE_CITY_BY_NAME_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
 function writeZoneCityMap(map) {
   localStorage.setItem(ZONE_CITY_STORAGE_KEY, JSON.stringify(map))
 }
 
-export function saveZoneCity(zoneId, city) {
-  const trimmed = String(city ?? '').trim()
-  if (!zoneId || !trimmed) return
-  const map = readZoneCityMap()
-  map[String(zoneId)] = trimmed
-  writeZoneCityMap(map)
+function writeZoneCityByNameMap(map) {
+  localStorage.setItem(ZONE_CITY_BY_NAME_KEY, JSON.stringify(map))
 }
 
-export function removeZoneCity(zoneId) {
-  if (zoneId == null || zoneId === '') return
-  const map = readZoneCityMap()
-  delete map[String(zoneId)]
-  writeZoneCityMap(map)
+export function saveZoneCity(zoneId, city, zoneName = '') {
+  const trimmed = String(city ?? '').trim()
+  if (!trimmed) return
+  if (zoneId) {
+    const map = readZoneCityMap()
+    map[String(zoneId)] = trimmed
+    writeZoneCityMap(map)
+  }
+  const nameKey = normalizeZoneKey(zoneName)
+  if (nameKey) {
+    const byName = readZoneCityByNameMap()
+    byName[nameKey] = trimmed
+    writeZoneCityByNameMap(byName)
+  }
+}
+
+export function removeZoneCity(zoneId, zoneName = '') {
+  if (zoneId != null && zoneId !== '') {
+    const map = readZoneCityMap()
+    delete map[String(zoneId)]
+    writeZoneCityMap(map)
+  }
+  const nameKey = normalizeZoneKey(zoneName)
+  if (nameKey) {
+    const byName = readZoneCityByNameMap()
+    delete byName[nameKey]
+    writeZoneCityByNameMap(byName)
+  }
+}
+
+function normalizeZoneKey(value) {
+  return String(value ?? '').trim().toLowerCase()
 }
 
 function resolveZoneCity(item, cityByZone = null) {
   const fromApi = item?.city ?? item?.zone_city ?? item?.city_name ?? item?.region ?? ''
-  if (fromApi) return String(fromApi)
+  if (fromApi) return normalizeCityName(fromApi)
+
   const id = item?.id ?? item?.zone_id
-  if (id != null && cityByZone?.get(String(id))) {
-    return cityByZone.get(String(id))
+  if (id != null) {
+    const stored = readZoneCityMap()[String(id)]
+    if (stored) return normalizeCityName(stored)
   }
-  if (id == null) return ''
-  return readZoneCityMap()[String(id)] ?? ''
+
+  const name = item?.name ?? item?.zone_name
+  if (name) {
+    const storedByName = readZoneCityByNameMap()[normalizeZoneKey(name)]
+    if (storedByName) return normalizeCityName(storedByName)
+  }
+
+  if (id != null && cityByZone instanceof Map) {
+    const fromOrders = cityByZone.get(String(id))
+    if (fromOrders) return fromOrders
+  }
+
+  return ''
 }
 
-function buildZoneCityMap(orders) {
+function recordZoneCityCount(countsByZone, zoneId, city) {
+  const cityLabel = normalizeCityName(city)
+  if (!zoneId || !cityLabel) return
+  const key = String(zoneId)
+  if (!countsByZone.has(key)) countsByZone.set(key, new Map())
+  const cityCounts = countsByZone.get(key)
+  cityCounts.set(cityLabel, (cityCounts.get(cityLabel) ?? 0) + 1)
+}
+
+function buildZoneCityMap(orders, zones = []) {
   const countsByZone = new Map()
+  const zoneNameToId = new Map()
+
+  zones.forEach((zone) => {
+    const id = zone?.id ?? zone?.zone_id
+    const name = zone?.name ?? zone?.zone_name
+    if (id != null && name) {
+      zoneNameToId.set(normalizeZoneKey(name), String(id))
+    }
+  })
 
   orders.forEach((order) => {
-    const zoneId = order.zone_id ?? order.shipping_address?.zone_id ?? order.shipping_address?.zone?.id
+    const address = order.shipping_address
     const city =
-      order.shipping_address?.city ??
-      order.shipping_address?.address_line_2 ??
+      address?.city ??
+      address?.address_line_2 ??
       order.zone_name ??
-      order.shipping_address?.zone?.name
-    if (zoneId == null || !city) return
+      address?.zone?.name
+    if (!city) return
 
-    const key = String(zoneId)
-    if (!countsByZone.has(key)) countsByZone.set(key, new Map())
-    const cityCounts = countsByZone.get(key)
-    const cityLabel = String(city).trim()
-    cityCounts.set(cityLabel, (cityCounts.get(cityLabel) ?? 0) + 1)
+    const zoneId = order.zone_id ?? address?.zone_id ?? address?.zone?.id
+    if (zoneId != null) {
+      recordZoneCityCount(countsByZone, zoneId, city)
+      return
+    }
+
+    const line1 = address?.address_line_1
+    if (!line1) return
+    const matchedZoneId = zoneNameToId.get(normalizeZoneKey(line1))
+    if (matchedZoneId) {
+      recordZoneCityCount(countsByZone, matchedZoneId, city)
+    }
   })
 
   const result = new Map()
   countsByZone.forEach((cityCounts, zoneId) => {
     let bestCity = ''
     let bestCount = 0
-    cityCounts.forEach((count, city) => {
+    cityCounts.forEach((count, cityLabel) => {
       if (count > bestCount) {
-        bestCity = city
+        bestCity = cityLabel
         bestCount = count
       }
     })
@@ -170,9 +242,12 @@ export async function fetchZonesList() {
     getOrders({ per_page: 100 }),
   ])
 
+  const rawZones =
+    zonesResult.status === 'fulfilled' ? extractZoneList(zonesResult.value) : []
+
   const cityByZone =
     ordersResult.status === 'fulfilled'
-      ? buildZoneCityMap(extractOrderList(ordersResult.value))
+      ? buildZoneCityMap(extractOrderList(ordersResult.value), rawZones)
       : new Map()
 
   if (zonesResult.status !== 'fulfilled') {

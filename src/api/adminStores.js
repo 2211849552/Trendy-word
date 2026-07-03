@@ -103,6 +103,21 @@ export function extractDeliveryPricesMap(item) {
 
 /** قائمة أسعار مع أسماء المناطق من StoreAdminResource */
 export function extractZoneDeliveryPricesList(item) {
+  if (Array.isArray(item)) {
+    return item
+      .map((row) => {
+        if (row == null || typeof row !== 'object') return null
+        const zoneId = row.zone_id ?? row.zoneId ?? row.zone?.id
+        if (zoneId == null || zoneId === '') return null
+        return {
+          zoneId: String(zoneId),
+          zoneName: row.zone_name ?? row.zoneName ?? row.name ?? row.zone?.name ?? null,
+          deliveryPrice: normalizePriceValue(row.delivery_price ?? row.deliveryPrice ?? row.price ?? 0),
+        }
+      })
+      .filter(Boolean)
+  }
+
   if (Array.isArray(item?.zone_delivery_prices)) {
     return item.zone_delivery_prices
       .map((row) => {
@@ -126,7 +141,19 @@ export function extractZoneDeliveryPricesList(item) {
 }
 
 export function mapStoreDeliveryPricesResponse(data) {
-  const item = data?.data ?? data
+  const payload = data?.data ?? data
+
+  if (Array.isArray(payload)) {
+    const zoneDeliveryPrices = extractZoneDeliveryPricesList(payload)
+    return {
+      prices: Object.fromEntries(
+        zoneDeliveryPrices.map((row) => [row.zoneId, row.deliveryPrice]),
+      ),
+      zoneDeliveryPrices,
+    }
+  }
+
+  const item = payload
   return {
     prices: extractDeliveryPricesMap(item),
     zoneDeliveryPrices: extractZoneDeliveryPricesList(item),

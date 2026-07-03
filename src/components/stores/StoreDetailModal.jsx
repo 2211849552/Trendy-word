@@ -37,6 +37,9 @@ const STATUS_LABELS = {
   pending: 'معلق',
 }
 
+const EMPTY_DELIVERY_PRICES = {}
+const EMPTY_ZONE_DELIVERY_PRICES = []
+
 const PRODUCT_STATUS_LABELS = {
   active: 'نشط',
   archived: 'مؤرشف',
@@ -342,8 +345,8 @@ export function StoreDetailModal({
                   ) : null}
                   <StoreDeliveryPricesSection
                     storeId={store.id}
-                    initialPrices={store.deliveryPrices ?? {}}
-                    initialZoneDeliveryPrices={store.zoneDeliveryPrices ?? []}
+                    initialPrices={store.deliveryPrices ?? EMPTY_DELIVERY_PRICES}
+                    initialZoneDeliveryPrices={store.zoneDeliveryPrices ?? EMPTY_ZONE_DELIVERY_PRICES}
                     canEdit={canEditDeliveryPrices}
                     onSaved={(updated) => {
                       if (updated) onStoreUpdated?.(updated)

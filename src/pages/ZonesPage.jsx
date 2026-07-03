@@ -16,6 +16,7 @@ import {
   saveZoneCity,
   removeZoneCity,
 } from '../api/zones.js'
+import { formatCityWithFlag } from '../data/libyanCities.js'
 import { ConfirmDeleteModal } from '../components/catalog/ConfirmDeleteModal.jsx'
 import { PrimaryButton } from '../components/PrimaryButton.jsx'
 
@@ -100,7 +101,7 @@ export function ZonesPage() {
       }))
       const created = extractCreatedZone(result)
       if (created?.id) {
-        saveZoneCity(created.id, newAddressCity)
+        saveZoneCity(created.id, newAddressCity, newAddressName)
       }
       closeAdd()
       setActionMessage('تم إضافة المنطقة بنجاح.')
@@ -122,7 +123,7 @@ export function ZonesPage() {
     setDeleteLoading(true)
     try {
       await deleteZone(deleteTarget.id)
-      removeZoneCity(deleteTarget.id)
+      removeZoneCity(deleteTarget.id, deleteTarget.name)
       setDeleteTarget(null)
       setActionMessage('تم حذف المنطقة بنجاح.')
       await loadAddresses()
@@ -188,7 +189,9 @@ export function ZonesPage() {
                 <tr key={address.id} className="hover:bg-brand-300 transition-colors">
                   <td className="px-3 py-3 font-mono text-xs text-white/60">{address.id}</td>
                   <td className="px-3 py-3 font-bold text-white">{address.name}</td>
-                  <td className="px-3 py-3 text-white/70">{address.city || '—'}</td>
+                  <td className="px-3 py-3 text-white/70">
+                    {address.city ? formatCityWithFlag(address.city) : '—'}
+                  </td>
                   <td className="px-3 py-3 text-white/60">{address.createdAt}</td>
                   <td className="px-3 py-3 text-center">
                     <button

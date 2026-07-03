@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Loader2, Truck } from 'lucide-react'
 import { fetchAvailableZones } from '../../api/zones.js'
 import {
+  getStoreDeliveryPrices,
   updateStoreDeliveryPrices,
   mapAdminStoreDetail,
-  extractDeliveryPricesMap,
+  mapStoreDeliveryPricesResponse,
 } from '../../api/adminStores.js'
 
 const DEFAULT_EMPTY_PRICE = 10
@@ -28,8 +29,8 @@ function formatDeliveryPrice(price) {
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
   if (err?.status === 403) return 'ليس لديك صلاحية إدارة أسعار التوصيل.'
-  if (err?.status === 422) return err?.message || fallback
-  if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
+  if (err?.status === 422) return err.message || fallback
+  if (err?.status === 0 || err?.status == null) return err?.message || 'تعذّر الاتصال بالخادم.'
   return err?.message || fallback
 }
 
@@ -39,8 +40,8 @@ function mergeZonePrices(zones, pricesMap, namedPrices = []) {
   )
 
   return zones.map((zone) => ({
-    zoneId: zone.id,
-    zoneName: nameByZoneId.get(zone.id) ?? zone.name,
+    zoneId: String(zone.id),
+    zoneName: nameByZoneId.get(String(zone.id)) ?? zone.name,
     price: pricesMap[zone.id] ?? pricesMap[String(zone.id)] ?? '',
   }))
 }
@@ -54,7 +55,7 @@ function applyPricesToRows(zones, mappedPrices) {
 }
 
 function pricesFromShowApi(initialPrices = {}, initialZoneDeliveryPrices = []) {
-  const prices = extractDeliveryPricesMap({ delivery_prices: initialPrices })
+  const prices = { ...initialPrices }
 
   const zoneDeliveryPrices = (initialZoneDeliveryPrices ?? [])
     .map((row) => ({
@@ -73,6 +74,13 @@ function pricesFromShowApi(initialPrices = {}, initialZoneDeliveryPrices = []) {
   return { prices, zoneDeliveryPrices }
 }
 
+function zonesFromDeliveryPrices(zoneDeliveryPrices = []) {
+  return zoneDeliveryPrices.map((row) => ({
+    id: String(row.zoneId),
+    name: row.zoneName ?? `منطقة ${row.zoneId}`,
+  }))
+}
+
 export function StoreDeliveryPricesSection({
   storeId,
   initialPrices = {},
@@ -88,37 +96,70 @@ export function StoreDeliveryPricesSection({
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
+  const pricesSnapshotRef = useRef('')
 
-  const showPrices = useMemo(
+  const propsPrices = useMemo(
     () => pricesFromShowApi(initialPrices, initialZoneDeliveryPrices),
     [initialPrices, initialZoneDeliveryPrices],
   )
 
-  const loadZones = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!storeId) return
     setLoading(true)
     setLoadError('')
+
     try {
-      const zonesList = await fetchAvailableZones()
+      const [zonesResult, pricesResult] = await Promise.allSettled([
+        fetchAvailableZones(),
+        getStoreDeliveryPrices(storeId),
+      ])
+
+      let mappedPrices = propsPrices
+      if (pricesResult.status === 'fulfilled') {
+        const fromApi = mapStoreDeliveryPricesResponse(pricesResult.value)
+        if (fromApi.zoneDeliveryPrices.length > 0 || Object.keys(fromApi.prices).length > 0) {
+          mappedPrices = fromApi
+        }
+      }
+
+      let zonesList = zonesResult.status === 'fulfilled' ? zonesResult.value : []
+
+      if (zonesList.length === 0 && mappedPrices.zoneDeliveryPrices.length > 0) {
+        zonesList = zonesFromDeliveryPrices(mappedPrices.zoneDeliveryPrices)
+      }
+
+      if (zonesList.length === 0) {
+        if (zonesResult.status === 'rejected') {
+          throw zonesResult.reason
+        }
+        setZones([])
+        setRows([])
+        return
+      }
+
+      pricesSnapshotRef.current = JSON.stringify(mappedPrices)
       setZones(zonesList)
-      setRows(applyPricesToRows(zonesList, showPrices))
+      setRows(applyPricesToRows(zonesList, mappedPrices))
     } catch (err) {
       setZones([])
       setRows([])
-      setLoadError(apiErrorMessage(err, 'تعذّر تحميل المناطق.'))
+      setLoadError(apiErrorMessage(err, 'تعذّر تحميل أسعار التوصيل.'))
     } finally {
       setLoading(false)
     }
-  }, [storeId, showPrices])
+  }, [storeId])
 
   useEffect(() => {
-    loadZones()
-  }, [loadZones])
+    loadData()
+  }, [loadData])
 
   useEffect(() => {
     if (zones.length === 0) return
-    setRows(applyPricesToRows(zones, showPrices))
-  }, [zones, showPrices])
+    const nextKey = JSON.stringify(propsPrices)
+    if (nextKey === pricesSnapshotRef.current) return
+    pricesSnapshotRef.current = nextKey
+    setRows(applyPricesToRows(zones, propsPrices))
+  }, [zones, propsPrices])
 
   useEffect(() => {
     if (!saveMessage) return undefined
@@ -150,6 +191,7 @@ export function StoreDeliveryPricesSection({
         updated.deliveryPrices ?? pricesByZone,
         updated.zoneDeliveryPrices ?? [],
       )
+      pricesSnapshotRef.current = JSON.stringify(mappedPrices)
       setRows(applyPricesToRows(zones, mappedPrices))
       onSaved?.(updated)
       setSaveMessage('تم حفظ أسعار التوصيل بنجاح.')
