@@ -55,6 +55,7 @@ export function CategoriesPage() {
   const [newAttrName, setNewAttrName] = useState('')
   const [attrOptions, setAttrOptions] = useState([])
   const [editAttrOriginalOptions, setEditAttrOriginalOptions] = useState([])
+  const [deleteValueConfirm, setDeleteValueConfirm] = useState(null)
 
   const patchCategoryInList = (id, patch) => {
     setCategories((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)))
@@ -268,10 +269,14 @@ export function CategoriesPage() {
     }
   }
 
-  const handleDeleteSingleValue = async (valueId, idx) => {
-    if (!window.confirm('هل أنت متأكد من حذف قيمة الخاصية هذه؟ قد يؤثر ذلك على المنتجات المرتبطة بها.')) {
-      return
-    }
+  const handleDeleteSingleValue = (valueId, idx) => {
+    setDeleteValueConfirm({ valueId, idx })
+  }
+
+  const confirmDeleteValue = async () => {
+    if (!deleteValueConfirm) return
+    const { valueId, idx } = deleteValueConfirm
+    setDeleteValueConfirm(null)
 
     try {
       await deleteAdminAttributeValue(valueId)
@@ -843,16 +848,7 @@ export function CategoriesPage() {
                   </div>
                </div>
 
-               <div className="rounded-2xl bg-fuchsia-50/30 p-5 border border-fuchsia-100/50">
-                  <p className="text-[10px] font-bold text-white/50 mb-4 uppercase tracking-wider">التصنيفات المرتبطة ({selectedItem.relatedCats?.length || 0})</p>
-                  <div className="flex flex-wrap gap-2">
-                     {(selectedItem.relatedCats || ['أزياء رجالية', 'أزياء نسائية']).map(cat => (
-                       <span key={cat} className="rounded-lg bg-fuchsia-100 px-4 py-1.5 text-xs font-bold text-fuchsia-700">
-                         {cat}
-                       </span>
-                     ))}
-                  </div>
-               </div>
+               
             </div>
             <div className="flex flex-col-reverse gap-2 border-t border-white/5 bg-brand-300 p-6 sm:flex-row sm:justify-end">
               <button
@@ -957,6 +953,30 @@ export function CategoriesPage() {
             <div className="flex gap-3 justify-start p-6 bg-brand-300 border-t border-white/5">
                 <button onClick={handleEditAttribute} className="rounded-xl bg-brand-900 px-8 py-3 text-sm font-bold text-white hover:bg-brand-950 shadow-premium shadow-brand-900/15 transition-all active:scale-95">حفظ التعديلات</button>
                 <button onClick={() => setShowEditAttribute(false)} className="rounded-xl border border-white/10 bg-brand-200 px-8 py-3 text-sm font-bold text-white/80 hover:bg-brand-300 transition-colors">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Value Confirmation Modal */}
+      {deleteValueConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl bg-brand-200 p-6 shadow-2xl border border-white/10 text-right animate-in zoom-in-95 duration-200" dir="rtl">
+            <h3 className="text-lg font-bold text-white mb-2">تأكيد حذف القيمة</h3>
+            <p className="text-sm text-white/70 mb-6">هل أنت متأكد من حذف قيمة الخاصية هذه؟ قد يؤثر ذلك على المنتجات المرتبطة بها.</p>
+            <div className="flex gap-3 justify-start">
+              <button
+                onClick={confirmDeleteValue}
+                className="rounded-xl bg-red-500 hover:bg-red-600 px-5 py-2.5 text-xs font-bold text-white transition-colors"
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                onClick={() => setDeleteValueConfirm(null)}
+                className="rounded-xl border border-white/10 bg-brand-300 hover:bg-brand-100 px-5 py-2.5 text-xs font-bold text-white/80 transition-colors"
+              >
+                إلغاء
+              </button>
             </div>
           </div>
         </div>
