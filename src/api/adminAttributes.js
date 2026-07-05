@@ -34,3 +34,20 @@ export function deleteAdminAttribute(attribute) {
     method: 'DELETE',
   })
 }
+
+// PUT /api/admin/attributes/values/{attributeValue}
+export function updateAdminAttributeValue(attributeValue, body) {
+  return apiRequest(`/api/admin/attributes/values/${attributeValue}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
+// DELETE /api/admin/attributes/values/{attributeValue}
+export function deleteAdminAttributeValue(attributeValue) {
+  return apiRequest(`/api/admin/attributes/values/${attributeValue}`, {
+    method: 'DELETE',
+  })
+}
+
+

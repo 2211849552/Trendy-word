@@ -164,7 +164,7 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
                   </li>
                   <li className="flex items-center gap-2">
                     <MapPin className="size-4 shrink-0 text-white/50" aria-hidden />
-                    {req.phone || req.city || '—'}
+                    {req.city || '—'}
                   </li>
                 </ul>
                 <div className="mt-4 flex items-center gap-2">

@@ -20,6 +20,8 @@ import {
   getAdminAttribute,
   updateAdminAttribute,
   deleteAdminAttribute,
+  updateAdminAttributeValue,
+  deleteAdminAttributeValue,
 } from '../api/adminAttributes.js'
 
 function formatCategoryProductCount(count) {
@@ -158,13 +160,13 @@ export function CategoriesPage() {
 
   const openAddAttributeModal = () => {
     setNewAttrName('')
-    setAttrOptions([''])
+    setAttrOptions([{ id: null, value: '' }])
     setShowAddAttribute(true)
   }
 
   const handleAddAttribute = async () => {
     const trimmedName = newAttrName.trim()
-    const values = attrOptions.map((value) => value.trim()).filter(Boolean)
+    const values = attrOptions.map((opt) => opt.value.trim()).filter(Boolean)
 
     if (!trimmedName) {
       triggerToast('يرجى إدخال اسم الخاصية.')
@@ -194,7 +196,7 @@ export function CategoriesPage() {
 
   const handleEditAttribute = async () => {
     const trimmedName = newAttrName.trim()
-    const values = attrOptions.map((value) => value.trim()).filter(Boolean)
+    const values = attrOptions.map((opt) => opt.value.trim()).filter(Boolean)
 
     if (!trimmedName || !selectedItem) {
       triggerToast('يرجى إدخال اسم الخاصية.')
@@ -205,24 +207,91 @@ export function CategoriesPage() {
       return
     }
 
-    const newValuesOnly = values.filter((value) => !editAttrOriginalOptions.includes(value))
+    const modifiedValues = attrOptions.filter((opt) => {
+      if (opt.id === null || opt.id === undefined) return false
+      const original = editAttrOriginalOptions.find((o) => o.id === opt.id)
+      return original && original.value.trim() !== opt.value.trim()
+    })
+
+    const newValues = attrOptions
+      .filter((opt) => (opt.id === null || opt.id === undefined) && opt.value.trim() !== '')
+      .map((opt) => opt.value.trim())
+
     const payload = { name: trimmedName }
-    if (newValuesOnly.length > 0) {
-      payload.values = newValuesOnly
+    if (newValues.length > 0) {
+      payload.values = newValues
     }
 
     try {
       const response = await updateAdminAttribute(selectedItem.id, payload)
-      const fromApi = mapAttribute(response?.data ?? response)
-      patchAttributeInList(selectedItem.id, {
-        ...fromApi,
-        name: trimmedName,
-        options: values,
-      })
+      
+      for (const val of modifiedValues) {
+        await updateAdminAttributeValue(val.id, { value: val.value.trim() })
+      }
+
+      const data = await getAdminAttribute(selectedItem.id)
+      const updatedAttr = mapAttribute(data?.data ?? data)
+
+      patchAttributeInList(selectedItem.id, updatedAttr)
       setShowEditAttribute(false)
       triggerToast('تم تحديث الخاصية بنجاح')
     } catch (err) {
       triggerToast(apiErrorMessage(err, 'تعذّر تحديث الخاصية. حاول مرة أخرى.'))
+    }
+  }
+
+  const handleUpdateSingleValue = async (valueId, newValue) => {
+    const trimmedVal = newValue.trim()
+    if (!trimmedVal) {
+      triggerToast('لا يمكن أن تكون قيمة الخاصية فارغة.')
+      return
+    }
+
+    try {
+      await updateAdminAttributeValue(valueId, { value: trimmedVal })
+      setEditAttrOriginalOptions((prev) => prev.map((o) => (o.id === valueId ? { ...o, value: trimmedVal } : o)))
+      
+      if (selectedItem) {
+        const updatedOptions = attrOptions.map((o) => (o.id === valueId ? { ...o, value: trimmedVal } : o))
+        const updatedOptionStrings = updatedOptions.map(o => o.value)
+        const updatedValues = selectedItem.values?.map(v => v.id === valueId ? { ...v, value: trimmedVal } : v) || []
+        
+        patchAttributeInList(selectedItem.id, {
+          ...selectedItem,
+          options: updatedOptionStrings,
+          values: updatedValues
+        })
+      }
+      triggerToast('تم تحديث قيمة الخاصية بنجاح')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر تحديث قيمة الخاصية. حاول مرة أخرى.'))
+    }
+  }
+
+  const handleDeleteSingleValue = async (valueId, idx) => {
+    if (!window.confirm('هل أنت متأكد من حذف قيمة الخاصية هذه؟ قد يؤثر ذلك على المنتجات المرتبطة بها.')) {
+      return
+    }
+
+    try {
+      await deleteAdminAttributeValue(valueId)
+      const updatedOptions = attrOptions.filter((_, i) => i !== idx)
+      setAttrOptions(updatedOptions)
+      setEditAttrOriginalOptions((prev) => prev.filter((o) => o.id !== valueId))
+
+      if (selectedItem) {
+        const updatedOptionStrings = updatedOptions.map(o => o.value)
+        const updatedValues = selectedItem.values?.filter(v => v.id !== valueId) || []
+        
+        patchAttributeInList(selectedItem.id, {
+          ...selectedItem,
+          options: updatedOptionStrings,
+          values: updatedValues
+        })
+      }
+      triggerToast('تم حذف قيمة الخاصية بنجاح')
+    } catch (err) {
+      triggerToast(apiErrorMessage(err, 'تعذّر حذف قيمة الخاصية. حاول مرة أخرى.'))
     }
   }
 
@@ -267,11 +336,13 @@ export function CategoriesPage() {
   }
 
   const openEditAttr = (attr) => {
-    const options = attr.options?.length ? [...attr.options] : ['']
+    const options = attr.values?.length 
+      ? attr.values.map(v => ({ id: v.id, value: v.value })) 
+      : (attr.options?.length ? attr.options.map(opt => ({ id: null, value: opt })) : [{ id: null, value: '' }])
     setSelectedItem(attr)
     setNewAttrName(attr.name)
     setAttrOptions(options)
-    setEditAttrOriginalOptions(attr.options?.length ? [...attr.options] : [])
+    setEditAttrOriginalOptions(JSON.parse(JSON.stringify(options)))
     setShowEditAttribute(true)
   }
 
@@ -287,11 +358,13 @@ export function CategoriesPage() {
       // keep list item data if detail fetch fails
     }
 
-    const options = attr.options?.length ? [...attr.options] : ['']
+    const options = attr.values?.length 
+      ? attr.values.map(v => ({ id: v.id, value: v.value })) 
+      : (attr.options?.length ? attr.options.map(opt => ({ id: null, value: opt })) : [{ id: null, value: '' }])
     setSelectedItem(attr)
     setNewAttrName(attr.name)
     setAttrOptions(options)
-    setEditAttrOriginalOptions(attr.options?.length ? [...attr.options] : [])
+    setEditAttrOriginalOptions(JSON.parse(JSON.stringify(options)))
     setShowEditAttribute(true)
   }
 
@@ -619,10 +692,10 @@ export function CategoriesPage() {
                       </button>
                       <input
                         type="text"
-                        value={opt}
+                        value={opt.value}
                         onChange={(e) => {
                           const newOpts = [...attrOptions]
-                          newOpts[idx] = e.target.value
+                          newOpts[idx] = { ...newOpts[idx], value: e.target.value }
                           setAttrOptions(newOpts)
                         }}
                         placeholder={`القيمة ${idx + 1}`}
@@ -632,7 +705,7 @@ export function CategoriesPage() {
                   ))}
                   <button
                     type="button"
-                    onClick={() => setAttrOptions([...attrOptions, ''])}
+                    onClick={() => setAttrOptions([...attrOptions, { id: null, value: '' }])}
                     className="flex items-center gap-1 text-white font-bold text-sm hover:underline mt-2 mr-auto"
                   >
                     <Plus className="size-4" />
@@ -826,32 +899,53 @@ export function CategoriesPage() {
               <div>
                 <label className="block text-xs font-bold text-white/60 mb-3 text-right">قيم الخاصية *</label>
                 <div className="space-y-2">
-                  {attrOptions.map((opt, idx) => (
-                    <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-right-1 duration-200">
-                      <button
-                        type="button"
-                        onClick={() => setAttrOptions(attrOptions.filter((_, i) => i !== idx))}
-                        disabled={attrOptions.length === 1}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <X className="size-4" />
-                      </button>
-                      <input
-                        type="text"
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...attrOptions]
-                          newOpts[idx] = e.target.value
-                          setAttrOptions(newOpts)
-                        }}
-                        placeholder={`القيمة ${idx + 1}`}
-                        className="flex-1 rounded-xl border border-white/10 px-5 py-2.5 text-right outline-none focus:border-brand-500 transition-all text-sm font-medium"
-                      />
-                    </div>
-                  ))}
+                  {attrOptions.map((opt, idx) => {
+                    const original = editAttrOriginalOptions.find(o => o.id === opt.id);
+                    const isModified = opt.id && original && original.value !== opt.value;
+
+                    return (
+                      <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-right-1 duration-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (opt.id) {
+                              handleDeleteSingleValue(opt.id, idx)
+                            } else {
+                              setAttrOptions(attrOptions.filter((_, i) => i !== idx))
+                            }
+                          }}
+                          disabled={attrOptions.length === 1}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <X className="size-4" />
+                        </button>
+                        <input
+                          type="text"
+                          value={opt.value}
+                          onChange={(e) => {
+                            const newOpts = [...attrOptions]
+                            newOpts[idx] = { ...newOpts[idx], value: e.target.value }
+                            setAttrOptions(newOpts)
+                          }}
+                          placeholder={`القيمة ${idx + 1}`}
+                          className="flex-1 rounded-xl border border-white/10 px-5 py-2.5 text-right outline-none focus:border-brand-500 transition-all text-sm font-medium"
+                        />
+                        {isModified && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateSingleValue(opt.id, opt.value)}
+                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                            title="حفظ تعديل القيمة"
+                          >
+                            <Check className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                   <button
                     type="button"
-                    onClick={() => setAttrOptions([...attrOptions, ''])}
+                    onClick={() => setAttrOptions([...attrOptions, { id: null, value: '' }])}
                     className="flex items-center gap-1 text-white font-bold text-sm hover:underline mt-2 mr-auto"
                   >
                     <Plus className="size-4" />

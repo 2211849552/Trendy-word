@@ -56,6 +56,7 @@ export function mapAttribute(item) {
     type: item.type ?? 'list',
     isRequired: item.is_required ?? item.isRequired ?? true,
     options: extractAttributeValues(item),
+    values: Array.isArray(item.values) ? item.values : [],
     relatedCats: item.related_categories ?? item.relatedCats ?? [],
   }
 }

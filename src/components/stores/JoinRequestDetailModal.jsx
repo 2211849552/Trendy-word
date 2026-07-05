@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, FileText, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2 } from 'lucide-react'
 import { StoreImage } from './StoreImage.jsx'
 
 function InfoCard({ label, value, className = '' }) {
@@ -36,9 +36,6 @@ export function JoinRequestDetailModal({
 
   if (!open || !request) return null
 
-  const handleDocClick = () => {
-    // Document preview logic would go here
-  }
 
   const confirmAccept = () => {
     onAccept?.(request.id)
@@ -181,13 +178,12 @@ export function JoinRequestDetailModal({
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <InfoCard label="اسم التاجر" value={request.owner} />
-                <InfoCard label="الموقع" value={request.city} />
+                <InfoCard label="منطقة المتجر" value={request.city || '—'} />
                 <InfoCard label="البريد الإلكتروني" value={request.email} />
                 <InfoCard label="رقم الهاتف" value={request.phone} />
                 <InfoCard
                   label="نوع التجارة"
                   value={request.businessType}
-                  className="border-violet-100 bg-violet-50/90"
                 />
                 <InfoCard
                   label="تاريخ الطلب"
@@ -221,20 +217,6 @@ export function JoinRequestDetailModal({
                   </div>
                 </div>
               )}
-
-              <div>
-                <p className="mb-2 text-sm font-semibold text-white/90">الوثيقة الرسمية</p>
-                <button
-                  type="button"
-                  onClick={handleDocClick}
-                  className="flex w-full items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-start text-sm text-amber-950 transition-colors hover:bg-amber-100/90"
-                >
-                  <FileText className="size-5 shrink-0 text-amber-700" aria-hidden />
-                  <span className="min-w-0 font-medium break-all" dir="ltr">
-                    {request.documentFile}
-                  </span>
-                </button>
-              </div>
 
               <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-5">
                 <button
