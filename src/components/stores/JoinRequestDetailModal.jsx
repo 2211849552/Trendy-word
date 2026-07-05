@@ -161,36 +161,93 @@ export function JoinRequestDetailModal({
             </div>
           ) : (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="text-center">
+              <div className="text-center animate-in fade-in duration-300">
                 <StoreImage
                   src={request.image}
                   name={request.storeName}
                   className="mx-auto size-24 rounded-2xl shadow-premium ring-2 ring-slate-100"
                 />
                 <h3 className="mt-4 text-xl font-bold text-white">{request.storeName}</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/70">
-                  {request.description}
-                </p>
                 <span className="mt-3 inline-flex rounded-full bg-amber-100 px-4 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200/80">
-                  {request.status}
+                  {request.status === 'pending' ? 'قيد الانتظار' : request.status}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoCard label="اسم التاجر" value={request.owner} />
-                <InfoCard label="منطقة المتجر" value={request.city || '—'} />
-                <InfoCard label="البريد الإلكتروني" value={request.email} />
-                <InfoCard label="رقم الهاتف" value={request.phone} />
-                <InfoCard
-                  label="نوع التجارة"
-                  value={request.businessType}
-                />
-                <InfoCard
-                  label="تاريخ الطلب"
-                  value={request.date}
-                  className="border-brand-100 bg-brand-100/90"
-                />
+              {/* بيانات مدير المتجر */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold text-white/90 border-r-4 border-emerald-500 pr-2">بيانات مدير المتجر</h4>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <InfoCard label="اسم مدير المتجر" value={request.owner || '—'} />
+                  <InfoCard label="رقم هاتف مدير المتجر" value={request.ownerPhone || '—'} />
+                  <InfoCard label="إيميل مدير المتجر" value={request.ownerEmail || '—'} className="sm:col-span-2" />
+                </div>
               </div>
+
+              {/* بيانات المتجر */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold text-white/90 border-r-4 border-emerald-500 pr-2">بيانات المتجر</h4>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <InfoCard label="اسم المتجر" value={request.storeName || '—'} />
+                  <InfoCard
+                    label="نوع الكيان"
+                    value={request.entityType === 'company' ? 'شركة' : request.entityType === 'individual' ? 'فرد' : '—'}
+                  />
+                  {request.entityType === 'company' && (
+                    <InfoCard label="رقم السجل التجاري" value={request.commercialRegister || '—'} className="sm:col-span-2" />
+                  )}
+                  <InfoCard label="رقم هاتف المتجر" value={request.phone || '—'} />
+                  <InfoCard label="إيميل المتجر" value={request.email || '—'} />
+                  <InfoCard
+                    label="نوع المتجر"
+                    value={
+                      request.businessType === 'local' || request.businessType === 'محلي'
+                        ? 'محلي'
+                        : request.businessType === 'electronic' || request.businessType === 'الكتروني'
+                        ? 'إلكتروني'
+                        : request.businessType || '—'
+                    }
+                  />
+                  <InfoCard label="منطقة المتجر" value={request.city || '—'} />
+                  <InfoCard
+                    label="تاريخ الطلب"
+                    value={request.date}
+                    className="border-brand-100 bg-brand-100/90"
+                  />
+                  
+                  {request.googleMapUrl && (
+                    <div className="sm:col-span-2 rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
+                      <p className="text-xs font-medium text-white/60">رابط خريطة Google</p>
+                      <a
+                        href={request.googleMapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 block text-sm font-bold text-emerald-400 hover:text-emerald-300 transition-colors underline break-all"
+                      >
+                        {request.googleMapUrl}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* وصف المتجر والملاحظات */}
+              {(request.description || request.notes) && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-white/90 border-r-4 border-emerald-500 pr-2">معلومات إضافية</h4>
+                  {request.description && (
+                    <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
+                      <p className="text-xs font-medium text-white/60">وصف المتجر</p>
+                      <p className="mt-1 text-sm text-white/80 whitespace-pre-line leading-relaxed">{request.description}</p>
+                    </div>
+                  )}
+                  {request.notes && (
+                    <div className="rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
+                      <p className="text-xs font-medium text-white/60">ملاحظات التاجر</p>
+                      <p className="mt-1 text-sm text-white/80 whitespace-pre-line leading-relaxed">{request.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {request.sampleProducts?.length > 0 && (
                 <div>

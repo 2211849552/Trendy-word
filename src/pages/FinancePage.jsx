@@ -44,6 +44,19 @@ function apiErrorMessage(err, fallback) {
   return err?.message || fallback
 }
 
+function isWalletRecharge(tx) {
+  const desc = String(tx.description || '')
+  const rawType = String(tx.rawType || '').toLowerCase()
+  
+  return (
+    desc.includes('شحن محفظة') ||
+    desc.includes('شحن رصيد') ||
+    desc.includes('شحن المتجر') ||
+    desc.includes('شحن الزبون') ||
+    rawType === 'deposit'
+  )
+}
+
 export function FinancePage() {
   const [activeType, setActiveType] = useState('جميع الأنواع')
   const [searchQuery, setSearchQuery] = useState('')
@@ -148,7 +161,8 @@ export function FinancePage() {
     const mapped = extractTransactionList(data).map(mapTransaction)
     const enriched = await enrichTransactionsWithParties(mapped)
     if (seq !== loadSeq.current) return
-    setTransactions(enriched)
+    const filtered = enriched.filter(tx => !isWalletRecharge(tx))
+    setTransactions(filtered)
   }, [searchQuery])
 
   const loadBankCards = async () => {
@@ -334,7 +348,8 @@ export function FinancePage() {
       const exported = extractTransactionList(exportData).map(mapTransaction)
       if (exported.length) {
         const enriched = await enrichTransactionsWithParties(exported)
-        list = filterTransactionsClient(enriched, { type: activeType })
+        const withoutRecharge = enriched.filter(tx => !isWalletRecharge(tx))
+        list = filterTransactionsClient(withoutRecharge, { type: activeType })
       }
     } catch {
       // fallback to loaded transactions
