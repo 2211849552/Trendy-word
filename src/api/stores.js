@@ -173,11 +173,11 @@ function orderBelongsToStore(order, storeId, storeName = '') {
 
 async function countOrdersFromList(storeId, storeName = '') {
   let page = 1
-  let lastPage = 1
+  let lastPage
   let count = 0
 
   do {
-    const data = await getOrders({ per_page: 100, page })
+    const data = await getOrders({ per_page: 100, page, sales_channel: 'app' })
     const list = extractOrderList(data)
     const meta = extractOrderMeta(data)
     count += list.filter((order) => orderBelongsToStore(order, storeId, storeName)).length
@@ -190,8 +190,8 @@ async function countOrdersFromList(storeId, storeName = '') {
 
 async function countOrdersFromFilteredApi(storeId) {
   const filterParams = [
-    { store_id: storeId, per_page: 1 },
-    { store: storeId, per_page: 1 },
+    { store_id: storeId, sales_channel: 'app', per_page: 1 },
+    { store: storeId, sales_channel: 'app', per_page: 1 },
   ]
 
   for (const params of filterParams) {
@@ -229,22 +229,16 @@ export function mapCustodySummary(data) {
  * 1. GET /api/admin/stores/{store}
  * 2. GET /api/orders?store_id= (meta.total)
  * 3. GET /api/orders (عدّ يدوي حسب store_id)
+ *
+ * تعديل: يتم جلب وحساب الطلبات التي تمت عبر التطبيق فقط (sales_channel = 'app')
+ * ونتجاهل الإجمالي العام القادم من المتجر أو الـ preset لأنها تشمل طلبات نقاط البيع (POS).
  */
-export async function fetchStoreOrdersCount(storeId, { storeName = '', knownCount = null } = {}) {
+export async function fetchStoreOrdersCount(storeId, { storeName = '' } = {}) {
   const id = Number(storeId)
   if (!Number.isFinite(id) || id <= 0) return 0
 
-  const preset = readOrderCount(knownCount)
-  if (preset != null) return preset
-
-  try {
-    const storeData = await getAdminStore(id)
-    const fromStore = extractStoreOrderCount(storeData)
-    if (fromStore != null) return fromStore
-  } catch {
-    // ignore and try fallbacks
-  }
-
+  // نتجاهل knownCount و getAdminStore لأن إجماليات المتجر تشمل طلبات POS أيضاً.
+  // نقوم بالتحميل والفلترة المباشرة لطلبات التطبيق.
   try {
     const fromFiltered = await countOrdersFromFilteredApi(id)
     if (fromFiltered != null) return fromFiltered

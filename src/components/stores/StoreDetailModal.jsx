@@ -150,11 +150,7 @@ export function StoreDetailModal({
     if (!storeId) return
     setCustodyLoading(true)
     setCustodyError('')
-    setStoreOrdersCount(
-      storeInfo.orders != null && Number.isFinite(Number(storeInfo.orders))
-        ? Number(storeInfo.orders)
-        : null,
-    )
+    setStoreOrdersCount(null)
     try {
       const [summaryData, logsData, ordersCount] = await Promise.all([
         getStoreCustodySummaryForStore(storeId),

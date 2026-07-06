@@ -415,7 +415,7 @@ export function OrdersPage({ currentUser }) {
 
       {detailsModalOpen && selectedOrder ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-2xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-5xl rounded-2xl bg-brand-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
 
             <div className="flex items-center justify-between border-b border-white/5 p-6">
               <h2 className="text-2xl font-bold text-white">تفاصيل الطلب</h2>
@@ -505,7 +505,16 @@ export function OrdersPage({ currentUser }) {
                         </span>
                         <div className="text-right">
                           <p className="font-medium text-white">{item.product_name ?? 'منتج'}</p>
-                          <p className="text-xs text-white/50">
+                          {Array.isArray(item.variant?.attribute_values) && item.variant.attribute_values.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-1 justify-end">
+                              {item.variant.attribute_values.map((val) => (
+                                <span key={val.id} className="inline-flex items-center rounded bg-brand-100/40 px-2 py-0.5 text-[10px] font-medium text-white/70">
+                                  {val.attribute?.name || 'خاصية'}: {val.value}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-white/50 mt-1">
                             الكمية: {item.quantity} · {formatAmount(item.price)}
                           </p>
                         </div>
