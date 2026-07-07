@@ -168,7 +168,6 @@ export function ZonesPage() {
           <table className="w-full text-right text-sm">
             <thead className="bg-brand-300/80 text-white/60 border-b border-white/10">
               <tr>
-                <th className="px-3 py-3 font-medium">#</th>
                 <th className="px-3 py-3 font-medium">اسم المنطقة</th>
                 <th className="px-3 py-3 font-medium">المدينة</th>
                 <th className="px-3 py-3 font-medium">تاريخ الإضافة</th>
@@ -178,7 +177,7 @@ export function ZonesPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-3 py-12 text-center text-white/60">
+                  <td colSpan="4" className="px-3 py-12 text-center text-white/60">
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-5 animate-spin" />
                       جاري تحميل المناطق...
@@ -187,7 +186,6 @@ export function ZonesPage() {
                 </tr>
               ) : addresses.map((address) => (
                 <tr key={address.id} className="hover:bg-brand-300 transition-colors">
-                  <td className="px-3 py-3 font-mono text-xs text-white/60">{address.id}</td>
                   <td className="px-3 py-3 font-bold text-white">{address.name}</td>
                   <td className="px-3 py-3 text-white/70">
                     {address.city ? formatCityWithFlag(address.city) : '—'}
@@ -213,7 +211,7 @@ export function ZonesPage() {
               ))}
               {!loading && addresses.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-white/60">
+                  <td colSpan="4" className="px-6 py-12 text-center text-white/60">
                     {loadError || 'لا توجد مناطق مسجّلة.'}
                   </td>
                 </tr>
