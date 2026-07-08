@@ -42,6 +42,26 @@ export function getFinanceTransactions(params = {}) {
   return apiRequest(`/api/finance/transactions${query ? `?${query}` : ''}`)
 }
 
+function extractFinancePaginationMeta(data) {
+  return data?.meta ?? {}
+}
+
+export async function fetchAllFinanceTransactions(params = {}) {
+  const items = []
+  let page = 1
+  let lastPage = 1
+
+  do {
+    const data = await getFinanceTransactions({ ...params, page })
+    items.push(...extractTransactionList(data))
+    const meta = extractFinancePaginationMeta(data)
+    lastPage = Number(meta.last_page ?? 1)
+    page += 1
+  } while (page <= lastPage)
+
+  return items
+}
+
 // GET /api/finance/transactions/{id}
 export function getFinanceTransaction(id) {
   return apiRequest(`/api/finance/transactions/${encodeURIComponent(String(id))}`)
@@ -373,8 +393,18 @@ export function buildPaymentStatsQueryParams({ period } = {}) {
 function mapPaymentType(item) {
   const txType = String(item.transaction_type ?? '').toLowerCase()
   const ledgerType = String(item.type ?? '').toLowerCase()
+  const description = String(item.description ?? '')
 
   if (txType.includes('cash') || txType.includes('cod')) {
+    return PAYMENT_TYPE_LABELS.cash
+  }
+
+  if (
+    description.includes('عهدة نقدية')
+    || description.includes('دفع نقدي')
+    || description.includes('نقداً')
+    || description.includes('نقدا')
+  ) {
     return PAYMENT_TYPE_LABELS.cash
   }
 
@@ -582,16 +612,24 @@ function applyOrderInfo(tx, order) {
   }
 }
 
-export async function enrichTransactionsWithParties(transactions) {
+export async function enrichTransactionsWithParties(transactions, { preloadedOrders = [] } = {}) {
   if (!transactions.length) return transactions
 
+  try {
   const orderIds = new Set()
   const storeIds = new Set()
   const orderNumbers = new Set()
   const complaintIds = new Set()
   const needsBulkOrders = transactions.some(needsPartyEnrichment)
+  const cachedOrders = Array.isArray(preloadedOrders) ? preloadedOrders : []
 
   transactions.forEach((tx) => {
+    if (tx.isSynthetic) return
+
+    const hasCustomer = Boolean(tx.customer && tx.customer !== '—')
+    const hasStore = Boolean(tx.store && tx.store !== '—')
+    if (hasCustomer && hasStore) return
+
     const model = referenceModel(tx.referenceType)
     if (model === 'Order' && tx.referenceId) orderIds.add(Number(tx.referenceId))
     if (model === 'Store' && tx.referenceId) storeIds.add(Number(tx.referenceId))
@@ -605,7 +643,13 @@ export async function enrichTransactionsWithParties(transactions) {
   const orderCache = new Map()
   const storeCache = new Map()
   const complaintCache = new Map()
-  let bulkOrders = []
+  let bulkOrders = [...cachedOrders]
+
+  cachedOrders.forEach((order) => {
+    if (!order?.id) return
+    const mapped = mapOrderToParties(order)
+    if (mapped) orderCache.set(Number(order.id), mapped)
+  })
 
   await Promise.all([
     ...[...orderIds].map(async (id) => {
@@ -656,7 +700,7 @@ export async function enrichTransactionsWithParties(transactions) {
         // ignore lookup failures
       }
     }),
-    ...(needsBulkOrders
+    ...(needsBulkOrders && !cachedOrders.length
       ? [
           (async () => {
             try {
@@ -788,19 +832,124 @@ export async function enrichTransactionsWithParties(transactions) {
       store: tx.store !== '—' ? tx.store : (linked.store || '—'),
     }
   })
+  } catch {
+    return transactions.map((tx) => ({
+      ...tx,
+      customer: tx.customer || '—',
+      store: tx.store || '—',
+    }))
+  }
 }
 
 export function mapTransactionDetail(data) {
   return mapTransaction(data?.data ?? data)
 }
 
-export function filterTransactionsClient(transactions, { type, status } = {}) {
+function isDeliveredOrderStatus(status) {
+  const value = String(status ?? '').toLowerCase()
+  return value === 'delivered' || value === 'completed'
+}
+
+function pickOrderDeliveryFee(order) {
+  const fee = Number(order?.delivery_fee ?? order?.shipping_fee ?? 0)
+  return Number.isFinite(fee) && fee > 0 ? fee : 0
+}
+
+function orderFinanceDate(order) {
+  return String(order?.delivered_at ?? order?.created_at ?? '').slice(0, 10)
+}
+
+function orderNumberFromOrder(order) {
+  return order?.order_number ?? (order?.id != null ? `ORD-${order.id}` : '')
+}
+
+function hasDeliveryCashTransaction(transactions, orderNumber) {
+  return transactions.some((tx) => {
+    const description = String(tx.description ?? '')
+    if (!description.includes(orderNumber)) return false
+    if (tx.rawType === 'cash_delivery_fee') return true
+    return description.includes('توصيل') || description.toLowerCase().includes('delivery')
+  })
+}
+
+export function mapOrderToCashDeliveryTransaction(order) {
+  const orderNumber = orderNumberFromOrder(order)
+  const deliveryFee = pickOrderDeliveryFee(order)
+  if (!orderNumber || !deliveryFee) return null
+
+  return {
+    id: `CASH-DLV-${orderNumber}`,
+    transactionId: null,
+    customer: order.customer_name ?? '—',
+    store: order.store_name ?? '—',
+    amount: deliveryFee,
+    grossAmount: deliveryFee,
+    fee: 0,
+    type: PAYMENT_TYPE_LABELS.cash,
+    rawType: 'cash_delivery_fee',
+    date: orderFinanceDate(order),
+    status: 'ناجحة',
+    description: `رسوم توصيل نقدية لطلبية رقم ${orderNumber}`,
+    balanceAfter: 0,
+    referenceType: 'App\\Models\\Order',
+    referenceId: order.id != null ? Number(order.id) : null,
+    referenceDetails: { order_number: orderNumber },
+    isSynthetic: true,
+    source: 'order_delivery_fee',
+    raw: order,
+  }
+}
+
+export function buildCashDeliveryTransactionsFromOrders(orders, existingTransactions = []) {
+  if (!Array.isArray(orders) || !orders.length) return []
+
+  const existing = Array.isArray(existingTransactions) ? existingTransactions : []
+  const synthetic = []
+
+  orders.forEach((order) => {
+    if (!isDeliveredOrderStatus(order?.status)) return
+    const orderNumber = orderNumberFromOrder(order)
+    if (!orderNumber || !pickOrderDeliveryFee(order)) return
+    if (hasDeliveryCashTransaction(existing, orderNumber)) return
+
+    const tx = mapOrderToCashDeliveryTransaction(order)
+    if (tx) synthetic.push(tx)
+  })
+
+  return synthetic
+}
+
+export function mergeFinanceTransactions(apiTransactions, extraTransactions = []) {
+  const merged = [...(Array.isArray(apiTransactions) ? apiTransactions : [])]
+  const seen = new Set(merged.map((tx) => tx.id))
+
+  ;(Array.isArray(extraTransactions) ? extraTransactions : []).forEach((tx) => {
+    if (!tx?.id || seen.has(tx.id)) return
+    merged.push(tx)
+    seen.add(tx.id)
+  })
+
+  return merged.sort((a, b) => {
+    const byDate = String(b.date ?? '').localeCompare(String(a.date ?? ''))
+    if (byDate !== 0) return byDate
+    return String(b.id ?? '').localeCompare(String(a.id ?? ''))
+  })
+}
+
+export function filterTransactionsClient(transactions, { type, status, search } = {}) {
   let result = transactions
   if (type && type !== 'جميع الأنواع') {
     result = result.filter((tx) => tx.type === type)
   }
   if (status && status !== 'جميع الحالات') {
     result = result.filter((tx) => tx.status === status)
+  }
+  const trimmed = search?.trim().toLowerCase()
+  if (trimmed) {
+    result = result.filter((tx) =>
+      [tx.id, tx.customer, tx.store, tx.description, tx.type, tx.status, tx.date, String(tx.amount)]
+        .some((value) => String(value ?? '').toLowerCase().includes(trimmed)),
+    )
   }
   return result
 }

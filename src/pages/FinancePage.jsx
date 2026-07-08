@@ -7,24 +7,25 @@ import {
   getDeliveryProfits,
   getPlatformEarnings,
   getRevenueOverview,
-  getFinanceTransactions,
+  fetchAllFinanceTransactions,
   getFinanceTransaction,
-  exportFinanceReport,
   extractFinancePayload,
   pickFinanceAmount,
   sumSubscriptionAndAdProfits,
-  extractTransactionList,
   mapTransaction,
   mapTransactionDetail,
   enrichTransactionsWithParties,
   buildFinanceQueryParams,
   filterTransactionsClient,
+  buildCashDeliveryTransactionsFromOrders,
+  mergeFinanceTransactions,
   fetchPaymentMethodsDistribution,
   fetchMonthlyRevenueSeries,
   paymentMethodsChartHasData,
   filterPaymentMethodsChartForDisplay,
   buildPaymentMethodsChart,
 } from '../api/adminFinance.js'
+import { getOrders, extractOrderList } from '../api/adminOrders.js'
 import { downloadFinanceReportPdf } from '../utils/printFinance.js'
 import {
   getBankCards,
@@ -42,19 +43,6 @@ function apiErrorMessage(err, fallback) {
   if (err?.status === 422) return err.message || fallback
   if (err?.status === 0 || err?.status == null) return 'تعذّر الاتصال بالخادم.'
   return err?.message || fallback
-}
-
-function isWalletRecharge(tx) {
-  const desc = String(tx.description || '')
-  const rawType = String(tx.rawType || '').toLowerCase()
-  
-  return (
-    desc.includes('شحن محفظة') ||
-    desc.includes('شحن رصيد') ||
-    desc.includes('شحن المتجر') ||
-    desc.includes('شحن الزبون') ||
-    rawType === 'deposit'
-  )
 }
 
 export function FinancePage() {
@@ -153,17 +141,32 @@ export function FinancePage() {
 
   const loadTransactions = useCallback(async () => {
     const seq = ++loadSeq.current
-    const params = buildFinanceQueryParams({
-      search: searchQuery,
-    })
-    const data = await getFinanceTransactions(params)
+    const params = buildFinanceQueryParams()
+    const allTx = await fetchAllFinanceTransactions(params)
     if (seq !== loadSeq.current) return
-    const mapped = extractTransactionList(data).map(mapTransaction)
-    const enriched = await enrichTransactionsWithParties(mapped)
+
+    const mapped = allTx.map(mapTransaction)
+
+    let orders = []
+    try {
+      const ordersData = await getOrders({ per_page: 100, status: 'delivered' })
+      orders = extractOrderList(ordersData)
+    } catch {
+      orders = []
+    }
+
+    let enriched = mapped
+    try {
+      enriched = await enrichTransactionsWithParties(mapped, { preloadedOrders: orders })
+    } catch {
+      enriched = mapped
+    }
+
+    const cashDelivery = buildCashDeliveryTransactionsFromOrders(orders, enriched)
+    const merged = mergeFinanceTransactions(enriched, cashDelivery)
     if (seq !== loadSeq.current) return
-    const filtered = enriched.filter(tx => !isWalletRecharge(tx))
-    setTransactions(filtered)
-  }, [searchQuery])
+    setTransactions(merged)
+  }, [])
 
   const loadBankCards = async () => {
     setCardsLoading(true)
@@ -317,6 +320,10 @@ export function FinancePage() {
   const openDetails = async (tx) => {
     setSelectedTx(tx)
     setDetailsModalOpen(true)
+    if (tx.isSynthetic || !tx.transactionId) {
+      setDetailLoading(false)
+      return
+    }
     setDetailLoading(true)
     try {
       const data = await getFinanceTransaction(tx.transactionId)
@@ -344,12 +351,14 @@ export function FinancePage() {
 
     let list = filteredTransactions
     try {
-      const exportData = await exportFinanceReport(params)
-      const exported = extractTransactionList(exportData).map(mapTransaction)
+      const exported = (await fetchAllFinanceTransactions(params)).map(mapTransaction)
       if (exported.length) {
-        const enriched = await enrichTransactionsWithParties(exported)
-        const withoutRecharge = enriched.filter(tx => !isWalletRecharge(tx))
-        list = filterTransactionsClient(withoutRecharge, { type: activeType })
+        const ordersData = await getOrders({ per_page: 100, status: 'delivered' })
+        const orders = extractOrderList(ordersData)
+        const cashDelivery = buildCashDeliveryTransactionsFromOrders(orders, exported)
+        const merged = mergeFinanceTransactions(exported, cashDelivery)
+        const enriched = await enrichTransactionsWithParties(merged, { preloadedOrders: orders })
+        list = filterTransactionsClient(enriched, { type: activeType, search: searchQuery })
       }
     } catch {
       // fallback to loaded transactions
@@ -383,8 +392,8 @@ export function FinancePage() {
   }
 
   const filteredTransactions = useMemo(
-    () => filterTransactionsClient(transactions, { type: activeType }),
-    [transactions, activeType],
+    () => filterTransactionsClient(transactions, { type: activeType, search: searchQuery }),
+    [transactions, activeType, searchQuery],
   )
 
   const totalRevenue = useMemo(
