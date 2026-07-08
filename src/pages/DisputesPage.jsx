@@ -37,6 +37,10 @@ import {
   COMPLAINT_CATEGORY_FILTER_OPTIONS,
   buildComplaintStats,
 } from '../api/adminComplaints.js'
+import {
+  getDeactivationReason,
+  setDeactivationReason,
+} from '../utils/deactivationReasons.js'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -78,6 +82,45 @@ function buildAccountActionWarning(dispute, actionType, targetType) {
     return `تحذير: سيتم ${verb} حساب الزبون [${dispute.customer}]`
   }
   return `تحذير: سيتم ${verb} مالك المتجر [${dispute.store}]`
+}
+
+const COMPLAINT_ACTION_REASON_KEY = 'trendy_complaint_account_actions_v1'
+
+function readComplaintActionStore() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(COMPLAINT_ACTION_REASON_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeComplaintActionStore(next) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(COMPLAINT_ACTION_REASON_KEY, JSON.stringify(next))
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function getComplaintAccountAction(complaintId) {
+  return readComplaintActionStore()[String(complaintId)] ?? null
+}
+
+function setComplaintAccountAction(complaintId, payload) {
+  const store = readComplaintActionStore()
+  store[String(complaintId)] = payload
+  writeComplaintActionStore(store)
+}
+
+function resolveDisputeActionReason(dispute) {
+  const cached = getComplaintAccountAction(dispute?.id)
+  if (cached?.reason) return cached
+  return null
 }
 
 const MAX_MERCHANT_WARNING_TEXT_LENGTH = 2000
@@ -259,7 +302,17 @@ export function DisputesPage({ params, setParams }) {
     setDetailLoading(true)
     try {
       const detail = await fetchComplaintDetail(dispute.id)
-      setSelectedDispute(detail)
+      const cachedReason = resolveDisputeActionReason(detail)
+      setSelectedDispute(
+        cachedReason
+          ? {
+              ...detail,
+              accountActionReason: cachedReason.reason,
+              accountActionType: cachedReason.actionType,
+              accountActionTargetType: cachedReason.targetType,
+            }
+          : detail,
+      )
       setDisputes((prev) => prev.map((d) => (d.id === detail.id ? { ...d, ...detail } : d)))
     } catch (err) {
       triggerToast(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الشكوى.'))
@@ -462,6 +515,33 @@ export function DisputesPage({ params, setParams }) {
         target_type: adminTargetType,
         reason,
       })
+
+      setComplaintAccountAction(selectedDispute.id, {
+        reason,
+        actionType: adminAccountAction,
+        targetType: adminTargetType,
+      })
+      setSelectedDispute((prev) => (prev ? {
+        ...prev,
+        accountActionReason: reason,
+        accountActionType: adminAccountAction,
+        accountActionTargetType: adminTargetType,
+      } : prev))
+
+      if (adminTargetType === 'customer' && selectedDispute.customerId) {
+        setDeactivationReason('customer', selectedDispute.customerId, reason)
+      }
+      if (adminTargetType === 'store') {
+        const linkedStoreId =
+          selectedDispute.storeId
+          ?? selectedDispute.raw?.order?.store_id
+          ?? selectedDispute.raw?.order?.store?.id
+          ?? null
+        if (linkedStoreId != null) {
+          setDeactivationReason('store', linkedStoreId, reason)
+        }
+      }
+
       triggerToast(
         adminAccountAction === 'suspend_account'
           ? 'تم إيقاف الحساب المستهدف بنجاح'
@@ -713,6 +793,15 @@ export function DisputesPage({ params, setParams }) {
                     </div>
                   </div>
                 ) : null}
+
+                {resolveDisputeActionReason(dispute)?.reason ? (
+                  <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-right">
+                    <p className="text-xs text-amber-200/80">سبب إجراء الحساب</p>
+                    <p className="mt-1 text-sm font-bold text-amber-100">
+                      {resolveDisputeActionReason(dispute)?.reason}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             ))
           )}
@@ -779,6 +868,26 @@ export function DisputesPage({ params, setParams }) {
                   <p className="text-sm text-white/60 mb-2">وصف الشكوى</p>
                   <p className="font-bold text-white text-lg">{selectedDispute.description}</p>
                 </div>
+
+              {(() => {
+                const localReason = selectedDispute.accountActionReason
+                  || resolveDisputeActionReason(selectedDispute)?.reason
+                if (!localReason) return null
+                const targetType =
+                  selectedDispute.accountActionTargetType
+                  || resolveDisputeActionReason(selectedDispute)?.targetType
+                const actionType =
+                  selectedDispute.accountActionType
+                  || resolveDisputeActionReason(selectedDispute)?.actionType
+                return (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-right" dir="rtl">
+                    <p className="text-sm text-amber-200/80 mb-1">
+                      سبب {actionType === 'ban' ? 'الحظر' : 'الإيقاف'} ({targetType === 'store' ? 'المتجر' : 'الزبون'})
+                    </p>
+                    <p className="font-bold text-amber-100 text-lg">{localReason}</p>
+                  </div>
+                )
+              })()}
 
                 {(() => {
                   const selectedAttachments = getComplaintAttachments(selectedDispute)

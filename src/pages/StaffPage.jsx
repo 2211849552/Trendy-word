@@ -33,6 +33,11 @@ import {
   ASSIGNABLE_PLATFORM_ROLES,
   roleLabelToId,
 } from '../api/adminEmployees.js'
+import {
+  getDeactivationReason,
+  setDeactivationReason,
+  clearDeactivationReason,
+} from '../utils/deactivationReasons.js'
 
 function apiErrorMessage(err, fallback) {
   const msg = String(err?.message ?? '')
@@ -77,6 +82,8 @@ export function StaffPage() {
 
   const [toggleLoading, setToggleLoading] = useState(false)
   const [toggleError, setToggleError] = useState('')
+  const [deactivateReason, setDeactivateReason] = useState('')
+  const [showDeactivateForm, setShowDeactivateForm] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
 
   const loadSeq = useRef(0)
@@ -125,6 +132,8 @@ export function StaffPage() {
     setDetailsModalOpen(false)
     setSelectedStaff(null)
     setToggleError('')
+    setDeactivateReason('')
+    setShowDeactivateForm(false)
   }
 
   const openDetails = async (employee) => {
@@ -132,9 +141,17 @@ export function StaffPage() {
     setDetailsModalOpen(true)
     setDetailLoading(true)
     setToggleError('')
+    setDeactivateReason('')
+    setShowDeactivateForm(false)
     try {
       const data = await getEmployee(employee.id)
-      setSelectedStaff(mapEmployeeDetail(data))
+      const detail = mapEmployeeDetail(data)
+      const cachedReason = getDeactivationReason('employee', employee.id)
+      setSelectedStaff(
+        cachedReason && !detail.deactivationReason
+          ? { ...detail, deactivationReason: cachedReason }
+          : detail,
+      )
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الموظف.'))
       setTimeout(() => setActionMessage(''), 3000)
@@ -255,10 +272,27 @@ export function StaffPage() {
     setToggleError('')
     const wasActive = selectedStaff.rawStatus === 'active'
     try {
+      if (wasActive && !deactivateReason.trim()) {
+        setToggleError('سبب التعطيل مطلوب.')
+        return
+      }
       await toggleEmployeeStatus(selectedStaff.id)
       const data = await getEmployee(selectedStaff.id)
-      setSelectedStaff(mapEmployeeDetail(data))
+      const detail = mapEmployeeDetail(data)
+      if (wasActive) {
+        setDeactivationReason('employee', selectedStaff.id, deactivateReason.trim())
+      } else {
+        clearDeactivationReason('employee', selectedStaff.id)
+      }
+      const cachedReason = getDeactivationReason('employee', selectedStaff.id)
+      setSelectedStaff(
+        cachedReason && !detail.deactivationReason
+          ? { ...detail, deactivationReason: cachedReason }
+          : detail,
+      )
       await loadStaff()
+      setDeactivateReason('')
+      setShowDeactivateForm(false)
       setActionMessage(
         wasActive ? 'تم تعطيل حساب الموظف.' : 'تم إعادة تفعيل حساب الموظف.',
       )
@@ -491,6 +525,12 @@ export function StaffPage() {
 
               <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
                 <h3 className="text-sm font-bold text-white/80">إدارة الحساب</h3>
+                {selectedStaff.rawStatus !== 'active' && selectedStaff.deactivationReason ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                    <p className="mb-1 text-amber-200/80">سبب التعطيل</p>
+                    <p className="font-bold">{selectedStaff.deactivationReason}</p>
+                  </div>
+                ) : null}
                 <p className="text-sm text-white/70">
                   {selectedStaff.rawStatus === 'active'
                     ? 'يمكنك تعطيل حساب هذا الموظف. سيتم إنهاء جلساته النشطة.'
@@ -501,25 +541,69 @@ export function StaffPage() {
                     {toggleError}
                   </p>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={handleToggleStatus}
-                  disabled={toggleLoading}
-                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors disabled:opacity-60 ${
-                    selectedStaff.rawStatus === 'active'
-                      ? 'border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  }`}
-                >
-                  {toggleLoading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : selectedStaff.rawStatus === 'active' ? (
-                    <Ban className="size-4" />
+                {selectedStaff.rawStatus === 'active' ? (
+                  !showDeactivateForm ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDeactivateForm(true)
+                        setToggleError('')
+                      }}
+                      disabled={toggleLoading}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-60"
+                    >
+                      <Ban className="size-4" />
+                      تعطيل الحساب
+                    </button>
                   ) : (
-                    <UserCheck className="size-4" />
-                  )}
-                  {selectedStaff.rawStatus === 'active' ? 'تعطيل الحساب' : 'إعادة تفعيل الحساب'}
-                </button>
+                    <div className="space-y-3">
+                      <div>
+                        <label htmlFor="staff-deactivate-reason" className="mb-2 block text-sm font-medium text-white/80">
+                          سبب التعطيل <span className="text-brand-300">*</span>
+                        </label>
+                        <textarea
+                          id="staff-deactivate-reason"
+                          value={deactivateReason}
+                          onChange={(e) => setDeactivateReason(e.target.value)}
+                          rows={3}
+                          placeholder="اكتبي سبب تعطيل الحساب..."
+                          className="input-brand resize-none"
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleToggleStatus}
+                          disabled={toggleLoading}
+                          className="btn-primary disabled:opacity-60"
+                        >
+                          {toggleLoading ? 'جاري الحفظ...' : 'تأكيد التعطيل'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowDeactivateForm(false)
+                            setDeactivateReason('')
+                            setToggleError('')
+                          }}
+                          className="rounded-xl border border-white/10 bg-brand-300 px-5 py-2.5 text-sm font-bold text-white/80 transition-colors hover:bg-brand-100"
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleToggleStatus}
+                    disabled={toggleLoading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {toggleLoading ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
+                    إعادة تفعيل الحساب
+                  </button>
+                )}
               </div>
               </>
               )}

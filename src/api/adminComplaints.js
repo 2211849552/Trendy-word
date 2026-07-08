@@ -245,6 +245,7 @@ export function mapComplaint(item) {
     customer: item.user?.name ?? item.order?.customer_name ?? '—',
     customerId: item.user?.id ?? null,
     store: item.order?.store_name ?? '—',
+    storeId: item.order?.store_id ?? item.order?.store?.id ?? null,
     orderId: item.order?.order_number ?? (item.order_id ? `ORD-${item.order_id}` : '—'),
     orderDbId: item.order?.id ?? item.order_id ?? null,
     date: String(item.created_at ?? '').slice(0, 10),

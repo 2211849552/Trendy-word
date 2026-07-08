@@ -46,6 +46,11 @@ import { DriverChatModal } from '../components/drivers/DriverChatModal.jsx'
 import { DriverCustodyViewSection } from '../components/drivers/DriverCustodyViewSection.jsx'
 import { DriverCustodySection } from '../components/drivers/DriverCustodySection.jsx'
 import { DriverDuesSection } from '../components/drivers/DriverDuesSection.jsx'
+import {
+  getDeactivationReason,
+  setDeactivationReason,
+  clearDeactivationReason,
+} from '../utils/deactivationReasons.js'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -292,7 +297,11 @@ export function DriversPage({ params, setParams, currentUser }) {
     setToggleError('')
     try {
       const mapped = await loadDriverAdminStats(driver.id)
+      const cachedReason = getDeactivationReason('driver', driver.id)
       setSelectedDriver(mapped)
+      if (cachedReason && !mapped.deactivationReason) {
+        setSelectedDriver({ ...mapped, deactivationReason: cachedReason })
+      }
       setEditForm(emptyDriverEditForm(mapped))
       setDrivers((prev) =>
         prev.map((d) =>
@@ -433,15 +442,26 @@ export function DriversPage({ params, setParams, currentUser }) {
     try {
       let result
       if (selectedDriver.rawStatus === 'active') {
+        if (!deactivateReason.trim()) {
+          setToggleError('سبب التعطيل مطلوب.')
+          return
+        }
         result = await deactivateDriver(selectedDriver.id, deactivateReason)
+        setDeactivationReason('driver', selectedDriver.id, deactivateReason.trim())
         setActionMessage(result?.message || 'تم تعطيل حساب السائق.')
       } else {
         result = await reactivateDriver(selectedDriver.id)
+        clearDeactivationReason('driver', selectedDriver.id)
         setActionMessage(result?.message || 'تم إعادة تفعيل حساب السائق.')
       }
 
       const mapped = mapDriverDetail(result)
-      setSelectedDriver(mapped)
+      const cachedReason = getDeactivationReason('driver', selectedDriver.id)
+      setSelectedDriver(
+        cachedReason && !mapped.deactivationReason
+          ? { ...mapped, deactivationReason: cachedReason }
+          : mapped,
+      )
       setEditForm(emptyDriverEditForm(mapped))
       setDeactivateReason('')
       setShowDeactivateForm(false)
@@ -826,6 +846,13 @@ export function DriversPage({ params, setParams, currentUser }) {
               <div className="rounded-xl border border-white/10 bg-brand-300/50 p-5 space-y-4">
                 <h3 className="text-sm font-bold text-white/80">إدارة الحساب</h3>
 
+                {selectedDriver.rawStatus !== 'active' && selectedDriver.deactivationReason ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                    <p className="mb-1 text-amber-200/80">سبب التعطيل</p>
+                    <p className="font-bold">{selectedDriver.deactivationReason}</p>
+                  </div>
+                ) : null}
+
                 {selectedDriver.rawStatus === 'active' && !showDeactivateForm ? (
                   <button
                     type="button"
@@ -844,7 +871,7 @@ export function DriversPage({ params, setParams, currentUser }) {
                   <form className="space-y-4" onSubmit={handleToggleStatus}>
                     <div>
                       <label htmlFor="driver-deactivate-reason" className="mb-2 block text-sm font-medium text-white/80">
-                        سبب التعطيل (اختياري)
+                        سبب التعطيل <span className="text-brand-300">*</span>
                       </label>
                       <textarea
                         id="driver-deactivate-reason"

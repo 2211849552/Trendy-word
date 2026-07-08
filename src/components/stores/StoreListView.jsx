@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { Search, SlidersHorizontal, Eye, Power, CheckCircle, Download } from 'lucide-react'
 import { StoreDetailModal } from './StoreDetailModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
+import {
+  getDeactivationReason,
+  setDeactivationReason,
+  clearDeactivationReason,
+} from '../../utils/deactivationReasons.js'
 
 const STATUS_LABELS = {
   active: 'نشط',
@@ -159,6 +164,11 @@ export function StoreListView({
     setActionError('')
     try {
       await onToggleStoreStatus(toggleStore, deactivateReason.trim())
+      if (toggleStore.status === 'active') {
+        setDeactivationReason('store', toggleStore.id, deactivateReason.trim())
+      } else {
+        clearDeactivationReason('store', toggleStore.id)
+      }
       showStatusToast(
         toggleStore.status === 'active'
           ? 'تم إلغاء تفعيل المتجر بنجاح'
@@ -179,7 +189,14 @@ export function StoreListView({
     setSelectedStore(row)
     try {
       const details = await onLoadStoreDetails(row.id)
-      if (details) setSelectedStore(details)
+      if (details) {
+        const cachedReason = getDeactivationReason('store', row.id)
+        setSelectedStore(
+          cachedReason && !details.deactivationReason
+            ? { ...details, deactivationReason: cachedReason }
+            : details,
+        )
+      }
     } finally {
       setDetailLoading(false)
     }

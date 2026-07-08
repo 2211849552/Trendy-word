@@ -25,6 +25,11 @@ import {
   customersToCsv,
 } from '../api/adminCustomers.js'
 import { openCustomersPrintWindow } from '../utils/printCustomers.js'
+import {
+  getDeactivationReason,
+  setDeactivationReason,
+  clearDeactivationReason,
+} from '../utils/deactivationReasons.js'
 
 function apiErrorMessage(err, fallback) {
   if (err?.status === 401) return 'انتهت الجلسة. سجّلي الدخول من جديد.'
@@ -107,7 +112,11 @@ export function CustomersPage() {
     setToggleError('')
     try {
       const detail = await fetchCustomerDetail(customer.id)
+      const cachedReason = getDeactivationReason('customer', customer.id)
       setSelectedCustomer(detail)
+      if (cachedReason && !detail.deactivationReason) {
+        setSelectedCustomer({ ...detail, deactivationReason: cachedReason })
+      }
     } catch (err) {
       setActionMessage(apiErrorMessage(err, 'تعذّر تحميل تفاصيل الزبون.'))
       setTimeout(() => setActionMessage(''), 3000)
@@ -118,7 +127,12 @@ export function CustomersPage() {
 
   const refreshSelectedCustomer = async (customerId) => {
     const detail = await fetchCustomerDetail(customerId)
-    setSelectedCustomer(detail)
+    const cachedReason = getDeactivationReason('customer', customerId)
+    setSelectedCustomer(
+      cachedReason && !detail.deactivationReason
+        ? { ...detail, deactivationReason: cachedReason }
+        : detail,
+    )
   }
 
   const getSelectedCustomerRecordId = () =>
@@ -143,6 +157,7 @@ export function CustomersPage() {
     setToggleError('')
     try {
       await deactivateCustomer(customerId, selectedCustomer, deactivateReason.trim())
+      setDeactivationReason('customer', customerId, deactivateReason.trim())
       setActionMessage('تم تعطيل حساب الزبون.')
       await refreshSelectedCustomer(customerId)
       setDeactivateReason('')
@@ -170,6 +185,7 @@ export function CustomersPage() {
     setToggleError('')
     try {
       await reactivateCustomer(customerId, selectedCustomer)
+      clearDeactivationReason('customer', customerId)
       setActionMessage('تم إعادة تفعيل حساب الزبون.')
       await refreshSelectedCustomer(customerId)
       await loadCustomers()
@@ -441,6 +457,13 @@ export function CustomersPage() {
                 <div className="rounded-xl bg-brand-300 border border-white/5 p-5 text-right">
                   <p className="text-sm text-white/60 mb-1">عدد الشكاوى</p>
                   <p className="font-bold text-white text-lg">{selectedCustomer.totalComplaints}</p>
+                </div>
+              ) : null}
+
+              {selectedCustomer.rawStatus !== 'active' && selectedCustomer.deactivationReason ? (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-right">
+                  <p className="text-sm text-amber-200/80 mb-1">سبب التعطيل</p>
+                  <p className="font-bold text-amber-100">{selectedCustomer.deactivationReason}</p>
                 </div>
               ) : null}
 

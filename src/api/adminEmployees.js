@@ -239,6 +239,7 @@ export function mapEmployee(item) {
     department: item.staff_profile?.department ?? '—',
     jobTitle: item.staff_profile?.job_title ?? mapRoleLabel(item.roles),
     employeeIdNumber: item.staff_profile?.employee_id_number ?? '—',
+    deactivationReason: item.deactivation_reason ?? item.staff_profile?.deactivation_reason ?? '',
     raw: item,
   }
 }

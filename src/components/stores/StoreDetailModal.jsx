@@ -30,6 +30,7 @@ import { ConfirmDeleteModal } from '../catalog/ConfirmDeleteModal.jsx'
 import { StoreImage } from './StoreImage.jsx'
 import { StoreDeliveryPricesSection, formatDeliveryPrice } from './StoreDeliveryPricesSection.jsx'
 import { StorePromotionsSection } from './StorePromotionsSection.jsx'
+import { getDeactivationReason } from '../../utils/deactivationReasons.js'
 
 const STATUS_LABELS = {
   active: 'نشط',
@@ -226,6 +227,8 @@ export function StoreDetailModal({
   if (!open || !store) return null
 
   const deliveryPriceSummary = store.zoneDeliveryPrices ?? []
+  const displayedDeactivationReason =
+    store.deactivationReason || (store?.id ? getDeactivationReason('store', store.id) : '')
 
   const overlay = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -313,8 +316,8 @@ export function StoreDetailModal({
                     }`}>
                       {STATUS_LABELS[store.status] ?? store.status}
                     </span>
-                    {store.deactivationReason ? (
-                      <p className="mt-2 text-xs text-white/55">سبب التعطيل: {store.deactivationReason}</p>
+                    {displayedDeactivationReason ? (
+                      <p className="mt-2 text-xs text-white/55">سبب التعطيل: {displayedDeactivationReason}</p>
                     ) : null}
                   </div>
                   <CheckCircle2 className="size-5 text-white/50" />

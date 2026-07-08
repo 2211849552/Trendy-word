@@ -318,6 +318,7 @@ export function mapDriver(item) {
     firstCashCollectedAt: profile.first_cash_collected_at ?? item.first_cash_collected_at ?? null,
     totalEarnings: Number(stats.total_earnings ?? item.total_earnings ?? profile.earnings ?? 0),
     joinDate: item.created_at ? String(item.created_at).slice(0, 10) : '—',
+    deactivationReason: item.deactivation_reason ?? profile.deactivation_reason ?? '',
     raw: item,
   }
 }

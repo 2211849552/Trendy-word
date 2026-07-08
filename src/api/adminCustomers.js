@@ -190,6 +190,7 @@ export function mapCustomer(item) {
     loyaltyPoints: Number(item.loyalty_points ?? 0),
     lastLoginAt: item.last_login_at ?? null,
     defaultAddress: item.default_address ?? null,
+    deactivationReason: item.deactivation_reason ?? '',
     raw: item,
   }
 }

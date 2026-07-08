@@ -26,11 +26,19 @@ import {
   hasFullStoreManagementAccess,
   canViewStorePromotions,
 } from '../api/user.js'
+import { getDeactivationReason } from '../utils/deactivationReasons.js'
 
 function extractList(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.data)) return data.data
   return []
+}
+
+function withCachedDeactivationReason(store) {
+  if (!store) return store
+  const cachedReason = store?.id ? getDeactivationReason('store', store.id) : ''
+  if (!cachedReason || store.deactivationReason) return store
+  return { ...store, deactivationReason: cachedReason }
 }
 
 async function enrichMissingMerchantData(stores, setStores) {
@@ -119,7 +127,7 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
       if (apiStatus) params.status = apiStatus
 
       const data = await getAdminStores(params)
-      const mappedStores = extractStoreList(data).map(mapAdminStore)
+      const mappedStores = extractStoreList(data).map(mapAdminStore).map(withCachedDeactivationReason)
       setRegisteredStores(mappedStores)
       enrichMissingMerchantData(mappedStores, setRegisteredStores)
     } catch (err) {
@@ -140,7 +148,7 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
     loadRequests()
     getAdminStores({ per_page: 100 })
       .then((data) => {
-        const mappedStores = extractStoreList(data).map(mapAdminStore)
+        const mappedStores = extractStoreList(data).map(mapAdminStore).map(withCachedDeactivationReason)
         setRegisteredStores(mappedStores)
         enrichMissingMerchantData(mappedStores, setRegisteredStores)
       })
@@ -192,9 +200,9 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
   const handleLoadStoreDetails = async (storeId) => {
     try {
       const data = await getAdminStore(storeId)
-      return mapAdminStoreDetail(data)
+      return withCachedDeactivationReason(mapAdminStoreDetail(data))
     } catch {
-      return registeredStores.find((s) => s.id === storeId) ?? null
+      return withCachedDeactivationReason(registeredStores.find((s) => s.id === storeId) ?? null)
     }
   }
 
