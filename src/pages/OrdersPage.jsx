@@ -587,7 +587,12 @@ export function OrdersPage({ currentUser }) {
                         onChange={(e) => setStatusForm((prev) => ({ ...prev, status: e.target.value }))}
                         className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
                       >
-                        {ORDER_STATUS_OPTIONS.map((opt) => (
+                        {ORDER_STATUS_OPTIONS.filter((opt) => {
+                          if (opt.value === 'cancelled' && isDeliveredOrder(selectedOrder)) {
+                            return false
+                          }
+                          return true
+                        }).map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
