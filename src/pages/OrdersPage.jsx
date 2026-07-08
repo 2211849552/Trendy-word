@@ -54,6 +54,11 @@ function getStatusStyle(status) {
   }
 }
 
+function isDeliveredOrder(order) {
+  const raw = String(order?.rawStatus ?? '').toLowerCase()
+  return raw === 'delivered' || raw === 'completed' || order?.status === 'تم التسليم'
+}
+
 export function OrdersPage({ currentUser }) {
   const canSearch = canSearchOrders(currentUser)
   const canFilter = canFilterOrders(currentUser)
@@ -194,6 +199,10 @@ export function OrdersPage({ currentUser }) {
   const handleCancelOrder = async (e) => {
     e.preventDefault()
     if (!selectedOrder) return
+    if (isDeliveredOrder(selectedOrder)) {
+      setActionError('لا يمكن إلغاء الطلب بعد استلامه.')
+      return
+    }
     if (cancelReason.trim().length < 5) {
       setActionError('سبب الإلغاء مطلوب (5 أحرف على الأقل).')
       return
@@ -604,7 +613,8 @@ export function OrdersPage({ currentUser }) {
                     </div>
                   </div>
 
-                  {!showCancelForm ? (
+                  {!isDeliveredOrder(selectedOrder) ? (
+                    !showCancelForm ? (
                     <button
                       type="button"
                       onClick={() => {
@@ -645,6 +655,11 @@ export function OrdersPage({ currentUser }) {
                         </button>
                       </div>
                     </form>
+                  )
+                  ) : (
+                    <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                      لا يمكن إلغاء الطلب بعد استلامه.
+                    </p>
                   )}
                 </div>
               ) : null}
