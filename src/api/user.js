@@ -4,7 +4,8 @@ import { getEmployee } from './adminEmployees.js'
 const STORE_MANAGEMENT_ROLES = new Set(['super_admin', 'stores_admin'])
 const STORES_ADMIN_ROLES = new Set(['stores_admin'])
 const ORDER_VIEW_ROLES = new Set(['super_admin', 'operations_admin'])
-const ORDER_STATUS_UPDATE_ROLES = new Set(['super_admin', 'operations_admin'])
+const ORDER_PAGE_ROLES = new Set(['super_admin', 'stores_admin'])
+const ORDER_STATUS_UPDATE_ROLES = new Set(['super_admin', 'stores_admin'])
 const CUSTOMER_MANAGEMENT_ROLES = new Set(['super_admin', 'operations_admin'])
 const FINANCE_MANAGEMENT_ROLES = new Set(['super_admin', 'accountant'])
 const STAFF_MANAGEMENT_ROLES = new Set(['super_admin'])
@@ -19,8 +20,8 @@ const DRIVER_MESSAGE_ROLES = new Set(['super_admin', 'operations_admin', 'stores
 const ROLE_ID_TO_SLUG = {
   1: 'super_admin',
   2: 'stores_admin',
-  3: 'operations_admin',
-  4: 'accountant',
+  3: 'accountant',
+  4: 'operations_admin',
 }
 
 function hasAnyRole(user, roles) {
@@ -261,9 +262,9 @@ export function canViewStoreJoinRequestNotifications(user) {
   return hasAnyRole(user, STORE_MANAGEMENT_ROLES)
 }
 
-/** إشعارات طلبات الزبائن الجديدة — مدير النظام ومسؤول العمليات فقط */
+/** إشعارات طلبات الزبائن الجديدة — مدير النظام ومسؤول المتاجر فقط */
 export function canViewNewCustomerOrderNotifications(user) {
-  return hasAnyRole(user, ORDER_VIEW_ROLES)
+  return hasAnyRole(user, ORDER_PAGE_ROLES)
 }
 
 /** إشعارات تذاكر الشكاوى الجديدة — مدير النظام ومسؤول العمليات فقط */
@@ -283,9 +284,9 @@ export function canAccessDisputes(user) {
   return hasAnyRole(user, ORDER_VIEW_ROLES)
 }
 
-/** واجهة قائمة الطلبات — مدير النظام (مدير المتاجر) ومسؤول العمليات فقط */
+/** واجهة قائمة الطلبات — مدير النظام ومسؤول المتاجر فقط */
 export function canAccessOrderList(user) {
-  return hasAnyRole(user, ORDER_VIEW_ROLES)
+  return hasAnyRole(user, ORDER_PAGE_ROLES)
 }
 
 /** واجهة إدارة الزبائن — مدير النظام ومسؤول العمليات فقط (يُستبعد مسؤول المتاجر والمحاسب) */
@@ -340,20 +341,20 @@ export function canManagePlans(user) {
 
 /** شريط/حقل «بحث عن طلب» */
 export function canSearchOrders(user) {
-  return hasAnyRole(user, ORDER_VIEW_ROLES)
+  return hasAnyRole(user, ORDER_PAGE_ROLES)
 }
 
 /** فلترة قائمة الطلبات */
 export function canFilterOrders(user) {
-  return hasAnyRole(user, ORDER_VIEW_ROLES)
+  return hasAnyRole(user, ORDER_PAGE_ROLES)
 }
 
 /** واجهة تفاصيل الطلب (extend من القائمة) */
 export function canViewOrderDetails(user) {
-  return hasAnyRole(user, ORDER_VIEW_ROLES)
+  return hasAnyRole(user, ORDER_PAGE_ROLES)
 }
 
-/** تحديث حالة الطلب — داخل تفاصيل الطلب فقط (include) — مدير النظام ومسؤول العمليات */
+/** تحديث حالة الطلب — داخل تفاصيل الطلب فقط (include) — مدير النظام ومسؤول المتاجر */
 export function canUpdateOrderStatus(user) {
   return hasAnyRole(user, ORDER_STATUS_UPDATE_ROLES)
 }

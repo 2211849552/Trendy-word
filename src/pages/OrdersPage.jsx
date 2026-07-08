@@ -70,6 +70,7 @@ export function OrdersPage({ currentUser }) {
   const [loadError, setLoadError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeStatus, setActiveStatus] = useState('جميع الحالات')
+  const [activeChannel, setActiveChannel] = useState('all')
 
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
@@ -113,8 +114,8 @@ export function OrdersPage({ currentUser }) {
   }, [loadOrders])
 
   const filteredOrders = useMemo(
-    () => filterOrdersClient(orders, { status: activeStatus }),
-    [orders, activeStatus],
+    () => filterOrdersClient(orders, { status: activeStatus, salesChannel: activeChannel }),
+    [orders, activeStatus, activeChannel],
   )
 
   const stats = buildOrderStats(orders, paginationMeta)
@@ -313,18 +314,31 @@ export function OrdersPage({ currentUser }) {
 
       <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-xl border border-white/10 bg-brand-200 p-4 shadow-premium">
         {canFilter ? (
-          <select
-            value={activeStatus}
-            onChange={(e) => setActiveStatus(e.target.value)}
-            className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
-            aria-label="فلترة قائمة الطلبات"
-          >
-            <option>جميع الحالات</option>
-            <option>قيد التنفيذ</option>
-            <option>قيد الشحن</option>
-            <option>تم التسليم</option>
-            <option>ملغي</option>
-          </select>
+          <>
+            <select
+              value={activeStatus}
+              onChange={(e) => setActiveStatus(e.target.value)}
+              className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
+              aria-label="فلترة قائمة الطلبات"
+            >
+              <option>جميع الحالات</option>
+              <option>قيد التنفيذ</option>
+              <option>قيد الشحن</option>
+              <option>تم التسليم</option>
+              <option>ملغي</option>
+            </select>
+
+            <select
+              value={activeChannel}
+              onChange={(e) => setActiveChannel(e.target.value)}
+              className="rounded-lg border border-white/10 bg-brand-200 px-3 py-2 text-sm font-medium outline-none focus:border-brand-500 w-full sm:w-auto"
+              aria-label="فلترة نوع الطلب"
+            >
+              <option value="all">جميع الأنواع (تطبيق/POS)</option>
+              <option value="app">تطبيق (App)</option>
+              <option value="pos">نقطة بيع (POS)</option>
+            </select>
+          </>
         ) : null}
 
         {canSearch ? (
@@ -350,6 +364,7 @@ export function OrdersPage({ currentUser }) {
                 <th className="px-3 py-3 font-medium">رقم الطلب</th>
                 <th className="px-3 py-3 font-medium">الزبون</th>
                 <th className="px-3 py-3 font-medium">المتجر</th>
+                <th className="px-3 py-3 font-medium text-center">نوع الطلب</th>
                 <th className="px-3 py-3 font-medium text-center">الإجمالي</th>
                 <th className="px-3 py-3 font-medium text-center">الدفع</th>
                 <th className="px-3 py-3 font-medium">التاريخ</th>
@@ -362,7 +377,7 @@ export function OrdersPage({ currentUser }) {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={canViewDetails ? 8 : 7} className="px-3 py-12 text-center text-white/60">
+                  <td colSpan={canViewDetails ? 9 : 8} className="px-3 py-12 text-center text-white/60">
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-5 animate-spin" />
                       جاري تحميل الطلبات...
@@ -374,6 +389,11 @@ export function OrdersPage({ currentUser }) {
                   <td className="px-3 py-3 font-bold text-white">{order.id}</td>
                   <td className="px-3 py-3 text-white/70">{order.customer}</td>
                   <td className="px-3 py-3 text-white/70">{order.store}</td>
+                  <td className="px-3 py-3 text-center">
+                    <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${order.salesChannel === 'pos' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {order.salesChannel === 'pos' ? 'نقطة بيع (POS)' : 'تطبيق (App)'}
+                    </span>
+                  </td>
                   <td className="px-3 py-3 font-bold text-white text-center">{formatAmount(order.total)}</td>
                   <td className="px-3 py-3 text-center">
                     <div className="flex flex-col items-center gap-1">
@@ -407,7 +427,7 @@ export function OrdersPage({ currentUser }) {
               ))}
               {!loading && filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan={canViewDetails ? 8 : 7} className="px-6 py-12 text-center text-white/60">
+                  <td colSpan={canViewDetails ? 9 : 8} className="px-6 py-12 text-center text-white/60">
                     {loadError || 'لا توجد طلبات مطابقة للبحث أو الفلتر.'}
                   </td>
                 </tr>
@@ -442,9 +462,14 @@ export function OrdersPage({ currentUser }) {
               ) : (
               <>
               <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${getStatusStyle(selectedOrder.status)}`}>
-                  {selectedOrder.status}
-                </span>
+                <div className="flex gap-2">
+                  <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${getStatusStyle(selectedOrder.status)}`}>
+                    {selectedOrder.status}
+                  </span>
+                  <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${selectedOrder.salesChannel === 'pos' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {selectedOrder.salesChannel === 'pos' ? 'نقطة بيع (POS)' : 'تطبيق (App)'}
+                  </span>
+                </div>
                 <div className="text-left">
                   <h3 className="text-2xl font-bold text-white">{selectedOrder.id}</h3>
                   <p className="text-sm text-white/60 mt-1">{selectedOrder.date}</p>

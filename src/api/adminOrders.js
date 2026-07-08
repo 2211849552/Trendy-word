@@ -42,8 +42,6 @@ export function reassignOrder(id, driverProfileId) {
 
 export const ORDER_STATUS_OPTIONS = [
   { value: 'pending', label: 'قيد الانتظار' },
-  { value: 'processing', label: 'قيد التجهيز' },
-  { value: 'shipped', label: 'تم الشحن' },
   { value: 'out_for_delivery', label: 'قيد التوصيل' },
   { value: 'delivered', label: 'تم التسليم' },
   { value: 'cancelled', label: 'ملغي' },
@@ -128,6 +126,7 @@ export function mapOrder(item) {
     date: formatDate(item.created_at),
     status: mapOrderStatus(rawStatus),
     rawStatus,
+    salesChannel: item.sales_channel ?? 'app',
     items: item.items ?? [],
     shippingAddress: item.shipping_address ?? null,
     timeline: item.timeline ?? [],
@@ -149,11 +148,20 @@ export function buildOrderQueryParams({ search, perPage = 100 } = {}) {
   return params
 }
 
-export function filterOrdersClient(orders, { status } = {}) {
-  if (!status || status === 'جميع الحالات') return orders
-  const group = STATUS_GROUPS[status]
-  if (!group) return orders.filter((order) => order.status === status)
-  return orders.filter((order) => group.includes(order.rawStatus))
+export function filterOrdersClient(orders, { status, salesChannel } = {}) {
+  let result = orders
+  if (status && status !== 'جميع الحالات') {
+    const group = STATUS_GROUPS[status]
+    if (group) {
+      result = result.filter((order) => group.includes(order.rawStatus))
+    } else {
+      result = result.filter((order) => order.status === status)
+    }
+  }
+  if (salesChannel && salesChannel !== 'all') {
+    result = result.filter((order) => order.salesChannel === salesChannel)
+  }
+  return result
 }
 
 export function buildOrderStats(orders, meta = {}) {

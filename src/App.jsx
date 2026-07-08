@@ -452,6 +452,7 @@ export default function App() {
     localStorage.removeItem('auth_token')
     clearPersistedUserRoles()
     setIsAuthenticated(false)
+    setActiveNav('overview')
   }
 
   if (authChecking) {
@@ -465,6 +466,7 @@ export default function App() {
   const handleLoginSuccess = (loginData) => {
     setIsAuthenticated(true)
     setCurrentUser(mapCurrentUser(loginData))
+    setActiveNav('overview')
   }
 
   if (!isAuthenticated) {
