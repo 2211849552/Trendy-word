@@ -169,7 +169,7 @@ function PlanCard({ plan, onView = () => {}, onDelete = () => {}, canManage = tr
 
       <p className="mt-3 flex items-center gap-2 text-sm text-white/60">
         <Users className="size-4 shrink-0 text-white/50" strokeWidth={2} aria-hidden />
-        <span>{plan.subscribers} متجر مشترك</span>
+        <span>{plan.subscribers} اشتراكات للمتاجر</span>
       </p>
 
       <div className="mt-6 flex flex-col gap-2">
@@ -509,7 +509,7 @@ export function PlansPage({ currentUser }) {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" dir="rtl">
         <StatCard
-          label="المتاجر المشتركة"
+          label="اجمالي الاشتراكات"
           value={stats.totalSubscribers.toLocaleString('ar-LY')}
           change="—"
           trend="up"

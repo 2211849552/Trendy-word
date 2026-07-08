@@ -226,19 +226,28 @@ export function PlanFormModal({
               <label htmlFor="plan-status" className="mb-2 block text-sm font-bold text-white/80">
                 حالة الخطة
               </label>
-              <select
-                id="plan-status"
-                value={form.status}
-                onChange={(e) => setField('status', e.target.value)}
-                disabled={readOnly}
-                className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10 disabled:opacity-90"
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              {readOnly ? (
+                <input
+                  id="plan-status"
+                  type="text"
+                  value={STATUS_OPTIONS.find((o) => o.value === form.status)?.label ?? form.status}
+                  readOnly
+                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none read-only:opacity-90"
+                />
+              ) : (
+                <select
+                  id="plan-status"
+                  value={form.status}
+                  onChange={(e) => setField('status', e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-brand-300/50 px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-brand-700 focus:bg-brand-200 focus:ring-4 focus:ring-brand-900/10"
+                >
+                  {STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {isView && loadSubscriptions ? (
