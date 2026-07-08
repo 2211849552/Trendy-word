@@ -11,7 +11,6 @@ const acceptImages = CAMPAIGN_IMAGE_TYPES.join(',')
 export function EditCampaignModal({ campaign, open, onClose, onSave, saving = false }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [link, setLink] = useState('')
   const [price, setPrice] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -24,7 +23,6 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     if (!open || !campaign) return
     setName(campaign.title)
     setDescription(campaign.description)
-    setLink(campaign.link ?? '')
     setPrice(campaign.price != null ? String(campaign.price) : '')
     setDateFrom(campaign.dateFrom)
     setDateTo(campaign.dateTo)
@@ -122,7 +120,6 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
       id: campaign.id,
       name: name.trim(),
       description: description.trim(),
-      link: link.trim(),
       price: priceNum,
       dateFrom,
       dateTo,
@@ -196,20 +193,6 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
             {errors.description ? (
               <p className="mt-1 text-xs text-rose-600">{errors.description}</p>
             ) : null}
-          </div>
-
-          <div>
-            <label htmlFor="edit-link" className="mb-1.5 block text-sm font-semibold text-white/90">
-              رابط الحملة
-            </label>
-            <input
-              id="edit-link"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              className={fieldClass}
-              dir="ltr"
-              disabled={saving}
-            />
           </div>
 
           <div>
