@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, Loader2 } from 'lucide-react'
 import { StoreImage } from './StoreImage.jsx'
 
 function InfoCard({ label, value, className = '' }) {
@@ -20,6 +20,7 @@ export function JoinRequestDetailModal({
   onClose,
   onAccept,
   onReject,
+  loading = false,
 }) {
   const [modalState, setModalState] = useState('details') // 'details', 'confirmAccept', 'confirmReject', 'success'
   const [successType, setSuccessType] = useState('accept') // 'accept', 'reject'
@@ -34,7 +35,7 @@ export function JoinRequestDetailModal({
     }
   }, [open])
 
-  if (!open || !request) return null
+  if (!open) return null
 
 
   const confirmAccept = () => {
@@ -70,7 +71,8 @@ export function JoinRequestDetailModal({
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200/95 px-5 py-4 backdrop-blur">
           <h2 className="text-lg font-bold text-white">
-            {modalState === 'confirmAccept' ? 'تأكيد قبول المتجر' : 
+            {loading || !request ? 'جاري تحميل التفاصيل...' :
+             modalState === 'confirmAccept' ? 'تأكيد قبول المتجر' : 
              modalState === 'confirmReject' ? 'تأكيد رفض المتجر' : 
              modalState === 'success' ? 'تم الإجراء بنجاح' :
              'تفاصيل طلب الانضمام'}
@@ -85,7 +87,12 @@ export function JoinRequestDetailModal({
         </div>
 
         <div className="px-5 py-6">
-          {modalState === 'success' ? (
+          {loading || !request ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-sm text-white/55">
+              <Loader2 className="size-8 animate-spin text-emerald-500" />
+              <p>جاري تحميل تفاصيل الطلب...</p>
+            </div>
+          ) : modalState === 'success' ? (
             <div className="text-center animate-in zoom-in-95 duration-300">
               <div className={`mx-auto flex size-20 items-center justify-center rounded-full mb-4 border-4 ${
                 successType === 'accept' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'

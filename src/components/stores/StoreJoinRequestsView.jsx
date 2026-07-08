@@ -18,19 +18,63 @@ import { StoreImage } from './StoreImage.jsx'
 
 export function StoreJoinRequestsView({ requests, registeredStores = [], loading = false, onAccept, onReject, onLoadRequest, onOpenList, initialRequestId, onClearInitialRequestId }) {
   const [modalRequestId, setModalRequestId] = useState(initialRequestId ? String(initialRequestId) : null)
-  const modalRequest = requests.find((r) => r.id === modalRequestId) ?? null
+  const [selectedRequest, setSelectedRequest] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  // Sync selectedRequest with the prop requests if it gets updated inside the list
+  useEffect(() => {
+    if (modalRequestId) {
+      const updated = requests.find((r) => r.id === modalRequestId)
+      if (updated) {
+        setSelectedRequest(updated)
+      }
+    }
+  }, [requests, modalRequestId])
 
   useEffect(() => {
     if (initialRequestId) {
-      setModalRequestId(String(initialRequestId))
-      onLoadRequest?.(String(initialRequestId))
+      const reqIdStr = String(initialRequestId)
+      setModalRequestId(reqIdStr)
+
+      const existing = requests.find((r) => r.id === reqIdStr)
+      if (existing) {
+        setSelectedRequest(existing)
+      }
+
+      const loadInitial = async () => {
+        setDetailLoading(true)
+        try {
+          const details = await onLoadRequest?.(reqIdStr)
+          if (details) {
+            setSelectedRequest(details)
+          }
+        } finally {
+          setDetailLoading(false)
+        }
+      }
+      loadInitial()
       onClearInitialRequestId?.()
     }
-  }, [initialRequestId, onLoadRequest, onClearInitialRequestId])
+  }, [initialRequestId, onLoadRequest, onClearInitialRequestId, requests])
 
-  const openDetails = (id) => {
+  const openDetails = async (id) => {
     setModalRequestId(id)
-    onLoadRequest?.(id)
+    const existing = requests.find((r) => r.id === id)
+    if (existing) {
+      setSelectedRequest(existing)
+    }
+
+    if (onLoadRequest) {
+      setDetailLoading(true)
+      try {
+        const details = await onLoadRequest(id)
+        if (details) {
+          setSelectedRequest(details)
+        }
+      } finally {
+        setDetailLoading(false)
+      }
+    }
   }
 
   const handlePrint = () => {
@@ -46,9 +90,13 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
   return (
     <>
       <JoinRequestDetailModal
-        request={modalRequest}
+        request={selectedRequest}
         open={Boolean(modalRequestId)}
-        onClose={() => setModalRequestId(null)}
+        loading={detailLoading}
+        onClose={() => {
+          setModalRequestId(null)
+          setSelectedRequest(null)
+        }}
         onAccept={(id) => {
           onAccept(id)
         }}
