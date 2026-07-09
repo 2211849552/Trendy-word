@@ -36,7 +36,7 @@ export function toggleEmployeeStatus(id) {
 }
 
 export const PLATFORM_ROLES = [
-  { id: 1, slug: 'super_admin', label: 'مدير نظام' },
+  { id: 1, slug: 'super_admin', label: 'مدير النظام' },
   { id: 2, slug: 'stores_admin', label: 'مسؤول متاجر' },
   { id: 3, slug: 'accountant', label: 'محاسب' },
   { id: 4, slug: 'operations_admin', label: 'مسؤول عمليات' },
@@ -55,6 +55,7 @@ const STATUS_UI = {
 const ROLE_FILTER_API = {
   'جميع الأدوار': null,
   'مدير نظام': 'super_admin',
+  'مدير النظام': 'super_admin',
   'مسؤول متاجر': 'stores_admin',
   'مسؤول عمليات': 'operations_admin',
   محاسب: 'accountant',
@@ -209,7 +210,25 @@ function formatLastLogin(value) {
 }
 
 export function mapRoleLabel(roles) {
-  const slug = Array.isArray(roles) ? roles[0] : roles
+  const firstRole = Array.isArray(roles) ? roles[0] : roles
+  if (!firstRole) return '—'
+  let slug = ''
+  if (typeof firstRole === 'object') {
+    slug = firstRole.slug ?? firstRole.name ?? firstRole.role ?? firstRole.label ?? ''
+  } else {
+    slug = String(firstRole)
+  }
+  slug = slug.trim().toLowerCase()
+  const aliases = {
+    admin: 'super_admin',
+    platform_admin: 'super_admin',
+    superadmin: 'super_admin',
+    storesadmin: 'stores_admin',
+    operationsadmin: 'operations_admin',
+  }
+  if (aliases[slug]) {
+    slug = aliases[slug]
+  }
   const found = PLATFORM_ROLES.find((role) => role.slug === slug)
   return found?.label ?? slug ?? '—'
 }
@@ -223,13 +242,33 @@ export function roleLabelToId(label) {
 }
 
 export function mapEmployee(item) {
-  const roleSlug = Array.isArray(item.roles) ? item.roles[0] : ''
+  const rawRole = Array.isArray(item.roles) ? item.roles[0] : ''
+  let roleSlug = ''
+  if (rawRole && typeof rawRole === 'object') {
+    roleSlug = rawRole.slug ?? rawRole.name ?? rawRole.role ?? rawRole.label ?? ''
+  } else if (rawRole != null) {
+    roleSlug = String(rawRole)
+  }
+  roleSlug = roleSlug.trim().toLowerCase()
+  const aliases = {
+    admin: 'super_admin',
+    platform_admin: 'super_admin',
+    superadmin: 'super_admin',
+    storesadmin: 'stores_admin',
+    operationsadmin: 'operations_admin',
+  }
+  if (aliases[roleSlug]) {
+    roleSlug = aliases[roleSlug]
+  }
+
+  const isSuper = roleSlug === 'super_admin'
+
   return {
     id: item.id,
     name: item.name ?? '—',
     email: item.email ?? '—',
     phone: item.phone ?? '—',
-    role: mapRoleLabel(item.roles),
+    role: isSuper ? 'مدير النظام' : mapRoleLabel(item.roles),
     roleSlug,
     roleId: roleSlugToId(roleSlug),
     hireDate: formatDate(item.staff_profile?.hire_date ?? item.joined_at),
@@ -237,7 +276,7 @@ export function mapEmployee(item) {
     status: mapEmployeeStatus(item.status),
     rawStatus: item.status ?? '',
     department: item.staff_profile?.department ?? '—',
-    jobTitle: item.staff_profile?.job_title ?? mapRoleLabel(item.roles),
+    jobTitle: isSuper ? 'مدير النظام' : (item.staff_profile?.job_title ?? mapRoleLabel(item.roles)),
     employeeIdNumber: item.staff_profile?.employee_id_number ?? '—',
     deactivationReason: item.deactivation_reason ?? item.staff_profile?.deactivation_reason ?? '',
     raw: item,
@@ -282,12 +321,13 @@ export function emptyEmployeeForm() {
 
 export function employeeToForm(employee) {
   const defaultRole = ASSIGNABLE_PLATFORM_ROLES[0]
+  const isSuper = employee.roleSlug === 'super_admin'
   return {
     name: employee.name ?? '',
     email: employee.email ?? '',
     phone: employee.phone ?? '',
-    role: employee.roleSlug === 'super_admin' ? defaultRole.label : (employee.role ?? defaultRole.label),
-    roleId: employee.roleSlug === 'super_admin'
+    role: isSuper ? defaultRole.label : (employee.role ?? defaultRole.label),
+    roleId: isSuper
       ? defaultRole.id
       : (employee.roleId ?? roleLabelToId(employee.role) ?? defaultRole.id),
     password: '',

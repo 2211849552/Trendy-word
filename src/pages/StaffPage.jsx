@@ -53,7 +53,8 @@ function apiErrorMessage(err, fallback) {
 
 function getRoleBadgeColor(role) {
   switch (role) {
-    case 'مدير نظام': return 'bg-brand-300 text-brand-700'
+    case 'مدير نظام':
+    case 'مدير النظام': return 'bg-brand-300 text-brand-700'
     case 'مسؤول عمليات': return 'bg-brand-300 text-white/90'
     case 'محاسب': return 'bg-brand-300 text-white/90'
     case 'مسؤول متاجر': return 'bg-brand-300 text-white/90'
