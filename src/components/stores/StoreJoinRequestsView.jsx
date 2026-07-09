@@ -6,11 +6,10 @@ import {
   ShoppingBag,
   Download,
   Eye,
-  Check,
-  X,
   User,
   Mail,
   MapPin,
+  ImageOff,
 } from 'lucide-react'
 import { StatCard } from '../StatCard.jsx'
 import { JoinRequestDetailModal } from './JoinRequestDetailModal.jsx'
@@ -21,71 +20,56 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
-  // Sync selectedRequest with the prop requests if it gets updated inside the list
   useEffect(() => {
     if (modalRequestId) {
-      const updated = requests.find((r) => r.id === modalRequestId)
+      const updated = requests.find((r) => String(r.id) === String(modalRequestId))
       if (updated) {
-        setSelectedRequest(updated)
+        setSelectedRequest((prev) => (prev ? { ...prev, ...updated } : updated))
       }
     }
   }, [requests, modalRequestId])
 
   useEffect(() => {
     if (initialRequestId) {
-      const reqIdStr = String(initialRequestId)
-      setModalRequestId(reqIdStr)
-
-      const existing = requests.find((r) => r.id === reqIdStr)
-      if (existing) {
-        setSelectedRequest(existing)
-      }
-
-      const loadInitial = async () => {
-        setDetailLoading(true)
-        try {
-          const details = await onLoadRequest?.(reqIdStr)
-          if (details) {
-            setSelectedRequest(details)
-          }
-        } finally {
-          setDetailLoading(false)
-        }
-      }
-      loadInitial()
+      openDetails(String(initialRequestId))
       onClearInitialRequestId?.()
     }
-  }, [initialRequestId, onLoadRequest, onClearInitialRequestId, requests])
+  }, [initialRequestId, onClearInitialRequestId])
 
   const openDetails = async (id) => {
-    setModalRequestId(id)
-    const existing = requests.find((r) => r.id === id)
+    const normalizedId = String(id)
+    setModalRequestId(normalizedId)
+    const existing = requests.find((r) => String(r.id) === normalizedId)
     if (existing) {
       setSelectedRequest(existing)
     }
 
-    if (onLoadRequest) {
-      setDetailLoading(true)
-      try {
-        const details = await onLoadRequest(id)
-        if (details) {
-          setSelectedRequest(details)
-        }
-      } finally {
-        setDetailLoading(false)
+    if (!onLoadRequest) return
+
+    setDetailLoading(true)
+    try {
+      const details = await onLoadRequest(normalizedId)
+      if (details) {
+        setSelectedRequest(details)
       }
+    } finally {
+      setDetailLoading(false)
     }
   }
 
+  const closeDetails = () => {
+    setModalRequestId(null)
+    setSelectedRequest(null)
+    setDetailLoading(false)
+  }
+
   const handlePrint = () => {
-    // Basic implementation for printing the page
     window.print()
   }
 
-  const activeCount = registeredStores.filter(s => s.status === 'active').length;
-  const bannedCount = registeredStores.filter(s => s.status === 'disabled').length;
-  const totalProducts = registeredStores.reduce((sum, s) => sum + (s.products || 0), 0);
-
+  const activeCount = registeredStores.filter(s => s.status === 'active').length
+  const bannedCount = registeredStores.filter(s => s.status === 'disabled').length
+  const totalProducts = registeredStores.reduce((sum, s) => sum + (s.products || 0), 0)
 
   return (
     <>
@@ -93,10 +77,7 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
         request={selectedRequest}
         open={Boolean(modalRequestId)}
         loading={detailLoading}
-        onClose={() => {
-          setModalRequestId(null)
-          setSelectedRequest(null)
-        }}
+        onClose={closeDetails}
         onAccept={(id) => {
           onAccept(id)
         }}
@@ -192,11 +173,18 @@ export function StoreJoinRequestsView({ requests, registeredStores = [], loading
                   <span className="text-xs font-medium text-white/50 tabular-nums">
                     {req.date}
                   </span>
-                  <StoreImage
-                    src={req.image}
-                    name={req.storeName}
-                    className="size-10 shrink-0 rounded-lg ring-1 ring-slate-100"
-                  />
+                  {req.image ? (
+                    <StoreImage
+                      src={req.image}
+                      name={req.storeName}
+                      className="size-10 shrink-0 rounded-lg ring-1 ring-slate-100"
+                      useDefaultImage={false}
+                    />
+                  ) : (
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-300 ring-1 ring-slate-100 text-white/45">
+                      <ImageOff className="size-4" aria-hidden />
+                    </div>
+                  )}
                 </div>
                 <h3 className="mt-3 text-base font-bold leading-snug text-white">
                   {req.storeName}

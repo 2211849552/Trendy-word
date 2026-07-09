@@ -1,4 +1,6 @@
 import { apiRequest } from './client.js'
+import { resolveMediaUrl } from '../utils/mediaUrl.js'
+import { getZones, extractZoneList } from './zones.js'
 
 // عرض جميع طلبات الانضمام المعلقة (status=pending) مع الفلترة
 // GET /api/admin/stores/requests
@@ -30,36 +32,98 @@ export function rejectStoreRequest(storeJoinRequest, body) {
   })
 }
 
-function resolveMediaUrl(path) {
-  if (!path) return null
-  if (/^https?:\/\//.test(path)) return path
-  const origin = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
-  return `${origin.replace(/\/$/, '')}/storage/${String(path).replace(/^\//, '')}`
+let zonesByIdCache = null
+
+async function getZonesByIdMap() {
+  if (zonesByIdCache) return zonesByIdCache
+  try {
+    const data = await getZones({ per_page: 100 })
+    zonesByIdCache = new Map(
+      extractZoneList(data)
+        .map((zone) => [
+          String(zone.id ?? zone.zone_id),
+          String(zone.name ?? zone.zone_name ?? '').trim(),
+        ])
+        .filter(([id, name]) => id && name),
+    )
+  } catch {
+    zonesByIdCache = new Map()
+  }
+  return zonesByIdCache
+}
+
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    const text = String(value ?? '').trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function resolveJoinRequestLogo(item) {
+  const store = item.store ?? {}
+  return resolveMediaUrl(
+    item.logo ??
+    item.logo_url ??
+    item.image ??
+    item.image_url ??
+    store.logo ??
+    store.logo_url,
+  )
 }
 
 export function mapJoinRequest(item) {
   const user = item.user ?? {}
+  const zone = item.zone ?? {}
+  const store = item.store ?? {}
+  const zoneId = item.zone_id ?? zone.id ?? store.zone_id ?? null
+
   return {
     id: String(item.id),
     date: item.date ?? item.created_at?.slice(0, 10) ?? '',
-    storeName: item.store_name ?? item.storeName ?? '',
-    owner: item.applicant_name ?? item.owner_name ?? item.owner ?? user.name ?? '',
-    ownerEmail: item.owner_email ?? user.email ?? '',
-    ownerPhone: item.applicant_phone ?? user.phone ?? '',
-    email: item.contact_email ?? item.email ?? '',
-    city: item.zone_name ?? item.city ?? '',
-    googleMapUrl: item.google_map_url ?? '',
-    phone: item.contact_phone ?? item.phone ?? '',
-    description: item.description ?? '',
-    notes: item.notes ?? '',
-    businessType: item.type ?? item.business_type ?? item.businessType ?? item.entity_type ?? '',
+    storeName: firstNonEmpty(item.store_name, item.storeName),
+    owner: firstNonEmpty(item.applicant_name, item.owner_name, item.owner, user.name),
+    ownerEmail: firstNonEmpty(item.owner_email, user.email, item.contact_email, item.email),
+    ownerPhone: firstNonEmpty(item.applicant_phone, item.owner_phone, user.phone),
+    email: firstNonEmpty(item.contact_email, item.email, item.owner_email, user.email),
+    zoneId,
+    city: firstNonEmpty(item.zone_name, zone.name, item.city),
+    googleMapUrl: firstNonEmpty(item.google_map_url, store.google_map_url),
+    phone: firstNonEmpty(item.contact_phone, item.phone, item.applicant_phone, user.phone),
+    description: firstNonEmpty(item.description, store.description),
+    notes: firstNonEmpty(item.notes),
+    businessType: firstNonEmpty(item.type, item.business_type, item.businessType, store.type),
     status: item.status ?? 'pending',
-    documentFile: item.document_file ?? item.documentFile ?? '',
-    image: resolveMediaUrl(item.logo ?? item.image),
+    documentFile: firstNonEmpty(item.document_file, item.documentFile),
+    image: resolveJoinRequestLogo(item),
     sampleProducts: item.sample_products ?? item.sampleProducts ?? [],
     plan: item.plan ?? null,
-    entityType: item.entity_type ?? '',
-    commercialRegister: item.commercial_register_number ?? '',
-    storeId: item.store_id ?? item.store?.id ?? null,
+    entityType: firstNonEmpty(item.entity_type, store.entity_type),
+    commercialRegister: firstNonEmpty(item.commercial_register_number, item.commercial_register),
+    storeId: item.store_id ?? store.id ?? null,
   }
+}
+
+export function enrichJoinRequestZone(request, zonesById = new Map()) {
+  if (!request) return request
+  const city = firstNonEmpty(
+    request.city,
+    request.zoneId != null ? zonesById.get(String(request.zoneId)) : '',
+  )
+  return city ? { ...request, city } : request
+}
+
+export async function enrichJoinRequestsWithZones(requests) {
+  if (!Array.isArray(requests) || !requests.length) return requests
+  const zonesById = await getZonesByIdMap()
+  return requests.map((request) => enrichJoinRequestZone(request, zonesById))
+}
+
+export async function fetchJoinRequestDetail(requestId) {
+  const normalizedId = String(requestId)
+  const [data, zonesById] = await Promise.all([
+    getStoreRequest(normalizedId),
+    getZonesByIdMap(),
+  ])
+  return enrichJoinRequestZone(mapJoinRequest(data?.data ?? data), zonesById)
 }

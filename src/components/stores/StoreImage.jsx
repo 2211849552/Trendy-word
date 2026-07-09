@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { Store } from 'lucide-react'
 import { DEFAULT_STORE_IMAGE } from '../../data/storeImages.js'
 
-export function StoreImage({ src, name, className = 'size-full' }) {
+export function StoreImage({ src, name, className = 'size-full', useDefaultImage = true }) {
   const [failed, setFailed] = useState(false)
-  const imageSrc = failed ? DEFAULT_STORE_IMAGE : (src || DEFAULT_STORE_IMAGE)
+  const hasSource = Boolean(src)
+  const imageSrc = !hasSource || failed
+    ? (useDefaultImage ? DEFAULT_STORE_IMAGE : null)
+    : src
 
   return (
     <div className={`relative overflow-hidden bg-brand-300 ${className}`}>
-      {!failed ? (
+      {imageSrc ? (
         <img
           src={imageSrc}
           alt={name}

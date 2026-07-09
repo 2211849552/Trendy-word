@@ -3,10 +3,11 @@ import { StoreJoinRequestsView } from '../components/stores/StoreJoinRequestsVie
 import { StoreListView } from '../components/stores/StoreListView.jsx'
 import {
   getStoreRequests,
-  getStoreRequest,
   acceptStoreRequest,
   rejectStoreRequest,
   mapJoinRequest,
+  enrichJoinRequestsWithZones,
+  fetchJoinRequestDetail,
 } from '../api/storeRequests.js'
 import {
   getAdminStores,
@@ -108,7 +109,18 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
     setLoadingRequests(true)
     try {
       const data = await getStoreRequests({ status: 'pending' })
-      setJoinRequests(extractList(data).map(mapJoinRequest))
+      const mappedRequests = extractList(data).map(mapJoinRequest)
+      const withDetails = await Promise.all(
+        mappedRequests.map(async (request) => {
+          try {
+            return await fetchJoinRequestDetail(request.id)
+          } catch {
+            const [enriched] = await enrichJoinRequestsWithZones([request])
+            return enriched
+          }
+        }),
+      )
+      setJoinRequests(withDetails)
     } catch {
       setJoinRequests([])
     } finally {
@@ -166,22 +178,23 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
   }, [view, storeQuery, storeStatus, loadStores])
 
   const handleLoadRequestDetails = async (requestId) => {
+    const normalizedId = String(requestId)
     try {
-      const data = await getStoreRequest(requestId)
-      const mapped = mapJoinRequest(data?.data ?? data)
+      const mapped = await fetchJoinRequestDetail(normalizedId)
       setJoinRequests((prev) =>
-        prev.map((r) => (r.id === requestId ? { ...r, ...mapped } : r)),
+        prev.map((r) => (String(r.id) === normalizedId ? { ...r, ...mapped } : r)),
       )
       return mapped
     } catch {
-      return joinRequests.find((r) => r.id === requestId) ?? null
+      return joinRequests.find((r) => String(r.id) === normalizedId) ?? null
     }
   }
 
   const handleAcceptRequest = async (requestId) => {
+    const normalizedId = String(requestId)
     try {
-      await acceptStoreRequest(requestId)
-      setJoinRequests((prev) => prev.filter((r) => r.id !== requestId))
+      await acceptStoreRequest(normalizedId)
+      setJoinRequests((prev) => prev.filter((r) => String(r.id) !== normalizedId))
       if (view === 'list') await loadStores()
     } catch {
       // keep request in list if API fails
@@ -189,9 +202,10 @@ export function StoreManagementPage({ params, setParams, currentUser }) {
   }
 
   const handleRejectRequest = async (requestId, reason) => {
+    const normalizedId = String(requestId)
     try {
-      await rejectStoreRequest(requestId, { reason })
-      setJoinRequests((prev) => prev.filter((r) => r.id !== requestId))
+      await rejectStoreRequest(normalizedId, { reason })
+      setJoinRequests((prev) => prev.filter((r) => String(r.id) !== normalizedId))
     } catch {
       // keep request in list if API fails
     }

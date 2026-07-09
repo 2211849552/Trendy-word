@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, CheckCircle2, Loader2 } from 'lucide-react'
-import { StoreImage } from './StoreImage.jsx'
+import { X, CheckCircle2, Loader2, ImageOff } from 'lucide-react'
 
 function InfoCard({ label, value, className = '' }) {
   return (
@@ -14,16 +13,32 @@ function InfoCard({ label, value, className = '' }) {
   )
 }
 
+function formatBusinessType(value) {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  if (normalized === 'local' || normalized === 'محلي') return 'محلي'
+  if (normalized === 'electronic' || normalized === 'الكتروني' || normalized === 'إلكتروني') {
+    return 'إلكتروني'
+  }
+  return value || '—'
+}
+
+function formatEntityType(value) {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  if (normalized === 'company') return 'شركة'
+  if (normalized === 'individual') return 'فرد'
+  return value || '—'
+}
+
 export function JoinRequestDetailModal({
   request,
   open,
+  loading = false,
   onClose,
   onAccept,
   onReject,
-  loading = false,
 }) {
-  const [modalState, setModalState] = useState('details') // 'details', 'confirmAccept', 'confirmReject', 'success'
-  const [successType, setSuccessType] = useState('accept') // 'accept', 'reject'
+  const [modalState, setModalState] = useState('details')
+  const [successType, setSuccessType] = useState('accept')
   const [rejectReason, setRejectReason] = useState('')
   const [reasonError, setReasonError] = useState('')
 
@@ -36,7 +51,6 @@ export function JoinRequestDetailModal({
   }, [open])
 
   if (!open) return null
-
 
   const confirmAccept = () => {
     onAccept?.(request.id)
@@ -72,8 +86,8 @@ export function JoinRequestDetailModal({
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/5 bg-brand-200/95 px-5 py-4 backdrop-blur">
           <h2 className="text-lg font-bold text-white">
             {loading || !request ? 'جاري تحميل التفاصيل...' :
-             modalState === 'confirmAccept' ? 'تأكيد قبول المتجر' : 
-             modalState === 'confirmReject' ? 'تأكيد رفض المتجر' : 
+             modalState === 'confirmAccept' ? 'تأكيد قبول المتجر' :
+             modalState === 'confirmReject' ? 'تأكيد رفض المتجر' :
              modalState === 'success' ? 'تم الإجراء بنجاح' :
              'تفاصيل طلب الانضمام'}
           </h2>
@@ -103,7 +117,7 @@ export function JoinRequestDetailModal({
                 {successType === 'accept' ? 'تم قبول المتجر بنجاح!' : 'تم رفض الطلب بنجاح'}
               </h3>
               <p className="text-sm text-white/60 mb-8 px-4 leading-relaxed">
-                {successType === 'accept' 
+                {successType === 'accept'
                   ? `تم تفعيل حساب متجر «${request.storeName}» وسيتم إرسال بريد إلكتروني لإبلاغهم بالقبول.`
                   : `تم إرسال سبب الرفض إلى متجر «${request.storeName}» عبر البريد الإلكتروني.`}
               </p>
@@ -140,7 +154,7 @@ export function JoinRequestDetailModal({
                   يرجى توضيح سبب الرفض ليتم إرساله للمتجر <span className="font-bold">{request.storeName}</span>
                 </p>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="mb-2 block text-sm font-bold text-white/80">سبب الرفض <span className="text-rose-500">*</span></label>
@@ -169,18 +183,29 @@ export function JoinRequestDetailModal({
           ) : (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="text-center animate-in fade-in duration-300">
-                <StoreImage
-                  src={request.image}
-                  name={request.storeName}
-                  className="mx-auto size-24 rounded-2xl shadow-premium ring-2 ring-slate-100"
-                />
+                <div className="mx-auto max-w-xs">
+                  <p className="mb-3 text-sm font-semibold text-white/80">صورة المتجر</p>
+                  {request.image ? (
+                    <img
+                      src={request.image}
+                      alt={`صورة متجر ${request.storeName}`}
+                      className="mx-auto size-32 rounded-2xl object-cover shadow-premium ring-2 ring-white/10"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="mx-auto flex size-32 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-brand-300/50 text-white/50">
+                      <ImageOff className="size-8" />
+                      <span className="text-xs font-medium">لم يتم رفع صورة للمتجر</span>
+                    </div>
+                  )}
+                </div>
                 <h3 className="mt-4 text-xl font-bold text-white">{request.storeName}</h3>
                 <span className="mt-3 inline-flex rounded-full bg-amber-100 px-4 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200/80">
                   {request.status === 'pending' ? 'قيد الانتظار' : request.status}
                 </span>
               </div>
 
-              {/* بيانات مدير المتجر */}
               <div className="space-y-3">
                 <h4 className="text-sm font-bold text-white/90 border-r-4 border-emerald-500 pr-2">بيانات مدير المتجر</h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -190,37 +215,24 @@ export function JoinRequestDetailModal({
                 </div>
               </div>
 
-              {/* بيانات المتجر */}
               <div className="space-y-3">
                 <h4 className="text-sm font-bold text-white/90 border-r-4 border-emerald-500 pr-2">بيانات المتجر</h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <InfoCard label="اسم المتجر" value={request.storeName || '—'} />
-                  <InfoCard
-                    label="نوع الكيان"
-                    value={request.entityType === 'company' ? 'شركة' : request.entityType === 'individual' ? 'فرد' : '—'}
-                  />
-                  {request.entityType === 'company' && (
+                  <InfoCard label="نوع الكيان" value={formatEntityType(request.entityType)} />
+                  {String(request.entityType).toLowerCase() === 'company' && (
                     <InfoCard label="رقم السجل التجاري" value={request.commercialRegister || '—'} className="sm:col-span-2" />
                   )}
                   <InfoCard label="رقم هاتف المتجر" value={request.phone || '—'} />
                   <InfoCard label="إيميل المتجر" value={request.email || '—'} />
-                  <InfoCard
-                    label="نوع المتجر"
-                    value={
-                      request.businessType === 'local' || request.businessType === 'محلي'
-                        ? 'محلي'
-                        : request.businessType === 'electronic' || request.businessType === 'الكتروني'
-                        ? 'إلكتروني'
-                        : request.businessType || '—'
-                    }
-                  />
+                  <InfoCard label="نوع المتجر" value={formatBusinessType(request.businessType)} />
                   <InfoCard label="منطقة المتجر" value={request.city || '—'} />
                   <InfoCard
                     label="تاريخ الطلب"
                     value={request.date}
                     className="border-brand-100 bg-brand-100/90"
                   />
-                  
+
                   {request.googleMapUrl && (
                     <div className="sm:col-span-2 rounded-xl border border-white/5 bg-brand-300/90 px-4 py-3">
                       <p className="text-xs font-medium text-white/60">رابط خريطة Google</p>
@@ -237,7 +249,6 @@ export function JoinRequestDetailModal({
                 </div>
               </div>
 
-              {/* وصف المتجر والملاحظات */}
               {(request.description || request.notes) && (
                 <div className="space-y-3">
                   <h4 className="text-sm font-bold text-white/90 border-r-4 border-emerald-500 pr-2">معلومات إضافية</h4>
