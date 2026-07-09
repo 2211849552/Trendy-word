@@ -217,9 +217,7 @@ export function DisputesPage({ params, setParams }) {
   const [galleryImages, setGalleryImages] = useState([])
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [replyText, setReplyText] = useState('')
-  const [showRepliesSection, setShowRepliesSection] = useState(false)
   const [financialAmount, setFinancialAmount] = useState('')
-  const [adminAccountAction, setAdminAccountAction] = useState('')
   const [adminTargetType, setAdminTargetType] = useState('')
   const [adminAccountReason, setAdminAccountReason] = useState('')
   const [merchantWarningText, setMerchantWarningText] = useState('')
@@ -280,23 +278,14 @@ export function DisputesPage({ params, setParams }) {
   }
 
   function resetAdminAccountForm() {
-    setAdminAccountAction('')
     setAdminTargetType('')
     setAdminAccountReason('')
-  }
-
-  function selectAdminAccountAction(actionType) {
-    setAdminAccountAction(actionType)
-    if (!complaintHasLinkedStore(selectedDispute)) {
-      setAdminTargetType('customer')
-    }
   }
 
   async function openDetailsModal(dispute) {
     setReplyText('')
     setMerchantWarningText('')
     resetAdminAccountForm()
-    setShowRepliesSection(false)
     setSelectedDispute(dispute)
     setDetailsModalOpen(true)
     setDetailLoading(true)
@@ -490,17 +479,13 @@ export function DisputesPage({ params, setParams }) {
   async function handleAccountAdminAction() {
     if (!selectedDispute) return
 
-    if (!adminAccountAction) {
-      triggerToast('يرجى اختيار نوع الإجراء: إيقاف الحساب أو حظر الحساب.')
-      return
-    }
     if (!adminTargetType) {
       triggerToast('يرجى تحديد الطرف المستهدف (الزبون أو المتجر).')
       return
     }
     const reason = adminAccountReason.trim()
     if (!reason) {
-      triggerToast('سبب الإيقاف/الحظر مطلوب قبل التنفيذ.')
+      triggerToast('سبب الحظر مطلوب قبل التنفيذ.')
       return
     }
     if (adminTargetType === 'store' && !complaintHasLinkedStore(selectedDispute)) {
@@ -511,20 +496,20 @@ export function DisputesPage({ params, setParams }) {
     setActionLoading(true)
     try {
       await complaintAdminAction(selectedDispute.id, {
-        action_type: adminAccountAction,
+        action_type: 'ban',
         target_type: adminTargetType,
         reason,
       })
 
       setComplaintAccountAction(selectedDispute.id, {
         reason,
-        actionType: adminAccountAction,
+        actionType: 'ban',
         targetType: adminTargetType,
       })
       setSelectedDispute((prev) => (prev ? {
         ...prev,
         accountActionReason: reason,
-        accountActionType: adminAccountAction,
+        accountActionType: 'ban',
         accountActionTargetType: adminTargetType,
       } : prev))
 
@@ -542,21 +527,16 @@ export function DisputesPage({ params, setParams }) {
         }
       }
 
-      triggerToast(
-        adminAccountAction === 'suspend_account'
-          ? 'تم إيقاف الحساب المستهدف بنجاح'
-          : 'تم حظر الحساب المستهدف بنجاح',
-      )
+      triggerToast('تم حظر الحساب المستهدف بنجاح')
       resetAdminAccountForm()
     } catch (err) {
-      triggerToast(apiErrorMessage(err, 'تعذّر تنفيذ إجراء الحساب.'))
+      triggerToast(apiErrorMessage(err, 'تعذّر تنفيذ إجراء الحظر.'))
     } finally {
       setActionLoading(false)
     }
   }
 
   const linkedStoreAvailable = complaintHasLinkedStore(selectedDispute)
-  const accountActionSelected = adminAccountAction === 'suspend_account' || adminAccountAction === 'ban'
 
   const statusBadgeClass = (status) => {
     if (status === 'مفتوحة') return 'bg-red-100 text-red-700'
@@ -928,117 +908,101 @@ export function DisputesPage({ params, setParams }) {
                   )
                 })()}
 
-                {/* Toggle button */}
-                <div className="flex justify-center mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowRepliesSection(!showRepliesSection)}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-brand-100 hover:bg-brand-300 transition-all shadow-premium border border-white/10 cursor-pointer"
-                  >
-                    <MessageCircle className="size-5" />
-                    {showRepliesSection
-                      ? 'إخفاء الردود والمراسلات'
-                      : `عرض الردود والمراسلات (${(selectedDispute.actions ?? []).filter((a) => a.action_type === 'reply').length})`}
-                  </button>
-                </div>
-
-                {showRepliesSection && (
-                  <div className="mt-6 space-y-6 animate-in fade-in duration-200">
-                    {/* Replies List */}
-                    {(() => {
-                      const replies = (selectedDispute.actions ?? []).filter(
-                        (action) => action.action_type === 'reply',
-                      )
-                      return (
-                        <div className="text-right" dir="rtl">
-                          <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
-                            <span>الردود والمراسلات</span>
-                            <span className="text-xs font-normal text-white/50">({replies.length} ردود)</span>
-                          </h3>
-                          
-                          {replies.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-white/10 bg-brand-300/30 p-8 text-center text-white/40">
-                              لا توجد ردود في هذه التذكرة بعد.
-                            </div>
-                          ) : (
-                            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar flex flex-col">
-                              {replies.map((reply) => {
-                                const isCustomer = Number(reply.action_by?.id) === Number(selectedDispute.customerId);
-                                return (
-                                  <div
-                                    key={reply.id}
-                                    className={`flex flex-col max-w-[85%] rounded-2xl p-4 transition-all duration-200 ${
+                <div className="mt-6 space-y-6">
+                  {/* Replies List */}
+                  {(() => {
+                    const replies = (selectedDispute.actions ?? []).filter(
+                      (action) => action.action_type === 'reply',
+                    )
+                    return (
+                      <div className="text-right" dir="rtl">
+                        <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
+                          <span>الردود والمراسلات</span>
+                          <span className="text-xs font-normal text-white/50">({replies.length} ردود)</span>
+                        </h3>
+                        
+                        {replies.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-white/10 bg-brand-300/30 p-8 text-center text-white/40">
+                            لا توجد ردود في هذه التذكرة بعد.
+                          </div>
+                        ) : (
+                          <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar flex flex-col">
+                            {replies.map((reply) => {
+                              const isCustomer = Number(reply.action_by?.id) === Number(selectedDispute.customerId);
+                              return (
+                                <div
+                                  key={reply.id}
+                                  className={`flex flex-col max-w-[85%] rounded-2xl p-4 transition-all duration-200 ${
+                                    isCustomer
+                                      ? 'bg-brand-300 border border-brand-100/50 self-start'
+                                      : 'bg-brand-100/50 border border-brand-300 self-end'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-4 mb-2">
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                                       isCustomer
-                                        ? 'bg-brand-300 border border-brand-100/50 self-start'
-                                        : 'bg-brand-100/50 border border-brand-300 self-end'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between gap-4 mb-2">
-                                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                        isCustomer
-                                          ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/20'
-                                          : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/20'
-                                      }`}>
-                                        {isCustomer ? 'الزبون' : 'الإدارة'}
-                                      </span>
-                                      <span className="text-xs text-white/40">
-                                        {reply.created_at
-                                          ? new Date(reply.created_at).toLocaleString('ar-LY', {
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                              day: '2-digit',
-                                              month: '2-digit',
-                                            })
-                                          : ''}
-                                      </span>
-                                    </div>
-                                    
-                                    <p className="text-sm font-semibold text-white/90 whitespace-pre-wrap leading-relaxed">
-                                      {reply.comment}
-                                    </p>
-                                    
-                                    <span className="text-[11px] text-white/50 mt-2 block self-start">
-                                      بواسطة: {reply.action_by?.name || (isCustomer ? selectedDispute.customer : 'مشرف المنصة')}
+                                        ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/20'
+                                        : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/20'
+                                    }`}>
+                                      {isCustomer ? 'الزبون' : 'الإدارة'}
+                                    </span>
+                                    <span className="text-xs text-white/40">
+                                      {reply.created_at
+                                        ? new Date(reply.created_at).toLocaleString('ar-LY', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                          })
+                                        : ''}
                                     </span>
                                   </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })()}
-
-                    {/* Reply Input Form */}
-                    {selectedDispute.rawStatus !== 'closed' && (
-                      <div className="space-y-4" dir="rtl">
-                        <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد على الشكوى</h3>
-                        <div>
-                          <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              placeholder="اكتب ردك هنا..."
-                              disabled={actionLoading}
-                              className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleSendReply}
-                              disabled={actionLoading || !replyText.trim()}
-                              className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0 disabled:opacity-60 cursor-pointer"
-                            >
-                              <Send className="size-4" />
-                              إرسال
-                            </button>
+                                  
+                                  <p className="text-sm font-semibold text-white/90 whitespace-pre-wrap leading-relaxed">
+                                    {reply.comment}
+                                  </p>
+                                  
+                                  <span className="text-[11px] text-white/50 mt-2 block self-start">
+                                    بواسطة: {reply.action_by?.name || (isCustomer ? selectedDispute.customer : 'مشرف المنصة')}
+                                  </span>
+                                </div>
+                              )
+                            })}
                           </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Reply Input Form */}
+                  {selectedDispute.rawStatus !== 'closed' && (
+                    <div className="space-y-4" dir="rtl">
+                      <h3 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">الرد على الشكوى</h3>
+                      <div>
+                        <label className="block text-sm font-medium text-white/70 mb-2">إضافة رد</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="اكتب ردك هنا..."
+                            disabled={actionLoading}
+                            className="flex-1 rounded-xl border border-white/10 bg-brand-300 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSendReply}
+                            disabled={actionLoading || !replyText.trim()}
+                            className="rounded-xl bg-brand-100 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-300 transition-colors shadow-premium border border-white/10 flex items-center gap-2 shrink-0 disabled:opacity-60 cursor-pointer"
+                          >
+                            <Send className="size-4" />
+                            إرسال
+                          </button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
 
                 <div className="mt-8">
                   <h3 className="text-lg font-bold text-white text-right mb-4 border-b border-white/10 pb-2" dir="rtl">
@@ -1092,146 +1056,77 @@ export function DisputesPage({ params, setParams }) {
                       </p>
 
                       <div className="mb-4 rounded-xl border border-white/10 bg-brand-300 p-4 space-y-4">
-                        <p className="text-sm font-bold text-white/90">إيقاف / حظر الحساب</p>
+                        <p className="text-sm font-bold text-white/90">إجراءات الحظر الإدارية</p>
 
                         <div>
-                          <p className="mb-2 text-sm font-medium text-white/70">نوع الإجراء</p>
-                          <div className="flex flex-wrap gap-4">
-                            <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+                          <p className="mb-3 text-sm font-medium text-white/70">تحديد نوع الحظر <span className="text-rose-400">*</span></p>
+                          <div className="flex flex-col gap-3">
+                            <label className="flex cursor-pointer items-center gap-2.5 text-sm text-white">
                               <input
                                 type="radio"
-                                name="admin-account-action"
-                                value="suspend_account"
-                                checked={adminAccountAction === 'suspend_account'}
-                                onChange={() => selectAdminAccountAction('suspend_account')}
+                                name="admin-target-type"
+                                value="customer"
+                                checked={adminTargetType === 'customer'}
+                                onChange={() => setAdminTargetType('customer')}
                                 disabled={actionLoading}
                                 className="size-4 accent-brand-400"
                               />
-                              إيقاف الحساب (suspend_account)
+                              حظر حساب الزبون الذي قدم الشكوى ({selectedDispute.customer})
                             </label>
-                            <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+                            <label
+                              title={linkedStoreAvailable ? '' : 'لا يوجد طلب/متجر مرتبط بهذه الشكوى'}
+                              className={`flex items-center gap-2.5 text-sm ${
+                                linkedStoreAvailable
+                                  ? 'cursor-pointer text-white'
+                                  : 'cursor-not-allowed text-white/40'
+                              }`}
+                            >
                               <input
                                 type="radio"
-                                name="admin-account-action"
-                                value="ban"
-                                checked={adminAccountAction === 'ban'}
-                                onChange={() => selectAdminAccountAction('ban')}
-                                disabled={actionLoading}
-                                className="size-4 accent-brand-400"
+                                name="admin-target-type"
+                                value="store"
+                                checked={adminTargetType === 'store'}
+                                onChange={() => setAdminTargetType('store')}
+                                disabled={actionLoading || !linkedStoreAvailable}
+                                className="size-4 accent-brand-400 disabled:opacity-40"
                               />
-                              حظر الحساب (ban)
+                              حظر المتجر المرتبط بالشكوى ({selectedDispute.store})
                             </label>
                           </div>
+                          {!linkedStoreAvailable ? (
+                            <p className="mt-2 text-xs text-white/50 text-right">
+                              لا يوجد متجر مرتبط بهذه الشكوى — خيار حظر المتجر غير متاح.
+                            </p>
+                          ) : null}
                         </div>
 
-                        {accountActionSelected ? (
-                          <>
-                            <div>
-                              <p className="mb-2 text-sm font-medium text-white/70">
-                                الطرف المستهدف <span className="text-rose-400">*</span>
-                              </p>
-                              <div className="flex flex-wrap gap-4">
-                                <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
-                                  <input
-                                    type="radio"
-                                    name="admin-target-type"
-                                    value="customer"
-                                    checked={adminTargetType === 'customer'}
-                                    onChange={() => setAdminTargetType('customer')}
-                                    disabled={actionLoading}
-                                    className="size-4 accent-brand-400"
-                                  />
-                                  الزبون (صاحب التذكرة)
-                                </label>
-                                <label
-                                  title={linkedStoreAvailable ? '' : 'لا يوجد طلب/متجر مرتبط بهذه التذكرة'}
-                                  className={`flex items-center gap-2 text-sm ${
-                                    linkedStoreAvailable
-                                      ? 'cursor-pointer text-white'
-                                      : 'cursor-not-allowed text-white/40'
-                                  }`}
-                                >
-                                  <input
-                                    type="radio"
-                                    name="admin-target-type"
-                                    value="store"
-                                    checked={adminTargetType === 'store'}
-                                    onChange={() => setAdminTargetType('store')}
-                                    disabled={actionLoading || !linkedStoreAvailable}
-                                    className="size-4 accent-brand-400 disabled:opacity-40"
-                                  />
-                                  المتجر (مالك المتجر المرتبط بالطلب)
-                                </label>
-                              </div>
-                              {!linkedStoreAvailable ? (
-                                <p className="mt-2 text-xs text-white/50">
-                                  لا يوجد طلب/متجر مرتبط بهذه التذكرة — خيار المتجر غير متاح.
-                                </p>
-                              ) : null}
-                            </div>
-
-                            {adminTargetType ? (
-                              <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm font-medium text-amber-100">
-                                {buildAccountActionWarning(selectedDispute, adminAccountAction, adminTargetType)}
-                              </div>
-                            ) : null}
-
-                            <div>
-                              <label className="mb-2 block text-sm font-medium text-white/70">
-                                سبب الإيقاف/الحظر <span className="text-rose-400">*</span>
-                              </label>
-                              <textarea
-                                value={adminAccountReason}
-                                onChange={(e) => setAdminAccountReason(e.target.value)}
-                                disabled={actionLoading}
-                                rows={3}
-                                placeholder="اكتب سبب الإجراء الإداري..."
-                                className="w-full resize-none rounded-xl border border-white/10 bg-brand-200 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
-                              />
-                            </div>
-
-                            <button
-                              type="button"
-                              disabled={actionLoading || !adminTargetType || !adminAccountReason.trim()}
-                              onClick={handleAccountAdminAction}
-                              className="w-full rounded-xl bg-brand-100 py-3 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60"
-                            >
-                              تنفيذ {accountActionVerb(adminAccountAction)} الحساب
-                            </button>
-                          </>
+                        {adminTargetType ? (
+                          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm font-medium text-rose-200">
+                            {buildAccountActionWarning(selectedDispute, 'ban', adminTargetType)}
+                          </div>
                         ) : null}
-                      </div>
 
-                      <div className="mb-4 rounded-xl border border-white/10 bg-brand-300 p-4 space-y-3">
-                        <p className="text-sm font-bold text-white/90">تحذير التاجر</p>
                         <div>
                           <label className="mb-2 block text-sm font-medium text-white/70">
-                            نص التحذير <span className="text-rose-400">*</span>
+                            سبب الحظر <span className="text-rose-400">*</span>
                           </label>
                           <textarea
-                            value={merchantWarningText}
-                            onChange={(e) =>
-                              setMerchantWarningText(
-                                e.target.value.slice(0, MAX_MERCHANT_WARNING_TEXT_LENGTH),
-                              )
-                            }
+                            value={adminAccountReason}
+                            onChange={(e) => setAdminAccountReason(e.target.value)}
                             disabled={actionLoading}
-                            rows={4}
-                            maxLength={MAX_MERCHANT_WARNING_TEXT_LENGTH}
-                            placeholder="اكتب نص التحذير الذي سيُرسل للتاجر..."
+                            rows={3}
+                            placeholder="اكتب سبب الحظر الإداري (إجباري)..."
                             className="w-full resize-none rounded-xl border border-white/10 bg-brand-200 py-2.5 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60"
                           />
-                          <p className="mt-1 text-xs text-white/50" dir="ltr">
-                            {merchantWarningText.length}/{MAX_MERCHANT_WARNING_TEXT_LENGTH}
-                          </p>
                         </div>
+
                         <button
                           type="button"
-                          disabled={actionLoading || !merchantWarningText.trim()}
-                          onClick={() => handleAction('warn_merchant')}
-                          className="w-full rounded-xl bg-brand-100 py-3 font-bold text-white hover:bg-brand-300 border border-white/10 disabled:opacity-60"
+                          disabled={actionLoading || !adminTargetType || !adminAccountReason.trim()}
+                          onClick={handleAccountAdminAction}
+                          className="w-full rounded-xl bg-rose-600/90 py-3 font-bold text-white hover:bg-rose-600 transition-colors border border-rose-500/30 disabled:opacity-60 cursor-pointer"
                         >
-                          إرسال تحذير للتاجر
+                          تنفيذ إجراء الحظر
                         </button>
                       </div>
                     </div>
