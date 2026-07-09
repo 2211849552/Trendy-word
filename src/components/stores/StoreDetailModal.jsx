@@ -233,9 +233,15 @@ export function StoreDetailModal({
   const overlay = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-brand-200 shadow-2xl animate-in zoom-in-95 duration-200" dir="rtl">
+      <div
+        className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-brand-200 shadow-2xl animate-in zoom-in-95 duration-200"
+        dir="rtl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="store-detail-title"
+      >
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 className="text-xl font-bold text-white">تفاصيل المتجر</h2>
+          <h2 id="store-detail-title" className="text-xl font-bold text-white">تفاصيل المتجر</h2>
           <button onClick={onClose} className="rounded-lg p-2 text-white/50 hover:bg-brand-300 hover:text-white/70 transition-colors">
             <X className="size-6" />
           </button>
