@@ -745,12 +745,14 @@ export function toCampaignFormData(form) {
   })
   if (form.bannerImage instanceof File) {
     fd.append('banner_image', form.bannerImage)
+  } else if (form.deleteCurrentImage) {
+    fd.append('remove_banner_image', '1')
   }
   return fd
 }
 
 export function toCampaignRequestBody(form) {
-  if (form.bannerImage instanceof File) return toCampaignFormData(form)
+  if (form.bannerImage instanceof File || form.deleteCurrentImage) return toCampaignFormData(form)
   return toCampaignPayload(form)
 }
 

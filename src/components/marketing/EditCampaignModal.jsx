@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ImagePlus, X } from 'lucide-react'
+import { ImagePlus, Pencil, Trash2, X } from 'lucide-react'
 import {
   CAMPAIGN_IMAGE_TYPES,
   validateCampaignImage,
@@ -16,6 +16,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const [dateTo, setDateTo] = useState('')
   const [bannerImage, setBannerImage] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [deleteCurrentImage, setDeleteCurrentImage] = useState(false)
   const [errors, setErrors] = useState({})
   const fileInputRef = useRef(null)
 
@@ -28,6 +29,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     setDateTo(campaign.dateTo)
     setBannerImage(null)
     setPreviewUrl('')
+    setDeleteCurrentImage(false)
     setErrors({})
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [open, campaign])
@@ -61,8 +63,9 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
   const fieldClass =
     'w-full rounded-xl border border-white/10 bg-brand-300/80 px-3 py-2.5 text-sm text-white outline-none transition focus:border-brand-900 focus:bg-brand-200 focus:ring-2 focus:ring-brand-900/20'
 
-  const displayImageUrl = previewUrl || campaign.bannerImageUrl || ''
+  const displayImageUrl = previewUrl || (deleteCurrentImage ? '' : campaign.bannerImageUrl) || ''
   const hasNewImage = bannerImage instanceof File
+  const hasCurrentImage = !deleteCurrentImage && !hasNewImage && !!campaign.bannerImageUrl
 
   const clearNewImage = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
@@ -70,6 +73,15 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
     setBannerImage(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     if (errors.bannerImage) setErrors((x) => ({ ...x, bannerImage: '' }))
+  }
+
+  const handleDeleteCurrentImage = () => {
+    clearNewImage()
+    setDeleteCurrentImage(true)
+  }
+
+  const handleChangeImageClick = () => {
+    fileInputRef.current?.click()
   }
 
   const handleImageChange = (e) => {
@@ -124,6 +136,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
       dateFrom,
       dateTo,
       bannerImage,
+      deleteCurrentImage: !bannerImage && deleteCurrentImage,
     })
   }
 
@@ -232,16 +245,36 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
                   alt="صورة الإعلان"
                   className="max-h-48 w-full object-cover"
                 />
-                {hasNewImage ? (
+                {/* أزرار التحكم بالصورة */}
+                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-slate-900/0 opacity-0 transition-all duration-200 hover:bg-slate-900/50 hover:opacity-100">
+                  {/* زر تغيير الصورة */}
                   <button
                     type="button"
-                    onClick={clearNewImage}
+                    onClick={handleChangeImageClick}
                     disabled={saving}
-                    className="absolute left-2 top-2 rounded-lg bg-slate-900/70 p-1.5 text-white transition hover:bg-slate-900 disabled:opacity-50"
-                    aria-label="إلغاء الصورة الجديدة"
+                    className="flex items-center gap-1.5 rounded-lg bg-brand-900/90 px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-brand-900 disabled:opacity-50"
+                    aria-label="تغيير الصورة"
                   >
-                    <X className="size-4" />
+                    <Pencil className="size-3.5" />
+                    تغيير
                   </button>
+                  {/* زر حذف الصورة */}
+                  <button
+                    type="button"
+                    onClick={hasNewImage ? clearNewImage : handleDeleteCurrentImage}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 rounded-lg bg-rose-600/90 px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-rose-600 disabled:opacity-50"
+                    aria-label="حذف الصورة"
+                  >
+                    <Trash2 className="size-3.5" />
+                    حذف
+                  </button>
+                </div>
+                {/* شارة «صورة جديدة» */}
+                {hasNewImage ? (
+                  <span className="absolute right-2 top-2 rounded-md bg-brand-900/80 px-2 py-0.5 text-[10px] font-bold text-white">
+                    صورة جديدة
+                  </span>
                 ) : null}
               </div>
             ) : (
@@ -250,7 +283,7 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
                 className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-brand-300/40 px-4 py-8 text-center transition hover:border-brand-500/40 hover:bg-brand-300/60"
               >
                 <ImagePlus className="size-8 text-white/40" />
-                <span className="text-sm font-medium text-white/70">اضغطي لرفع صورة الإعلان</span>
+                <span className="text-sm font-medium text-white/70">اضغط لرفع صورة الإعلان</span>
               </label>
             )}
 
@@ -261,12 +294,14 @@ export function EditCampaignModal({ campaign, open, onClose, onSave, saving = fa
               accept={acceptImages}
               onChange={handleImageChange}
               disabled={saving}
-              className="block w-full text-xs text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white disabled:opacity-60"
+              className="hidden"
             />
             {hasNewImage ? (
               <p className="mt-1 text-xs text-brand-300">سيتم استبدال الصورة الحالية عند الحفظ.</p>
-            ) : campaign.bannerImageUrl ? (
-              <p className="mt-1 text-xs text-white/50">اختر ملفاً جديداً لاستبدال الصورة الحالية.</p>
+            ) : deleteCurrentImage ? (
+              <p className="mt-1 text-xs text-rose-400">سيتم حذف صورة الحملة عند الحفظ. <button type="button" onClick={() => setDeleteCurrentImage(false)} className="underline hover:text-rose-300">تراجع</button></p>
+            ) : hasCurrentImage ? (
+              <p className="mt-1 text-xs text-white/50">مرّر المؤشر فوق الصورة لتغييرها أو حذفها.</p>
             ) : null}
             {errors.bannerImage ? (
               <p className="mt-1 text-xs text-rose-600">{errors.bannerImage}</p>
