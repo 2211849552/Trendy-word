@@ -36,6 +36,7 @@ const STATUS_LABELS = {
   active: 'نشط',
   disabled: 'معطل',
   pending: 'معلق',
+  banned: 'محظور',
 }
 
 const EMPTY_DELIVERY_PRICES = {}

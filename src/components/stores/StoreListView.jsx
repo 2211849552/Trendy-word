@@ -12,6 +12,7 @@ const STATUS_LABELS = {
   active: 'نشط',
   disabled: 'معطل',
   pending: 'معلق',
+  banned: 'محظور',
 }
 
 function escapeHtml(value) {
@@ -361,7 +362,7 @@ export function StoreListView({
             <option value="all">جميع الحالات</option>
             <option value="active">نشط</option>
             <option value="disabled">معطل</option>
-            <option value="pending">معلق</option>
+            <option value="banned">محظور</option>
           </select>
         </div>
       </div>
@@ -399,7 +400,7 @@ export function StoreListView({
                 </tr>
               ) : (
                 stores.map((row) => (
-                  <tr key={row.id} className={`transition-colors hover:bg-brand-300/60 ${row.status === 'disabled' ? 'opacity-60' : ''}`}>
+                  <tr key={row.id} className={`transition-colors hover:bg-brand-300/60 ${row.status === 'disabled' || row.status === 'banned' ? 'opacity-60' : ''}`}>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-3">
                         <StoreImage

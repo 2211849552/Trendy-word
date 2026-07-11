@@ -8,7 +8,7 @@ export function openStoresPrintWindow(stores) {
           <td dir="ltr">${escapeHtml(store.email)}</td>
           <td dir="ltr">${escapeHtml(store.phone)}</td>
           <td>${escapeHtml(store.city)}</td>
-          <td>${store.status === 'active' ? 'نشط' : store.status === 'pending' ? 'معلق' : 'معطل'}</td>
+          <td>${store.status === 'active' ? 'نشط' : store.status === 'pending' ? 'معلق' : store.status === 'banned' ? 'محظور' : 'معطل'}</td>
           <td>${escapeHtml(store.createdAt || '—')}</td>
         </tr>`,
     )

@@ -188,6 +188,7 @@ export function toApiStoreStatus(uiStatus) {
   if (uiStatus === 'all') return undefined
   if (uiStatus === 'disabled') return 'deactivated'
   if (uiStatus === 'pending') return 'inactive'
+  if (uiStatus === 'banned') return 'banned'
   return uiStatus
 }
 
@@ -195,6 +196,7 @@ export function normalizeStoreStatus(status) {
   if (status === 'active') return 'active'
   if (status === 'inactive') return 'pending'
   if (status === 'deactivated') return 'disabled'
+  if (status === 'banned') return 'banned'
   return 'disabled'
 }
 
